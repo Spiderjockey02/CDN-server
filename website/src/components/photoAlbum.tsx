@@ -18,7 +18,7 @@ export default function PhotoAlbum({ files, dir, user }: Props) {
 	return (
 		<>
 			<div className="row justify-content-between">
-				{files.slice(page * pageCount, (page + 1) * pageCount).map(_ => (
+				{files.sort((a, b) => a.type.localeCompare(b.type)).slice(page * pageCount, (page + 1) * pageCount).map(_ => (
 					<div className="card col-sm-2 m-2 text-center" key={_.name} style={{ margin:'0px', padding: '0px' }}>
 						<Link href={`/files${dir == '/' ? '/' : `/${dir}/`}${_.name}`} style={{ textDecoration: 'none' }}>
 							<Image className="center" loader={myLoader} src={_.name}
@@ -43,11 +43,11 @@ export default function PhotoAlbum({ files, dir, user }: Props) {
 							</a>
 						</li>
 						<li className="page-item">
-							<a className="page-link" href="#"onClick={() => setPage(1)} >1</a>
+							<a className="page-link" href="#"onClick={() => setPage(1)}>1</a>
 						</li>
-						<li className="page-item"><p className="page-link">{page}</p></li>
+						<li className="page-item"><p className="page-link">{page + 1}</p></li>
 						<li className="page-item">
-							<a className="page-link" href="#" onClick={() => setPage(Math.floor(files.length / pageCount))} >{Math.floor(files.length / 10)}</a>
+							<a className="page-link" href="#" onClick={() => setPage(Math.floor(files.length / pageCount))} >{Math.floor(files.length / 10) + 1}</a>
 						</li>
 						<li className="page-item">
 							<a className="page-link" href="#" aria-label="Next" onClick={() => setPage(page + 1 > Math.floor(files.length / pageCount) ? Math.floor(files.length / pageCount) : page + 1)}>
