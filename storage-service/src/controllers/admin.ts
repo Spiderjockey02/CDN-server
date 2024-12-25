@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { exec } from 'node:child_process';
 import os from 'os';
 import util from 'node:util';
-import { fetchAllGroups } from '../accessors/Group';
 import { directoryTree, getNumberOfFiles, Error } from '../utils';
 import { Client } from 'src/helpers';
 const cmd = util.promisify(exec);
@@ -53,7 +52,7 @@ export const getStats = (client: Client) => {
 				},
 				users: {
 					total: await client.userManager.fetchTotalCount(),
-					groups: (await fetchAllGroups()).map(g => ({
+					groups: (await client.groupManager.fetchAll()).map(g => ({
 						name: g.name,
 						userCount: g._count.users,
 					})),
