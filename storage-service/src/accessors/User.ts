@@ -92,4 +92,8 @@ export default class UserManager {
 		}
 		return user;
 	}
+
+	async fetchTotalCount() {
+		return client.user.count();
+	}
 }

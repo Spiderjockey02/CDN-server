@@ -52,7 +52,7 @@ export const getStats = (client: Client) => {
 					avg: os.loadavg(),
 				},
 				users: {
-					total: (await client.userManager.fetchAll()).length,
+					total: await client.userManager.fetchTotalCount(),
 					groups: (await fetchAllGroups()).map(g => ({
 						name: g.name,
 						userCount: g._count.users,
