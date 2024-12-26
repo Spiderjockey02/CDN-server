@@ -1,22 +1,22 @@
 import express from 'express';
-import { generateRoutes, Client } from './utils';
+import { generateRoutes } from './utils';
 import config from './config';
 import compression from 'compression';
-import { fetchAllGroups, createGroup } from './accessors/Group';
 import type { customRequest, customResponse } from './types';
 import bcrypt from 'bcrypt';
 import { join } from 'path';
 import cors from 'cors';
+import { Client } from './helpers';
 const app = express();
 const client = new Client();
 
 
 (async () => {
 	// Create 2 groups for normal users and admin
-	const groups = await fetchAllGroups();
+	const groups = await client.groupManager.fetchAll();
 	if (groups.length == 0) {
 		try {
-			await Promise.all([createGroup({ name: 'Free' }), createGroup({ name: 'Admin' })]);
+			await Promise.all([client.groupManager.create({ name: 'Free' }), client.groupManager.create({ name: 'Admin' })]);
 			client.logger.log('Successfully created group(s): Free, Admin.');
 		} catch (err) {
 			client.logger.error(err);
@@ -31,7 +31,7 @@ const client = new Client();
 			const hashPassword = await bcrypt.hash('admin', salt);
 			await client.userManager.create({ email: 'test@example.com', password: hashPassword, name: 'Admin' });
 			client.logger.log('Successfully created account: Admin');
-			client.logger.log(`Email: ${'test@example.com'}, password: ${'admin'}`);
+			client.logger.log('Email: test@example.com, password: admin');
 		} catch (err) {
 			client.logger.error(err);
 			client.logger.error('Error creating Admin account');

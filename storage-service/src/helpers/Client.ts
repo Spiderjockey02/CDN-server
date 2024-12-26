@@ -1,20 +1,19 @@
-// For caching files
-// For caching database queries
-// Add logger here
-
-import { fileItem } from '../types';
 import Logger from '../utils/Logger';
 import UserManager from '../accessors/User';
+import FileManager from './FileManager';
+import GroupManager from '../accessors/Group';
 
 
 export default class Client {
 	logger: Logger;
-	treeCache: Map<string, fileItem>;
 	userManager: UserManager;
+	groupManager: GroupManager;
+	FileManager: FileManager;
 
 	constructor() {
 		this.logger = new Logger();
-		this.treeCache = new Map();
 		this.userManager = new UserManager();
+		this.groupManager = new GroupManager();
+		this.FileManager = new FileManager();
 	}
 }

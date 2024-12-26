@@ -13,7 +13,12 @@ export default class UserManager {
 		});
 	}
 
-	async create(data: createUser) {
+	/**
+	  * Creates a new user
+	  * @param {createUser} data The user data.
+		* @returns {UserWithGroup} The created user.
+	*/
+	async create(data: createUser): Promise<UserWithGroup> {
 		const user = await client.user.create({
 			data: {
 				email: data.email,
@@ -33,7 +38,12 @@ export default class UserManager {
 		return user;
 	}
 
-	async update(data: updateUser) {
+	/**
+	  * Updates a user
+	  * @param {updateUser} data The user data.
+		* @returns {UserWithGroup} The updated user.
+	*/
+	async update(data: updateUser): Promise<UserWithGroup> {
 		const user = await client.user.update({
 			where: {
 				id: data.id,
@@ -51,17 +61,25 @@ export default class UserManager {
 		return user;
 	}
 
-	async fetchAll(data: GetUsers = {}) {
+	/**
+	  * Fetch all users
+	  * @param {GetUsers} data The user data.
+		* @returns {UserWithGroup[]} The users.
+	*/
+	async fetchAll(data: GetUsers = {}): Promise<UserWithGroup[]> {
 		return client.user.findMany({
 			include: {
 				group: data.group,
-				recentFiles: data.recent,
-				deleteFiles: data.delete,
 			},
 		});
 	}
 
-	async addUserToGroup(data: UserToGroupProps) {
+	/**
+	  * Update a user's group
+	  * @param {UserToGroupProps} data The user data.
+		* @returns {UserWithGroup} The updated user.
+	*/
+	async addUserToGroup(data: UserToGroupProps): Promise<UserWithGroup> {
 		return client.user.update({
 			where: {
 				id: data.userId,
@@ -73,9 +91,17 @@ export default class UserManager {
 					},
 				},
 			},
+			include: {
+				group: true,
+			},
 		});
 	}
 
+	/**
+	  * Fetch a user by a parameter
+	  * @param {fetchUserbyParam} data The user data.
+		* @returns {UserWithGroup | null} The updated user.
+	*/
 	async fetchbyParam(data: fetchUserbyParam): Promise<UserWithGroup | null> {
 		let user = this.cache.find(u => u.id === data.id || u.email === data.email) ?? null;
 		if (user == null) {
@@ -93,7 +119,11 @@ export default class UserManager {
 		return user;
 	}
 
-	async fetchTotalCount() {
+	/**
+	  * Fetch the total count of users
+		* @returns {number} The total count of users.
+	*/
+	async fetchTotalCount(): Promise<number> {
 		return client.user.count();
 	}
 }

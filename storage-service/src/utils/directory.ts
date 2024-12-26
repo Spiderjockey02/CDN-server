@@ -23,7 +23,7 @@ async function directoryTree(path: string, depth = 1) {
 
 	try {
 		stats = await fs.stat(path);
-	} catch (e) {
+	} catch {
 		return null;
 	}
 
@@ -34,7 +34,6 @@ async function directoryTree(path: string, depth = 1) {
 		item.extension = ext;
 		item.type = constants.FILE as fileType;
 		item.modified = stats.mtime.getTime();
-
 	} else if (stats.isDirectory()) {
 		const dirData = await safeReadDirSync(path);
 		if (dirData === null) return null;

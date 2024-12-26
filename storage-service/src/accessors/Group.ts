@@ -14,7 +14,12 @@ export default class GroupManager {
 		});
 	}
 
-	async create(data: CreateGroupProps) {
+	/**
+	  * Creates a new group
+	  * @param {CreateGroupProps} data The group data.
+		* @returns {Group} The created group.
+	*/
+	async create(data: CreateGroupProps): Promise<Group> {
 		const group = await client.group.create({
 			data: {
 				name: data.name,
@@ -25,6 +30,11 @@ export default class GroupManager {
 		return group;
 	}
 
+	/**
+	  * Retrieves all groups
+	  * @param {getGroupsInclude} data The group data.
+		* @returns {Group[]} The groups.
+	*/
 	async fetchAll(data: getGroupsInclude = {}) {
 		return client.group.findMany({
 			include: {
@@ -34,8 +44,12 @@ export default class GroupManager {
 		});
 	}
 
-
-	async getByName(data: GroupNameProps) {
+	/**
+	  * Retrieves a group by its name
+	  * @param {GroupNameProps} data The group name.
+		* @returns {Group | null} The group.
+	*/
+	async getByName(data: GroupNameProps): Promise<Group | null> {
 		let group = this.cache.get(data.name) ?? null;
 		if (group == null)	{
 			group = await client.group.findUnique({
@@ -51,12 +65,18 @@ export default class GroupManager {
 		return group;
 	}
 
-
-	async delete(data: IdParam) {
-		return client.group.delete({
+	/**
+	  * Deletes a group
+	  * @param {IdParam} data The group ID.
+		* @returns {Group} The deleted group.
+	*/
+	async delete(data: IdParam): Promise<Group> {
+		const group = await client.group.delete({
 			where: {
 				id: data.id,
 			},
 		});
+		this.cache.delete(group.name);
+		return group;
 	}
 }
