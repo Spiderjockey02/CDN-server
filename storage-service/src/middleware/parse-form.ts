@@ -1,6 +1,7 @@
 import { join } from 'path';
 import formidable from 'formidable';
 import { mkdir } from 'fs/promises';
+import fs from 'fs';
 import type { Request } from 'express';
 import { PATHS } from '../utils';
 import config from '../config';
@@ -11,10 +12,14 @@ const parseForm = async (client: Client, req: Request, userId: string): Promise<
 	// eslint-disable-next-line no-async-promise-executor
 	return await new Promise(async (resolve, reject) => {
 
-		const path = (req.headers['referer'] as string).slice(`${config.frontendURL}/files`.length).length > 0 ?
-			decodeURI((req.headers['referer'] as string).slice(`${config.frontendURL}/files`.length)) : '/';
+		// Get the path from the referer
+		const refererPath = req.headers['referer']?.split('/files')[1] || '';
+		const path = (refererPath.length > 0) ? decodeURI(refererPath) : '/';
 
+		// Check if the path is valid
 		const uploadDir = join(PATHS.CONTENT, userId, path);
+		if (!client.FileManager._verifyTraversal(userId, uploadDir)) throw 'Invalid path';
+
 		let user: UserWithGroup | null;
 		try {
 			user = await client.userManager.fetchbyParam({ id: userId });
@@ -36,7 +41,24 @@ const parseForm = async (client: Client, req: Request, userId: string): Promise<
 			maxFileSize: config.maximumFileSize,
 			uploadDir,
 			filename: (_name, _ext, part) => {
-				return `${part.originalFilename}`;
+				const baseName = part.originalFilename?.replace(/\.[^/.]+$/, '') || 'file';
+				const extension = part.originalFilename?.split('.').pop() || '';
+				let finalName = `${baseName}.${extension}`;
+
+				let counter = 1;
+				const MAX_ATTEMPTS = 10;
+				while (counter <= MAX_ATTEMPTS) {
+					const fullPath = join(uploadDir, finalName);
+					if (fs.existsSync(fullPath)) {
+						const newBaseName = `${baseName} (${counter})`;
+						finalName = `${newBaseName}.${extension}`;
+						counter++;
+					} else {
+						break;
+					}
+				}
+				if (counter > MAX_ATTEMPTS) throw new Error('Too many duplicate file names');
+				return finalName;
 			},
 		});
 
@@ -48,7 +70,7 @@ const parseForm = async (client: Client, req: Request, userId: string): Promise<
 			if (err) {
 				reject(err);
 			} else {
-				client.treeCache.delete(`${user?.id}_${path ? `/${path}` : ''}`);
+				// client.treeCache.delete(`${user?.id}_${path ? `/${path}` : ''}`);
 				resolve({ fields, files });
 			}
 		});
