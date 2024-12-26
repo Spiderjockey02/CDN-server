@@ -17,8 +17,7 @@ export const getFiles = (client: Client) => {
 
 			// Fetch from cache
 			const filePath = req.params.path;
-			const files = client.treeCache.get(`${session.user.id}_${filePath ? `/${filePath}` : ''}`)
-				?? await directoryTree(path.join(PATHS.CONTENT, session.user.id, `${filePath ? `/${filePath}` : ''}`));
+			const files = await client.FileManager.getDirectory(session.user.id, filePath);
 
 			res.json({ files });
 		} catch (err) {
@@ -28,7 +27,7 @@ export const getFiles = (client: Client) => {
 	};
 };
 
-// Endpoint GET /api/files/upload
+// Endpoint POST /api/files/upload
 export const postFileUpload = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
@@ -39,9 +38,8 @@ export const postFileUpload = (client: Client) => {
 			const { files } = await parseForm(client, req, session.user.id);
 			const file = files.media;
 			if (file == undefined) throw 'No files uploaded';
-			const url = file.map((f) => f.filepath);
 
-			return res.json({ success: `File(${Array.isArray(url) ? 's' : ''}) successfully uploaded.` });
+			return res.json({ success: 'File(s) successfully uploaded.' });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to upload file.');
@@ -49,17 +47,18 @@ export const postFileUpload = (client: Client) => {
 	};
 };
 
+// Endpoint DELETE /api/files/delete
 export const deleteFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
 		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
 
 		const { path: filePath } = req.body;
-		const userPath = (req.headers.referer as string).split('/files')[1];
-		const originalPath = userPath.startsWith('/') ? userPath : '/';
+		const userPath = (req.headers.referer)?.split('/files')[1] ?? '';
 
 		try {
-			await trash.addFileToPending(session.user.id, originalPath, filePath);
+			await client.FileManager.delete(session.user.id, userPath);
+			await trash.addFileToPending(session.user.id, userPath, filePath);
 			res.json({ success: 'Successfully deleted item.' });
 		} catch (err) {
 			client.logger.error(err);
@@ -68,14 +67,15 @@ export const deleteFile = (client: Client) => {
 	};
 };
 
-export const moveFile = (client: Client) => {
+// Endpoint POST /api/files/move
+export const postMoveFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
 		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
 		const { newPath, oldPath } = req.body;
 
 		try {
-			await fs.rename(`${PATHS.CONTENT}/${session.user.id}/${newPath}`, `${PATHS.CONTENT}/${session.user.id}/${oldPath}`);
+			await client.FileManager.move(session.user.id, oldPath, newPath);
 			res.json({ success: 'Successfully moved item' });
 		} catch (err) {
 			client.logger.error(err);
@@ -84,7 +84,8 @@ export const moveFile = (client: Client) => {
 	};
 };
 
-export const copyFile = (client: Client) => {
+// Endpoint POST /api/files/copy
+export const postCopyFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
 		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
@@ -100,7 +101,8 @@ export const copyFile = (client: Client) => {
 	};
 };
 
-export const downloadFile = (client: Client) => {
+// Endpoint GET /api/files/download
+export const getDownloadFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
 		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
@@ -118,7 +120,8 @@ export const downloadFile = (client: Client) => {
 	};
 };
 
-export const renameFile = (client: Client) => {
+// Endpoint POST /api/files/rename
+export const postRenameFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
 		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
@@ -137,7 +140,8 @@ export const renameFile = (client: Client) => {
 	};
 };
 
-export const createFolder = (client: Client) => {
+// Endpoint POST /api/files/create-folder
+export const postCreateFolder = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
 		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
@@ -156,17 +160,29 @@ export const createFolder = (client: Client) => {
 			const santisedPath = path.normalize(`${userPath}`).replace(/^[/\\]+/, '');
 			if (santisedPath.length == 0) return Error.GenericError(res, 'Invalid path detected.');
 
-			// Ensure they have not escaped their directory (directory traversal attacks)
-			const userBasePath = path.resolve(PATHS.CONTENT, session.user.id);
-			const targetPath = path.resolve(userBasePath, santisedPath, santisedFolderName);
-			if (!targetPath.startsWith(userBasePath)) return Error.GenericError(res, 'Invalid path detected.');
-
-			// Create folder
-			await fs.mkdir(targetPath);
+			await client.FileManager.createDirectory(session.user.id, santisedPath, santisedFolderName);
 			res.json({ success: 'Successfully created folder.' });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to create folder.');
+		}
+	};
+};
+
+// Endpoint GET /api/files/search
+export const getSearchFile = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const session = await getSession(req);
+			if (!session?.user) return res.json({ error: 'Invalid session' });
+
+			const srch = req.query.search as string;
+			const files = (await directoryTree(`${PATHS.CONTENT}/${session.user.id}`, 100))?.children;
+
+			res.json({ query: search(files, srch).map((i) => ({ ...i, path: i.path.split(`${session.user?.id}`)[1] })) });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to searech for item.');
 		}
 	};
 };
@@ -188,15 +204,3 @@ function search(files: Array<fileItem> | undefined, text: string, arr: Array<src
 
 	return arr;
 }
-
-export const searchFile = () => {
-	return async (req: Request, res: Response) => {
-		const session = await getSession(req);
-		if (!session?.user) return res.json({ error: 'Invalid session' });
-
-		const srch = req.query.search as string;
-		const files = (await directoryTree(`${PATHS.CONTENT}/${session.user.id}`, 100))?.children;
-
-		res.json({ query: search(files, srch).map((i) => ({ ...i, path: i.path.split(`${session.user?.id}`)[1] })) });
-	};
-};
