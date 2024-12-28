@@ -5,6 +5,8 @@ import type { User } from '@/types';
 import axios from 'axios';
 import { useState } from 'react';
 import type { ChangeEvent, MouseEvent } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBell, faSlidersH } from '@fortawesome/free-solid-svg-icons';
 interface Props {
 	user: User
 }
@@ -56,7 +58,7 @@ export default function FileNavBar({ user }: Props) {
 									<div className="input-group-append" id="filter">
 										<div className="dropup-center dropdown">
 											<button className="btn btn-outline-secondary dropdown-toggle" style={{ backgroundColor:'#f4f4f4', borderRadius:'0px 8px 8px 0px', border:'none', color:'#505762', height:'40px' }} type="button" data-bs-toggle="dropdown" aria-expanded="false">
-    										<i className="fas fa-sliders-h"></i>
+												<FontAwesomeIcon icon={faSlidersH} />
 											</button>
 											<div className="dropdown-menu p-4" style={{ width:'100%', padding:'15px', boxShadow: '1px 1px 1px 1px rgba(0,0,0,0.25)' }} >
 												<div className="form-group">
@@ -89,7 +91,7 @@ export default function FileNavBar({ user }: Props) {
 					<li className="nav-item">
 						<div className="dropdown" id="notifications">
 							<button className="btn btn-outline-secondary nav-link position-relative" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-								<i className="fas fa-bell" id="notifIcons"></i>
+								<FontAwesomeIcon icon={faBell} id="notifIcons" />
 								{user.Notifications?.length > 0 && (
 									<span className="position-absolute top-0 start-100 translate-middle badge border border-light rounded-circle bg-danger p-2"><span className="visually-hidden">unread messages</span></span>
 								)}

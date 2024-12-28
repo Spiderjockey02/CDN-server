@@ -1,3 +1,5 @@
+import { faBell } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { signOut, useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,7 +21,7 @@ export default function NavBar() {
 						<>
 							<li className="navbar-nav dropdown">
 								<a className="nav-item text-dark nav-link" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-									<i className="fas fa-bell"></i>
+									<FontAwesomeIcon icon={faBell} />
 								</a>
 								<div className="dropdown-menu dropdown-menu-end">
 									<h3 className="dropdown-header">Notifications</h3>

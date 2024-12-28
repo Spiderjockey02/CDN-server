@@ -1,5 +1,7 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { fileItem } from '../types';
 import mimeType from 'mime-types';
+import { faFile, faFileAlt, faFileImage, faFileVideo, faFolder, faImages, faMusic } from '@fortawesome/free-solid-svg-icons';
 
 export function formatBytes(bytes: number) {
 	if (bytes == 0) return '0 Bytes';
@@ -13,23 +15,23 @@ export function getFileIcon(file: fileItem) {
 	// Check folder stuff
 	if (!file.extension && file.children) {
 		return (file.children.filter(item => ['image', 'video'].includes((mimeType.lookup(item.extension) || '').split('/')[0])).length / file.children.length >= 0.60)
-			? '<i class="far fa-images"></i>' : '<i class="far fa-folder"></i>';
+			? <FontAwesomeIcon icon={faImages} /> : <FontAwesomeIcon icon={faFolder} /> ;
 	}
 
 	// Get the icon from file type
 	const type = mimeType.lookup(file.extension);
-	if (type == false) return '<i class="far fa-file">';
+	if (type == false) return <FontAwesomeIcon icon={faFile} />;
 
 	switch (type.split('/')[0]) {
 		case 'image':
-			return '<i class="far fa-file-image"></i>';
+			return <FontAwesomeIcon icon={faFileImage} />;
 		case 'video':
-			return '<i class="far fa-file-video"></i>';
+			return <FontAwesomeIcon icon={faFileVideo} />;
 		case 'text':
-			return'<i class="far fa-file-alt"></i>';
+			return <FontAwesomeIcon icon={faFileAlt} />;
 		case 'music':
-			return '<i class="fa-solid fa-file-music"></i>';
+			return <FontAwesomeIcon icon={faMusic} />;
 		default:
-			return '<i class="far fa-file">';
+			return <FontAwesomeIcon icon={faFile} />;
 	}
 }

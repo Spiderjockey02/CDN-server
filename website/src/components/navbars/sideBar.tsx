@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { formatBytes } from '@/utils/functions';
 import config from '@/config';
 import type { User } from '@/types';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBars, faClock, faFolder, faStar, faTrash } from '@fortawesome/free-solid-svg-icons';
 interface Props {
 	user: User
 }
@@ -27,7 +29,7 @@ export default function SideBar({ user }: Props) {
 			<ul className="list-unstyled components mobile-btn" style={{ verticalAlign:'center' }}>
 				<li>
 					<a className="btn sidebar-btn" data-bs-toggle="offcanvas" href="#offcanvasExample" role="button" aria-controls="offcanvasExample">
-						<i className="fa-solid fa-bars"></i>
+						<FontAwesomeIcon icon={faBars} />
 					</a>
 				</li>
 			</ul>
@@ -42,19 +44,19 @@ export default function SideBar({ user }: Props) {
 					<ul className="list-unstyled components">
 						<li>
 							<Link href="/files" className='btn sidebar-btn'>
-								<i className="fas fa-folder" data-bs-toggle="tooltip" data-bs-placement="right" title="All files"></i>
+								<FontAwesomeIcon icon={faFolder} data-bs-toggle="tooltip" data-bs-placement="right" title="All files" />
 								<span> All files</span>
 							</Link>
 						</li>
 						<li>
 							<Link href="/recent" className='btn sidebar-btn'>
-								<i className="fas fa-clock" data-bs-toggle="tooltip" data-bs-placement="right" title="Recents"></i>
+								<FontAwesomeIcon icon={faClock} data-bs-toggle="tooltip" data-bs-placement="right" title="Recents" />
 								<span> Recents</span>
 							</Link>
 						</li>
 						<li>
 							<Link href="/favourites" className='btn sidebar-btn'>
-								<i className="fas fa-star" data-toggle="tooltip" data-placement="right" title="Favourites"></i>
+								<FontAwesomeIcon icon={faStar} data-toggle="tooltip" data-placement="right" title="Favourites" />
 								<span> Favourites</span>
 							</Link>
 						</li>
@@ -66,7 +68,7 @@ export default function SideBar({ user }: Props) {
 								</div>
 							</div>
 							<Link href="/trash" className='btn sidebar-btn' style={{ marginTop: '0.5rem' }}>
-								<i className="fas fa-trash"></i>
+								<FontAwesomeIcon icon={faTrash} />
 								<span> Bin</span>
 							</Link>
 						</li>
@@ -76,19 +78,19 @@ export default function SideBar({ user }: Props) {
 			<ul className="list-unstyled components">
 				<li>
 					<Link href="/files" className='btn sidebar-btn'>
-						<i className="fas fa-folder" data-bs-toggle="tooltip" data-bs-placement="right" title="All files"></i>
+						<FontAwesomeIcon icon={faFolder} data-bs-toggle="tooltip" data-bs-placement="right" title="All files" />
 						<span className="side-text"> All files</span>
 					</Link>
 				</li>
 				<li>
 					<Link href="/recent" className='btn sidebar-btn'>
-						<i className="fas fa-clock" data-bs-toggle="tooltip" data-bs-placement="right" title="Recents"></i>
+						<FontAwesomeIcon icon={faClock} data-bs-toggle="tooltip" data-bs-placement="right" title="Recents" />
 						<span className="side-text"> Recents</span>
 					</Link>
 				</li>
 				<li>
 					<Link href="/favourites" className='btn sidebar-btn'>
-						<i className="fas fa-star" data-toggle="tooltip" data-placement="right" title="Favourites"></i>
+						<FontAwesomeIcon icon={faStar} data-toggle="tooltip" data-placement="right" title="Favourites" />
 						<span className="side-text"> Favourites</span>
 					</Link>
 				</li>
@@ -100,7 +102,7 @@ export default function SideBar({ user }: Props) {
 						</div>
 					</div>
 					<Link href="/trash" className='btn sidebar-btn' style={{ marginTop: '0.5rem' }}>
-						<i className="fas fa-trash"></i>
+						<FontAwesomeIcon icon={faTrash} />
 						<span className="side-text"> Bin</span>
 					</Link>
 				</li>

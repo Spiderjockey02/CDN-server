@@ -5,6 +5,8 @@ import { useRouter } from 'next/router';
 import { useState, type MouseEvent } from 'react';
 import path from 'path';
 import Image from 'next/image';
+import { faShareAlt } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 interface Props {
   file: fileItem
@@ -34,7 +36,7 @@ export default function FileItemRow({ dir, userId, file, isChecked, openContextM
 						<input className="form-check-input" type="checkbox" name="exampleRadios" id={encodeURI(file.name)} checked={isChecked} />
 					</div>
 				</th>
-				<th id="Type" scope="col" style={{ textAlign:'center' }} dangerouslySetInnerHTML={{ __html: getFileIcon(file) }}></th>
+				<th id="Type" scope="col" style={{ textAlign:'center' }}>{getFileIcon(file)}</th>
 				<th scope="row" className="text-truncate" style={{ maxWidth: 'calc( 70 * 1vw )' }}>
 					<Link onClick={handleTextClick} style={{ textDecoration: 'none', color: 'black' }} href="#">{file.name}</Link>
 				</th>
@@ -47,13 +49,15 @@ export default function FileItemRow({ dir, userId, file, isChecked, openContextM
 					<button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close" onClick={() => setShow(false)}></button>
 				</div>
 				<div className="offcanvas-body">
-					<Image src={file.name} alt={file.name} style={{ maxWidth: '100%' }} width={300} height={600} loader={imageLoader} loading='lazy' />
-					<br />
-					{file.name}
-					<br />
-					{new Date(file.modified).toLocaleString('en-US')}
-					<br />
-					{file.type == 'file' ? formatBytes(file.size) : file.children?.length ?? 0} file{file.children?.length !== 1 ? 's' : ''}
+					<div className='container justify-content-center text-center'>
+						<span onClick={handleRowClick} style={{ cursor: 'pointer' }}>
+							<Image src={file.name} alt={file.name} style={{ maxWidth: '100%', height: 'auto' }} width={300} height={600} loader={imageLoader} loading='lazy' />
+							<br />
+							<h4>{file.name}</h4>
+						</span>
+						<p>Created on: {new Date(file.modified).toLocaleString('en-US')}</p>
+						<p>{file.type == 'file' ? `Size: ${formatBytes(file.size)}` : file.children?.length ?? 0} file{file.children?.length !== 1 ? 's' : ''}</p>
+					</div>
 				</div>
 			</div>
 		</>
