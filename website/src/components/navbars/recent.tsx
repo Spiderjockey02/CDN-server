@@ -1,11 +1,11 @@
 import Image from 'next/image';
-import type { User } from '../../types/next-auth';
+import type { User } from '@/types';
 import Link from 'next/link';
 interface Props {
 	user: User
 }
 
-export default function Recent({ user }: Props) {
+export default function RecentNavbar({ user }: Props) {
 	return (
 		<div className="recent-tab">
 			<a type="button" data-bs-toggle="collapse" data-bs-target="#recentCollapse" aria-expanded="true" aria-controls="collapseExample">
@@ -16,7 +16,7 @@ export default function Recent({ user }: Props) {
 			</a>
 			<div className="collapse show" id="recentCollapse">
 				<div className="row h-100" style={{ overflowY: 'hidden', maxHeight: '285px' }}>
-					{user.recentFiles.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(f => (
+					{user.recentFiles?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(f => (
 						<Link href={`/files/${f.location}`} key={f.location} className="col" style={{ maxWidth:'150px', padding:'10px' }}>
 							<div className="card recentIcon">
 								<div className="image-container" style={{ minHeight: '210px' }}>

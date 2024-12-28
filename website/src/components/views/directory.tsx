@@ -1,8 +1,8 @@
-import type { fileItem } from '../utils/types';
+import type { fileItem } from '../../types';
 import { useState } from 'react';
-import ContextMenu from '../components/menus/contextMenu';
+import ContextMenu from '../menus/contextMenu';
 import type { MouseEvent } from 'react';
-import FileItemRow from './views/FileItemRow';
+import FileItemRow from './FileItemRow';
 type sortKeyTypes = 'Name' | 'Size' | 'Date_Mod';
 type SortOrder = 'ascn' | 'dscn';
 interface Props {

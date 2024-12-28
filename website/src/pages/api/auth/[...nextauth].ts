@@ -2,7 +2,7 @@ import NextAuth from 'next-auth';
 import TwitterProvider from 'next-auth/providers/twitter';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import config from '../../../config';
+import config from '@/config';
 import type { AuthOptions } from 'next-auth';
 import { encode } from 'next-auth/jwt';
 import axios from 'axios';

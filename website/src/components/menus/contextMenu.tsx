@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
-import { useOnClickOutside } from '../../utils/useOnClickOutisde';
+import { useOnClickOutside } from '@/utils/useOnClickOutisde';
 import type { BaseSyntheticEvent } from 'react';
 import Modal from '../UI/Modal';
 import axios from 'axios';
-import { fileItem } from '@/utils/types';
+import { fileItem } from '@/types';
 interface Props {
 	x: number
 	y: number

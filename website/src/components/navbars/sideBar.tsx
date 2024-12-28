@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { formatBytes } from '../../utils/functions';
-import config from '../../config';
-import type { User } from '../../types/next-auth';
+import { formatBytes } from '@/utils/functions';
+import config from '@/config';
+import type { User } from '@/types';
 interface Props {
 	user: User
 }
@@ -33,7 +33,9 @@ export default function SideBar({ user }: Props) {
 			</ul>
 			<div className="offcanvas offcanvas-start" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel" style={{ maxWidth: '75%' }}>
 				<div className="offcanvas-header">
-					<h5 className="offcanvas-title" id="offcanvasExampleLabel">{config.company.name}</h5>
+					<Link href="/" className="sidebar-header">
+						<h5>{config.company.name}</h5>
+					</Link>
 					<button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
 				</div>
 				<div className="offcanvas-body">

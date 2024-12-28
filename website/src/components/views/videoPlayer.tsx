@@ -1,11 +1,11 @@
-import type { User } from '../../types/next-auth';
+import type { User } from '@/types';
 import { useRef } from 'react';
 interface Props {
   dir: string
   user: User
 }
 
-export default function DisplayFile({ dir, user }: Props) {
+export default function VideoPlayer({ dir, user }: Props) {
 	const video = useRef<HTMLVideoElement>(null);
 	const videoContainer = useRef<HTMLDivElement>(null);
 	const duration = useRef<HTMLTimeElement>(null);

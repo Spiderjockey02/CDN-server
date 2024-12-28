@@ -1,8 +1,5 @@
 import { useSession } from 'next-auth/react';
-import NavBar from '../components/navbars/home-navbar';
-import ErrorPopup from '../components/menus/Error-pop';
-import SuccessPopup from '../components/menus/Success-pop';
-import Footer from '../components/footer';
+import { HomeNavbar, ErrorPopup, SuccessPopup, Footer } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
 import { useState } from 'react';
 import axios from 'axios';
@@ -94,7 +91,7 @@ export default function Settings() {
 	};
 	return (
 		<>
-			<NavBar />
+			<HomeNavbar />
 			<section className="vh-50" style={{ 'backgroundColor': '#eee' }}>
 				<div className="container h-100">
 					<div className="row d-flex justify-content-center align-items-center h-100">

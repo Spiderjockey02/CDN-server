@@ -5,29 +5,25 @@ const nextConfig = {
 	reactStrictMode: true,
 	webpack: (config) => {
 		config.resolve.fallback = { fs: false };
-
 		return config;
-	},
-	images: {
-	 domains: ['mdbcdn.b-cdn.net'],
 	},
 	rewrites: async () => {
 		return [
 		 {
 				source: '/avatar/:userId*',
-				destination: 'http://localhost:9816/avatar/:userId*',
+				destination: `${process.env.BACKEND_URL}/avatar/:userId*`,
 		 },
 		 {
 				source: '/thumbnail/:userId/:path*',
-				destination: 'http://localhost:9816/thumbnail/:userId/:path*',
+				destination: `${process.env.BACKEND_URL}/thumbnail/:userId/:path*`,
 		 },
 		 {
 				source: '/content/:userId/:path*',
-				destination: 'http://localhost:9816/content/:userId/:path*',
+				destination: `${process.env.BACKEND_URL}/content/:userId/:path*`,
 		 },
 		 {
 				source: '/api/:path((?!auth).*)',
-				destination: 'http://localhost:9816/api/:path*',
+				destination: `${process.env.BACKEND_URL}/api/:path*`,
 		 },
 	 ];
 	},

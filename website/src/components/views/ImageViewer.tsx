@@ -1,12 +1,9 @@
-import type { fileItem } from '../../utils/types';
-import VideoPlayer from './videoPlayer';
 import MimeType from 'mime-types';
 import Image from 'next/image';
-import type { User } from '../../types/next-auth';
+import type { User, fileItem } from '@/types';
 import axios from 'axios';
 import { useState } from 'react';
-import SuccessPopup from '../menus/Success-pop';
-import ErrorPopup from '../menus/Error-pop';
+import { SuccessPopup, ErrorPopup, VideoPlayer } from '@/components';
 
 interface Geo {
   name: string
@@ -38,7 +35,7 @@ interface Props {
 }
 
 
-export default function DisplayFile({ files, dir, user, analysed }: Props) {
+export default function ImageViewer({ files, dir, user, analysed }: Props) {
 	const nsfw: Array<NSFW> = JSON.parse(analysed?.nsfw ?? '{}');
 	const objects: Array<Objects> = JSON.parse(analysed?.objects ?? '{}');
 	const geo: Array<Geo> = JSON.parse(analysed?.geo ?? '{}');

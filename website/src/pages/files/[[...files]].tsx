@@ -1,11 +1,5 @@
-import FileNavBar from '../../components/navbars/file-navBar';
-import SideBar from '../../components/navbars/sideBar';
-import Directory from '../../components/directory';
-import PhotoAlbum from '../../components/photoAlbum';
-import ImageViewer from '../../components/views/ImageViewer';
-import RecentTab from '../../components/navbars/recent';
-import Toast from '../../components/menus/Toast';
-import type { fileItem } from '../../utils/types';
+import { FileNavBar, Sidebar, Directory, PhotoAlbum, ImageViewer, RecentNavbar, Toast } from '@/components';
+import type { fileItem } from '../../types';
 import type { GetServerSidePropsContext } from 'next';
 import { ChangeEvent, useState } from 'react';
 import { useSession } from 'next-auth/react';
@@ -97,13 +91,13 @@ export default function Files({ dir, path = '/', analysed }: Props) {
 		<>
 			<Toast percentage={progress} filename={filename} show={progress > 0}/>
 			<div className="wrapper" style={{ height:'100vh' }}>
-				<SideBar user={session.user}/>
+				<Sidebar user={session.user}/>
 				<div className="container-fluid" style={{ overflowY: 'scroll' }}>
 					<FileNavBar user={session.user} />
 					<div className="container-fluid">
 						<BreadcrumbNav path={path} isFile={dir?.type == 'file'} setviewType={setviewType} onUpload={onFileUploadChange} />
 						{(path.length <= 1 && session.user.recentFiles?.length >= 1) &&
-						<RecentTab user={session.user}/>
+						<RecentNavbar user={session.user}/>
 						}
 						{dir == null ?
 							<p>This folder is empty</p>

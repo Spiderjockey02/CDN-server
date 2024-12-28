@@ -1,7 +1,6 @@
-import FileNavBar from '../components/navbars/file-navBar';
-import SideBar from '../components/navbars/sideBar';
+import { FileNavBar, Sidebar } from '@/components';
 import { useSession } from 'next-auth/react';
-import type { RecentFiles } from '../types/next-auth';
+import type { RecentFiles } from '@/types';
 import Link from 'next/link';
 
 export default function Recent() {
@@ -12,7 +11,7 @@ export default function Recent() {
 	return (
 		<>
 			<div className="wrapper" style={{ height:'100vh' }}>
-				<SideBar user={session.user}/>
+				<Sidebar user={session.user}/>
 				<div className="container-fluid" style={{ overflowY: 'scroll' }}>
 					<FileNavBar user={session.user}/>
 					<div className="container-fluid">

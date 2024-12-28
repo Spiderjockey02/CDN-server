@@ -1,9 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
-import type { User } from '../../types/next-auth';
+import type { User } from '@/types';
 import axios from 'axios';
-import config from 'src/config';
 import { useState } from 'react';
 import type { ChangeEvent, MouseEvent } from 'react';
 interface Props {
@@ -88,22 +87,22 @@ export default function FileNavBar({ user }: Props) {
 				</ul>
 				<ul className="navbar-nav ml-auto">
 					<li className="nav-item">
-						<div className="dropdown mr-1" id="notifications">
+						<div className="dropdown" id="notifications">
 							<button className="btn btn-outline-secondary nav-link position-relative" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-								Alerts <i className="fas fa-bell" id="notifIcons"></i>
-								{user.Notifications.length > 0 && (
+								<i className="fas fa-bell" id="notifIcons"></i>
+								{user.Notifications?.length > 0 && (
 									<span className="position-absolute top-0 start-100 translate-middle badge border border-light rounded-circle bg-danger p-2"><span className="visually-hidden">unread messages</span></span>
 								)}
 							</button>
 							<div className="dropdown-menu dropdown-menu-end p-1 text-muted" style={{ width: '300px', overflowY: 'scroll', maxHeight: '300px' }}>
-								<h3 className="dropdown-header" style={{ fontSize: '18px' }}>Notifications - {user.Notifications.length}</h3>
-								{user.Notifications.map(_ => (
+								<h3 className="dropdown-header" style={{ fontSize: '18px' }}>Notifications - {user.Notifications?.length}</h3>
+								{user.Notifications?.map(_ => (
 									<div className="alert alert-primary alert-dismissible fade show" role="alert" key={_.id} style={{ padding: '13px' }}>
 										<span style={{ fontSize: '15px' }}>{_.text} <a href="/resend">[Resend Email]</a></span>
 										<button type="button" className="btn-close" aria-label="Close" onClick={(e)=> deleteNotification(e, _.id)}></button>
 									</div>
 								))}
-								{user.Notifications.length == 0 && (
+								{user.Notifications?.length == 0 && (
 									<p className="mb-0">You currently have no notifications.</p>
 								)}
 							</div>

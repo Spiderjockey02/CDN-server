@@ -1,9 +1,10 @@
 import { getFileIcon, formatBytes } from '@/utils/functions';
-import { fileItem } from '@/utils/types';
+import { fileItem } from '@/types';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState, type MouseEvent } from 'react';
 import path from 'path';
+import Image from 'next/image';
 
 interface Props {
   file: fileItem
@@ -23,6 +24,8 @@ export default function FileItemRow({ dir, userId, file, isChecked, openContextM
 		e.stopPropagation();
 		setShow(true);
 	};
+
+	const imageLoader = () => path.join('/thumbnail', userId, dir, encodeURI(file.name));
 	return (
 		<>
 			<tr key={file.name} style={{ cursor: 'pointer' }} onContextMenu={(e) => openContextMenu(e, file)} onClick={handleRowClick}>
@@ -44,7 +47,7 @@ export default function FileItemRow({ dir, userId, file, isChecked, openContextM
 					<button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close" onClick={() => setShow(false)}></button>
 				</div>
 				<div className="offcanvas-body">
-					<img src={`/thumbnail/${userId}/${dir}/${file.name}`} alt={file.name} style={{ maxWidth: '100%' }} />
+					<Image src={file.name} alt={file.name} style={{ maxWidth: '100%' }} width={300} height={600} loader={imageLoader} loading='lazy' />
 					<br />
 					{file.name}
 					<br />
