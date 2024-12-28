@@ -1,17 +1,19 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useOnClickOutside } from '../../utils/useOnClickOutisde';
 import type { BaseSyntheticEvent } from 'react';
-import { useRouter } from 'next/router';
+import Modal from '../UI/Modal';
+import axios from 'axios';
+import { fileItem } from '@/utils/types';
 interface Props {
 	x: number
 	y: number
-	selected: string
+	selected: fileItem
 	closeContextMenu: () => void
 }
 
 export default function ContextMenu({ x, y, closeContextMenu, selected }: Props) {
 	const contextMenuRef = useRef<HTMLDivElement>(null);
-	const router = useRouter();
+	const [rename, setRename] = useState(selected.name);
 
 	useOnClickOutside(contextMenuRef, closeContextMenu);
 	function closeModal(id: string) {
@@ -20,33 +22,31 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 		document.getElementById(id)?.setAttribute('style', 'display: none');
 		document.body.removeChild(document.getElementsByClassName('modal-backdrop')[0] as Node);
 		closeContextMenu();
-		router.reload();
 	}
 
-	const handleRenameSubmit = async (event: BaseSyntheticEvent) => {
-		event.preventDefault();
-		const oldPath = (document.getElementById('oldPath') as HTMLInputElement).value;
-		const newPath = (document.getElementById('renameInput') as HTMLInputElement).value;
+	const handleRenameSubmit = async (e: BaseSyntheticEvent) => {
+		const oldName = selected.name;
+		e.preventDefault();
 
-		await fetch('/api/files/rename', {
-			method: 'post',
-			headers: {
-				'content-type': 'application/json;charset=UTF-8',
-			},
-			body: JSON.stringify({ oldPath, newPath }),
-		});
+		try {
+			await axios.post('/api/files/rename', { oldName, newName: selected.type == 'file' ? `${rename}${selected.extension}` : rename });
+		} catch (err) {
+			console.log(err);
+		}
+
 		closeModal('renameModel');
 	};
 
-	const handleDeleteSubmit = async (event: BaseSyntheticEvent) => {
-		event.preventDefault();
-		await fetch('/api/files/delete', {
-			method: 'post',
-			headers: {
-				'content-type': 'application/json;charset=UTF-8',
-			},
-			body: JSON.stringify({ path: selected }),
-		});
+	const handleDeleteSubmit = async (e: BaseSyntheticEvent) => {
+		e.preventDefault();
+
+		try {
+			await axios.delete('/api/files/delete', {
+				data: { fileName: selected },
+			});
+		} catch (err) {
+			console.log(err);
+		}
 		closeModal('deleteModel');
 	};
 
@@ -56,7 +56,9 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 				<button className="btn btn-ctx-menu">
 					<i className="fas fa-share-alt"></i> Share
 				</button>
-				<button className="btn btn-ctx-menu" data-toggle="modal" data-target="#copyURLModel"><i className="fas fa-copy"></i> Copy link</button>
+				<button className="btn btn-ctx-menu" data-toggle="modal" data-target="#copyURLModel">
+					<i className="fas fa-copy"></i> Copy link
+				</button>
 				<button className="btn btn-ctx-menu">
 					<i className="fas fa-download"></i> Download
 				</button>
@@ -68,48 +70,30 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 				<button className="btn btn-ctx-menu"><i className="fas fa-ellipsis-v"></i> Details</button>
 			</div>
 
-			<div className="modal fade" id="deleteModel" aria-labelledby="exampleModalLabel" aria-hidden="true">
-				<div className="modal-dialog modal-dialog-centered">
-					<div className="modal-content">
-						<div className="modal-header">
-							<h5 className="modal-title" id="DeleteTitle">Delete {selected}?</h5>
-							<button type="button" className="close" data-bs-dismiss="modal" aria-label="Close">
-								<span aria-hidden="true">&times;</span>
-							</button>
-						</div>
-						<div className="modal-body">
-        			Are you sure you want to send this item to the recycle bin?
-						</div>
-						<div className="modal-footer">
-							<form onSubmit={handleDeleteSubmit} method="post">
-								<button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-								<button className="btn btn-primary" type="submit" id="imagefile">Delete</button>
-							</form>
-						</div>
-					</div>
-				</div>
-			</div>
+			<Modal
+				id="deleteModel"
+				title={`Delete ${selected.name}?`}
+				description="Are you sure you want to send this item to the recycle bin?" onSubmit={handleDeleteSubmit}
+			/>
 
 			<div className="modal fade" id="renameModel" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
 		    <div className="modal-dialog modal-dialog-centered" role="document">
 		      <div className="modal-content">
 		        <div className="modal-header">
-		          <h5 className="modal-title" id="exampleModalLongTitle">Rename {selected}</h5>
-		          <button type="button" className="close" data-bs-dismiss="modal" aria-label="Close">
-		            <span aria-hidden="true">&times;</span>
-		          </button>
+		          <h5 className="modal-title" id="exampleModalLongTitle">Rename {selected.name}</h5>
+		          <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 		        </div>
 		        <form onSubmit={handleRenameSubmit} method="post">
 							<div className="modal-body">
-								<input type="hidden" id="oldPath" name="oldPath" value={selected} />
+								<input type="hidden" id="oldPath" name="oldPath" value={selected.name} />
 								<div className="input-group mb-3">
-		              <input className="form-control" id="renameInput" type="text" name="newPath" placeholder={selected} />
-		              <span className="input-group-text" id="renameSuffix">.{selected.split('.').splice(-1)}</span>
+		              <input className="form-control" id="renameInput" type="text" name="newPath" defaultValue={selected.name.replace(selected.extension, '')} onChange={(e) => setRename(e.target.value)} />
+		              <span className="input-group-text" id="renameSuffix">{selected.extension}</span>
 		            </div>
 							</div>
 							<div className="modal-footer">
 		            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-		            <button type="submit" className="btn btn-primary">Save changes</button>
+		            <button type="submit" className="btn btn-primary">Save</button>
 		          </div>
 		        </form>
 		    	</div>
@@ -120,10 +104,8 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 				<div className="modal-dialog modal-dialog-centered" role="document">
 					<div className="modal-content">
 						<div className="modal-header">
-							<h5 className="modal-title" id="exampleModalLongTitle">Move or Copy {selected}</h5>
-							<button type="button" className="close" data-bs-dismiss="modal" aria-label="Close">
-								<span aria-hidden="true">&times;</span>
-							</button>
+							<h5 className="modal-title" id="exampleModalLongTitle">Move or Copy {selected.name}</h5>
+							<button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 						</div>
 						<form action="/files/change" method="post">
 							<div className="modal-body w-100">

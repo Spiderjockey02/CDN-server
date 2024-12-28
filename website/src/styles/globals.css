@@ -772,12 +772,12 @@ section {
   max-width: 170px;
 }
 .btn-ctx-menu {
-  text-align: justify;
+  text-align: start !important;
 	background: white;
   width: 100%;
 }
 .btn-ctx-menu:hover {
-  background-color: black;
+  background-color: grey !important;
   cursor: pointer;
 }
 
