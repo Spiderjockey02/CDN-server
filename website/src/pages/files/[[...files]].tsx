@@ -9,11 +9,11 @@ import type { fileItem } from '../../utils/types';
 import type { GetServerSidePropsContext } from 'next';
 import { ChangeEvent, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import Link from 'next/link';
 import { getServerSession } from 'next-auth/next';
 import { AuthOption } from '../api/auth/[...nextauth]';
 import axios, { AxiosRequestConfig } from 'axios';
 import { useRouter } from 'next/router';
+import BreadcrumbNav from '@/components/navbars/BreadcrumbNav';
 interface Props {
 	dir: fileItem | null
 	path: string
@@ -33,7 +33,7 @@ export default function Files({ dir, path = '/', analysed }: Props) {
 	const router = useRouter();
 
 	const [progress, setProgress] = useState(0);
-	const [remaining, setRemaining] = useState(0);
+	const [, setRemaining] = useState(0);
 	const [filename, setFilename] = useState('');
 	const [viewType, setviewType] = useState<viewTypeTypes>('List');
 
@@ -81,8 +81,7 @@ export default function Files({ dir, path = '/', analysed }: Props) {
 				},
 			};
 
-			const t = await axios.post('/api/files/upload', formData, options);
-			console.log('t', t);
+			await axios.post('/api/files/upload', formData, options);
 			router.reload();
 			setProgress(0);
 			setRemaining(0);
@@ -100,70 +99,18 @@ export default function Files({ dir, path = '/', analysed }: Props) {
 			<div className="wrapper" style={{ height:'100vh' }}>
 				<SideBar user={session.user}/>
 				<div className="container-fluid" style={{ overflowY: 'scroll' }}>
-					<FileNavBar user={session.user}/>
+					<FileNavBar user={session.user} />
 					<div className="container-fluid">
-						<div className="row">
-							<div className="col-md-10">
-								<nav style={{ fontSize:'18.72px' }} aria-label="breadcrumb">
-					        <ol className="breadcrumb" style={{ backgroundColor:'white' }}>
-					          <li className="breadcrumb-item">
-											{(path.length <= 1) ?
-												<b style={{ color:'black' }}>Home</b>
-												: <b>
-													<Link className="directoyLink" href={'/files'} style={{ color:'grey' }}>Home</Link>
-												</b>
-											}
-					          </li>
-										{path.split('/').length >= 1 ?
-										 path.split('/').map(name => (
-											 <li className="breadcrumb-item" key={name}>
-											 {(name !== path.split('/').pop() ?
-											  	<b>
-															<Link className="directoyLink" href={`/files/${path.split('/').slice(0, path.split('/').indexOf(name) + 1).join('/')}`} style={{ color:'grey' }}>{name}</Link>
-														</b>
-														: <b className="d-inline-block text-truncate" style={{ color:'black', maxWidth:'100vw' }}>{name}</b>
-										 		)}
-											 </li>
-											)) : <> </>}
-					        </ol>
-	      				</nav>
-							</div>
-							<div className="col-md-2">
-								{(dir?.children?.length ?? 0) >= 1 &&
-									<div className="btn-group" role="group" style={{ float: 'right' }}>
-										<button type="button" className="btn btn-outline-secondary" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-offset="0,10">New <i className="fas fa-plus"></i></button>
-										<div className="dropdown-menu dropdown-menu-right">
-											<label className="dropdown-item" id="fileHover">
-												File upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onFileUploadChange} multiple/>
-											</label>
-											<input type="hidden" value="test" name="path" />
-											<label className="dropdown-item" id="fileHover">
-												Folder upload<input type="file" hidden name="sampleFile" className="upload-input" />
-											</label>
-											<div className="dropdown-divider"></div>
-											<a className="dropdown-item" href="#">Create folder</a>
-											<button type="submit" style={{ display:'none' }} id="imagefile"></button>
-										</div>
-										<button className="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-    										Change view
-										</button>
-										<ul className="dropdown-menu">
-											<li><a onClick={() => setviewType('Tiles')} className="dropdown-item" href="#">Tiles</a></li>
-											<li><a onClick={() => setviewType('List')} className="dropdown-item" href="#">List</a></li>
-										</ul>
-									</div>
-								}
-							</div>
-						</div>
-						{(path.length <= 1 && session.user.recentFiles.length >= 1) &&
+						<BreadcrumbNav path={path} isFile={dir?.type == 'file'} setviewType={setviewType} onUpload={onFileUploadChange} />
+						{(path.length <= 1 && session.user.recentFiles?.length >= 1) &&
 						<RecentTab user={session.user}/>
 						}
 						{dir == null ?
 							<p>This folder is empty</p>
-							: (dir.children?.length >= 1) ?
+							: (dir.type == 'directory') ?
 								viewType == 'Tiles' ?
 									<PhotoAlbum files={dir.children} dir={path} user={session.user} /> :
-									<Directory files={dir} dir={path} />
+									<Directory files={dir} dir={path} userId={session.user.id} />
 								: <ImageViewer files={dir} dir={path} user={session.user} analysed={analysed}/>
 						}
 					</div>
@@ -184,14 +131,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			headers: { cookie: context.req.headers.cookie },
 		});
 
-		if (data.files.children !== undefined) {
-			return { props: { dir: data.files, path: path.join('/') } };
-		} else {
-			const { data: analysed } = await axios.get(`${process.env.NEXTAUTH_URL}/api/anaylse-fetch?userId=${session.user.id}&path=${path.join('/')}`, {
-				headers: { cookie: context.req.headers.cookie },
-			});
-			return { props: { dir: data.files, path: path.join('/'), analysed } };
-		}
+		return { props: { dir: data.files, path: path.join('/') } };
 	} catch (err) {
 		return { props: { dir: null, path: '/' } };
 	}
