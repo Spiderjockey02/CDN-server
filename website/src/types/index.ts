@@ -4,36 +4,38 @@ export interface Notification {
   createdAt: Date
 }
 
-export interface RecentFiles {
+export interface RecentlyViewed {
   id: string
-  location: string
-  createdAt: string
+  userId: string
+  fileId: string
+  viewedAt: Date
+  file: fileItem
 }
+
 
 export interface User {
   id: string
   name: string
   email: string
   createdAt: Date
-  recentFiles: RecentFiles[]
   group: {
     id: string
     name: string
     maxStorageSize: number
   }
-  Notifications: Notification[]
+  notifications: Notification[]
+  recentlyViewed: RecentlyViewed[]
   totalStorageSize: number
 }
 
 
-export type fileType = 'file' | 'directory'
+export type fileType = 'FILE' | 'DIRECTORY'
 export type fileItem = {
   path: string
   name: string
+  children: fileItem[]
+  modified: number
   size: number
   extension: string
   type: fileType
-  modified: number
-  children: fileItem[]
-  url: string
 }

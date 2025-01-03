@@ -3,10 +3,10 @@ import fs from 'fs';
 import { lookup } from 'mime-types';
 import { spawn } from 'child_process';
 import { createThumbnail } from '../utils/functions';
-import { updateUserRecentFiles } from '../accessors/Recent';
 import { PATHS, Error } from '../utils';
 import { getSession } from '../middleware';
 import { Client } from 'src/helpers';
+import { Prisma } from '@prisma/client';
 
 // Endpoint GET /avatar/:userId?
 export const getAvatar = () => {
@@ -84,15 +84,24 @@ export const getContent = (client: Client) => {
 		const userId = req.params.userid as string;
 		const path = req.params.path as string;
 
+		// Fetch file from database
+		const file = await client.FileManager.getByUserId(userId, path);
+		if (!file) return Error.MissingResource(res, 'File not found');
+
+		// Update the user's recently viewed file history
+		try {
+			await client.recentlyViewedFileManager.create({ userId, fileId: file.id });
+		} catch (error) {
+			// If the user has already viewed the file just update the viewedAt value
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2002') await client.recentlyViewedFileManager.update({ userId, fileId: file.id });
+			} else {
+				client.logger.error(error);
+			}
+		}
+
 		const fileType = lookup(path);
 		if (fileType == false) return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
-
-		// update the user's recent access files
-		try {
-			await updateUserRecentFiles({ userId, path });
-		} catch (err) {
-			client.logger.error(err);
-		}
 
 		// Check what type of file it is, to send the relevent data
 		switch(fileType.split('/')[0]) {

@@ -96,7 +96,7 @@ export default function Files({ dir, path = '/', analysed }: Props) {
 					<FileNavBar user={session.user} />
 					<div className="container-fluid">
 						<BreadcrumbNav path={path} isFile={dir?.type == 'file'} setviewType={setviewType} onUpload={onFileUploadChange} />
-						{(path.length <= 1 && session.user.recentFiles?.length >= 1) &&
+						{(path.length <= 1 && session.user.recentlyViewed?.length >= 1) &&
 						<RecentNavbar user={session.user}/>
 						}
 						{dir == null ?
