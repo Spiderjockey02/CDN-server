@@ -7,56 +7,19 @@ generator client {
   provider        = "prisma-client-js"
 }
 
-model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
 model User {
   id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
   emailVerified DateTime?
   password      String
-  accounts      Account[]
   createdAt     DateTime      @default(now()) @map("created_at")
-  sessions      Session[]
-  recentFiles   Recent[]
-  deleteFiles   DeleteFile[]
-  Notifications Notification[]
+  notifications Notification[]
+  recentlyViewed RecentlyViewedFile[]
+  files         File[]
   groupId       String?
   group         Group?  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   totalStorageSize  BigInt  @default(0)
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Recent {
-  id            String     @id   @default(cuid())
-  userId        String
-  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  location      String
-  createdAt     DateTime   @default(now()) @map("created_at")
-  @@unique([userId, location])
 }
 
 model Group {
@@ -66,18 +29,41 @@ model Group {
   maxStorageSize  BigInt       @default(5368709120)
 }
 
-model DeleteFile {
-  id            String    @id     @default(cuid())
-  userId        String
-  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  location      String
-  DeleteFileAt  DateTime
-}
-
 model Notification {
   id          String    @id             @default(cuid())
   createdAt   DateTime  @default(now())
   text        String
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum FileType {
+  FILE
+  DIRECTORY
+}
+
+model File {
+  id          String    @id @default(cuid())
+  path        String
+  name        String
+  size        BigInt
+  type        FileType  @default(FILE)    
+  modified    DateTime  @default(now())
+  children    File[]    @relation("FileToParent")
+  parent      File?     @relation("FileToParent", fields: [parentId], references: [id])
+  parentId    String?   
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  recentlyViewedBy  RecentlyViewedFile[]
+}
+
+model RecentlyViewedFile {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  file        File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  fileId      String
+  viewedAt    DateTime @default(now())
+
+  @@unique([fileId, userId])
 }
