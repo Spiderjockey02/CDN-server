@@ -67,10 +67,26 @@ const parseForm = async (client: Client, req: Request, userId: string): Promise<
 			const size: number = files.media?.reduce((a, b) => a + b.size, 0) ?? 0;
 			await client.userManager.update({ id: userId, totalStorageSize: (user?.totalStorageSize ?? 0n) + BigInt(size) });
 
+			// Update the database
+			for (const file of files.media ?? []) {
+				// Fetch the parent directory (folder that file is being uploaded to)
+				const dir = await client.FileManager.getByFilePath(userId, path);
+				if (dir == null) return reject('Missing parent directory');
+
+				// Add the new file to the parent's directory
+				await client.FileManager.update({ id: dir.id,
+					children: {
+						userId,
+						name: `${file.newFilename}`,
+						path: `${path}${file.newFilename}`,
+						size: BigInt(file.size),
+					},
+				});
+			}
+
 			if (err) {
 				reject(err);
 			} else {
-				// client.treeCache.delete(`${user?.id}_${path ? `/${path}` : ''}`);
 				resolve({ fields, files });
 			}
 		});

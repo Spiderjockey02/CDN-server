@@ -1,3 +1,5 @@
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import axios from 'axios';
 import Link from 'next/link';
 import { BaseSyntheticEvent, ChangeEvent, useState } from 'react';
@@ -7,11 +9,19 @@ interface Props {
   isFile: boolean
 	setviewType: (viewType: 'List' | 'Tiles') => void
 	onUpload: (e: ChangeEvent<HTMLInputElement>) => Promise<void>
+	fetchFiles: () => Promise<void>
 }
 
-export default function BreadcrumbNav({ path, isFile, setviewType, onUpload }: Props) {
+export default function BreadcrumbNav({ path, isFile, setviewType, onUpload, fetchFiles }: Props) {
 	const splitPath = path.split('/');
 	const [folderName, setFolderName] = useState('');
+
+	function closeModal(id: string) {
+		document.getElementById(id)?.classList.remove('show');
+		document.getElementById(id)?.setAttribute('aria-hidden', 'true');
+		document.getElementById(id)?.setAttribute('style', 'display: none');
+		document.body.removeChild(document.getElementsByClassName('modal-backdrop')[0] as Node);
+	}
 
 	async function handleFolderSubmit(event: BaseSyntheticEvent) {
 		event.preventDefault();
@@ -19,7 +29,10 @@ export default function BreadcrumbNav({ path, isFile, setviewType, onUpload }: P
 			const { data } = await axios.post('/api/files/create-folder', {
 				folderName: folderName,
 			});
-			if (data.success) console.log('Folder created');
+			if (data.success) {
+				await fetchFiles();
+				closeModal('createFolderModal');
+			}
 		} catch (error) {
 			console.error(error);
 		}
@@ -55,7 +68,7 @@ export default function BreadcrumbNav({ path, isFile, setviewType, onUpload }: P
 				{!isFile &&
           <>
           	<button type="button" className="btn btn-outline-secondary" style={{ display: 'inline-flex', alignContent: 'stretch', justifyContent: 'space-around', alignItems: 'center' }} data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-offset="0,10">
-            New <i className="fas fa-plus"></i>
+          		<FontAwesomeIcon icon={faPlus} /> New
           	</button>
           	<div className="dropdown-menu dropdown-menu-right">
           		<label className="dropdown-item btn" id="fileHover">

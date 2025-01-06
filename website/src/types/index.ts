@@ -38,4 +38,7 @@ export type fileItem = {
   size: number
   extension: string
   type: fileType
+  _count?: {
+    children: number
+  }
 }

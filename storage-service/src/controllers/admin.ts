@@ -1,40 +1,15 @@
 import { Request, Response } from 'express';
-import { exec } from 'node:child_process';
 import os from 'os';
-import util from 'node:util';
 import { directoryTree, getNumberOfFiles, Error } from '../utils';
 import { Client } from 'src/helpers';
-const cmd = util.promisify(exec);
 
 type data = { [key: string]: boolean}
-interface diskStorage {
-  free: number
-  total: number
-}
 
 // Endpoint: GET /api/admin/stats
 export const getStats = (client: Client) => {
 	return async (_req: Request, res: Response) => {
 		try {
-			const platform = process.platform;
-			let diskData: diskStorage = { free: 0, total: 0 };
-			if (platform == 'win32') {
-				const { stdout } = await cmd('wmic logicaldisk get size,freespace,caption');
-				const parsed = stdout.trim().split('\n').slice(1).map(line => line.trim().split(/\s+(?=[\d/])/));
-				const filtered = parsed.filter(d => process.cwd().toUpperCase().startsWith(d[0].toUpperCase()));
-				diskData = {
-					free: Number(filtered[0][1]),
-					total: Number(filtered[0][2]),
-				};
-			} else if (platform == 'linux') {
-				const { stdout } = await cmd('df -Pk --');
-				const parsed = stdout.trim().split('\n').slice(1).map(line => line.trim().split(/\s+(?=[\d/])/));
-				const filtered = parsed.filter(() => true);
-				diskData = {
-					free: Number(filtered[0][3]),
-					total: Number(filtered[0][1]),
-				};
-			}
+			const diskData = client.FileManager.getFileSystemStatitics();
 
 			res.json({
 				storage: {

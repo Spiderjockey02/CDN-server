@@ -1,12 +1,10 @@
 import { Request, Response } from 'express';
-import { PATHS, directoryTree, Error } from '../utils';
+import { PATHS, Error } from '../utils';
 import { getSession, parseForm } from '../middleware';
 import fs from 'fs/promises';
-import archiver from 'archiver';
-import { Client, TrashHandler } from '../helpers';
-import type { fileItem } from '../types';
+import { Client } from '../helpers';
 import path from 'node:path';
-const trash = new TrashHandler();
+// const trash = new TrashHandler();
 
 // Endpoint GET /api/files
 export const getFiles = (client: Client) => {
@@ -17,9 +15,9 @@ export const getFiles = (client: Client) => {
 
 			// Fetch from cache
 			const filePath = req.params.path;
-			const files = await client.FileManager.getDirectory(session.user.id, filePath);
+			const file = await client.FileManager.getDirectory(session.user.id, filePath || '/');
 
-			res.json({ files });
+			res.json({ file });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch file.');
@@ -53,17 +51,18 @@ export const deleteFile = (client: Client) => {
 		const session = await getSession(req);
 		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
 
-		const { path: filePath } = req.body;
+		const { fileName } = req.body;
 		const userPath = (req.headers.referer)?.split('/files')[1] ?? '';
 
 		try {
-			await client.FileManager.delete(session.user.id, userPath);
-			await trash.addFileToPending(session.user.id, userPath, filePath);
+			await client.FileManager.delete(session.user.id, path.join(userPath, fileName));
+			// await trash.addFileToPending(session.user.id, userPath, fileName);
 			res.json({ success: 'Successfully deleted item.' });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to delete item.');
 		}
+
 	};
 };
 
@@ -106,17 +105,21 @@ export const getDownloadFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
 		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
-		const { path: filePath } = req.body;
-		const archive = archiver('zip', { zlib: { level: 9 } });
+		const { path: filePath } = req.query;
 
-		archive
-			.directory(`${PATHS.CONTENT}/${session.user.id}${filePath}`, false)
-			.on('error', (err) => {
-				client.logger.error(err);
-				Error.GenericError(res, 'Failed to download file.');
-			})
-			.pipe(res);
-		archive.finalize();
+		// Fetch file from database
+		const file = await client.FileManager.getByFilePath(session.user.id, filePath as string);
+		if (!file) return Error.MissingResource(res, 'File not found');
+
+		// Check if file is a file or actually a directory
+		switch (file.type) {
+			case 'FILE':
+				return client.FileManager.downloadFile(res, session.user.id, filePath as string);
+			case 'DIRECTORY':
+				return client.FileManager.downloadDirectory(res, session.user.id, filePath as string);
+			default:
+				return Error.GenericError(res, 'Invalid file type');
+		}
 	};
 };
 
@@ -125,13 +128,12 @@ export const postRenameFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
 		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
-		const { oldPath, newPath } = req.body;
+		const { oldName, newName } = req.body;
 		const userPath = (req.headers.referer as string).split('/files')[1];
-		const originalPath = userPath.startsWith('/') ? userPath : '/';
+		const originalPath = decodeURI(userPath.startsWith('/') ? `${userPath}/` : '/');
 
 		try {
-			await fs.rename(`${PATHS.CONTENT}/${session.user.id}${originalPath}${oldPath}`,
-				`${PATHS.CONTENT}/${session.user.id}${originalPath}${newPath}.${oldPath.split('.').at(-1)}`);
+			await client.FileManager.rename(session.user.id, `${originalPath}${oldName}`, newName);
 			res.json({ success: 'Successfully renamed item' });
 		} catch (err) {
 			client.logger.error(err);
@@ -157,10 +159,8 @@ export const postCreateFolder = (client: Client) => {
 
 			// Decode & santise the referer path to ensure the folder is added to the correct path
 			const userPath = decodeURI(req.headers['referer']?.split('/files')[1] || '');
-			const santisedPath = path.normalize(`${userPath}`).replace(/^[/\\]+/, '');
-			if (santisedPath.length == 0) return Error.GenericError(res, 'Invalid path detected.');
-
-			await client.FileManager.createDirectory(session.user.id, santisedPath, santisedFolderName);
+			if (userPath.length == 0) return Error.GenericError(res, 'Invalid path detected.');
+			await client.FileManager.createDirectory(session.user.id, userPath.startsWith('/') ? userPath : `/${userPath}`, santisedFolderName);
 			res.json({ success: 'Successfully created folder.' });
 		} catch (err) {
 			client.logger.error(err);
@@ -176,31 +176,17 @@ export const getSearchFile = (client: Client) => {
 			const session = await getSession(req);
 			if (!session?.user) return res.json({ error: 'Invalid session' });
 
-			const srch = req.query.search as string;
-			const files = (await directoryTree(`${PATHS.CONTENT}/${session.user.id}`, 100))?.children;
+			// Search for file with extra information if sent aswell
+			const srch = req.query.query as string;
+			const fileType = req.query.fileType;
+			const type = Number(fileType) == 1 ? 'FILE' : 'DIRECTORY';
+			const files = await client.FileManager.searchByName(session.user.id, srch, type);
 
-			res.json({ query: search(files, srch).map((i) => ({ ...i, path: i.path.split(`${session.user?.id}`)[1] })) });
+			// Only need to send the name and path for search query
+			res.json({ query: files.map(f => ({ name: f.name, path: f.path })) });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to searech for item.');
 		}
 	};
 };
-
-interface srchQuery {
-	path: string
-	name: string
-}
-
-function search(files: Array<fileItem> | undefined, text: string, arr: Array<srchQuery> = []) {
-	if (files == undefined) return arr;
-	for (const i of files) {
-		if (i.type == 'file') {
-			if (i.name.startsWith(text)) arr.push({ path: '', name: i.name });
-		} else {
-			arr.push(...search(i.children, text, []));
-		}
-	}
-
-	return arr;
-}

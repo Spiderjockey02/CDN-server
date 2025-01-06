@@ -1,13 +1,26 @@
-import type { fileItem } from 'src/types';
-import { directoryTree, PATHS } from '../utils';
+import { Error as ErrorCL, PATHS, sanitiseObject } from '../utils';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import util from 'node:util';
+import { exec } from 'node:child_process';
+import type { Response } from 'express';
+import FileAccessor from '../accessors/File';
+import archiver from 'archiver';
+const cmd = util.promisify(exec);
 
-export default class FileManager {
-	cache: Map<string, fileItem>;
-
+interface diskStorage {
+  free: number
+  total: number
+}
+export default class FileManager extends FileAccessor {
+	diskData: diskStorage;
 	constructor() {
-		this.cache = new Map();
+		super();
+		this.diskData = { free: 0, total: 0 };
+
+		// Fetch disk data & update every 5 minutes
+		this._fetchDiskData();
+		setInterval(() => this._fetchDiskData(), 1000 * 60 * 10);
 	}
 
 	/**
@@ -16,13 +29,8 @@ export default class FileManager {
 	  * @param {string} filePath file path of the directory.
 	*/
 	async getDirectory(userId: string, filePath: string) {
-		// Build the full path and make sure it's valid
-		const fullPath = path.resolve(PATHS.CONTENT, userId, filePath);
-		const isPathValid = this._verifyTraversal(userId, fullPath);
-		if (!isPathValid) throw new Error('Invalid path');
-
-		// Get the files
-		return this.cache.get(fullPath) ?? await directoryTree(fullPath);
+		const files = await this.getByFilePath(userId, filePath);
+		return sanitiseObject(files);
 	}
 
 	/**
@@ -32,6 +40,7 @@ export default class FileManager {
 	*/
 	async delete(userId: string, filePath: string) {
 		const fullPath = path.resolve(PATHS.CONTENT, userId, filePath);
+		console.log(fullPath);
 		const isPathValid = this._verifyTraversal(userId, fullPath);
 		if (!isPathValid) throw new Error('Invalid path');
 
@@ -53,6 +62,20 @@ export default class FileManager {
 
 		// Move the file
 		return fs.rename(oldFullPath, newFullPath);
+	}
+
+	async rename(userId: string, filePath: string, newName: string) {
+		const file = await this.getByFilePath(userId, filePath);
+		if (file === null) throw new Error('File not found');
+
+		// Update the file
+		const pathSegs = file.path.split('/');
+		pathSegs[pathSegs.length - 1] = newName;
+		const newPath = pathSegs.join('/');
+
+		// Will update to also support their children for path to be updated aswell (when it's a directory)
+		await this.update({ id: file.id, name: newName, path: newPath });
+		return fs.rename(path.join(PATHS.CONTENT, userId, filePath), path.join(PATHS.CONTENT, userId, newName));
 	}
 
 	/**
@@ -79,12 +102,54 @@ export default class FileManager {
 		* @param {string} folderName The name of the folder.
 	*/
 	async createDirectory(userId: string, filePath: string, folderName: string) {
-		const fullPath = path.resolve(PATHS.CONTENT, userId, filePath, folderName);
+		const fullPath = path.join(PATHS.CONTENT, userId, filePath, folderName);
 		const isPathValid = this._verifyTraversal(userId, fullPath);
 		if (!isPathValid) throw new Error('Invalid path');
 
 		// Create the directory
-		return fs.mkdir(fullPath);
+		console.log('asdasd', filePath);
+		const dir = await this.getByFilePath(userId, filePath);
+		if (dir !== null) {
+			await this.update({ id: dir.id,
+				children: {
+					userId,
+					name: folderName,
+					path: `${filePath}${folderName}`,
+					size: 0n,
+					type: 'DIRECTORY',
+				},
+			});
+		}
+		return fs.mkdir(fullPath, { recursive: true });
+	}
+
+	/**
+	  * Retrieves the file system statistics
+		* @returns {diskStorage} The disk storage data.
+	*/
+	getFileSystemStatitics(): diskStorage {
+		return this.diskData;
+	}
+
+	downloadFile(res: Response, userId: string, filePath: string) {
+		res.download(path.join(PATHS.CONTENT, userId, filePath));
+	}
+
+	async downloadDirectory(res: Response, userId: string, filePath: string) {
+		const archive = archiver('zip', { zlib: { level: 9 } });
+		res.setHeader('Content-Type', 'application/zip');
+		res.setHeader('Content-Disposition', `attachment; filename="${path.basename(filePath)}.zip"`);
+
+		// Append directory to archive
+		archive.pipe(res);
+		archive.directory(path.join(PATHS.CONTENT, userId, filePath), false);
+
+		try {
+			await archive.finalize();
+			res.end();
+		} catch (error) {
+			ErrorCL.GenericError(res, 'Failed to create archive');
+		}
 	}
 
 	/**
@@ -96,5 +161,29 @@ export default class FileManager {
 		const userBasePath = path.resolve(PATHS.CONTENT, userId);
 		const targetPath = path.resolve(filePath);
 		return targetPath.startsWith(userBasePath);
+	}
+
+	/**
+	  * Fetches disk data
+	*/
+	async _fetchDiskData() {
+		const platform = process.platform;
+		if (platform == 'win32') {
+			const { stdout } = await cmd('wmic logicaldisk get size,freespace,caption');
+			const parsed = stdout.trim().split('\n').slice(1).map(line => line.trim().split(/\s+(?=[\d/])/));
+			const filtered = parsed.filter(d => process.cwd().toUpperCase().startsWith(d[0].toUpperCase()));
+			this.diskData = {
+				free: Number(filtered[0][1]),
+				total: Number(filtered[0][2]),
+			};
+		} else if (platform == 'linux') {
+			const { stdout } = await cmd('df -Pk --');
+			const parsed = stdout.trim().split('\n').slice(1).map(line => line.trim().split(/\s+(?=[\d/])/));
+			const filtered = parsed.filter(() => true);
+			this.diskData = {
+				free: Number(filtered[0][3]),
+				total: Number(filtered[0][1]),
+			};
+		}
 	}
 }

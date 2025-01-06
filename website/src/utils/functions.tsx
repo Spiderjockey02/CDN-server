@@ -11,6 +11,14 @@ export function formatBytes(bytes: number) {
 	return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+export function formatTime(timeInSeconds: number) {
+	const result = new Date((isNaN(timeInSeconds) ? 1 : timeInSeconds) * 1000).toISOString().substr(11, 8);
+	return {
+		minutes: result.substr(3, 2),
+		seconds: result.substr(6, 2),
+	};
+}
+
 export function getFileIcon(file: fileItem) {
 	// Check folder stuff
 	if (!file.extension && file.children) {
@@ -19,7 +27,7 @@ export function getFileIcon(file: fileItem) {
 	}
 
 	// Get the icon from file type
-	const type = mimeType.lookup(file.extension);
+	const type = mimeType.lookup(file.name);
 	if (type == false) return <FontAwesomeIcon icon={faFile} />;
 
 	switch (type.split('/')[0]) {

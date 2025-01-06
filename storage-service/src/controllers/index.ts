@@ -85,7 +85,7 @@ export const getContent = (client: Client) => {
 		const path = req.params.path as string;
 
 		// Fetch file from database
-		const file = await client.FileManager.getByUserId(userId, path);
+		const file = await client.FileManager.getByFilePath(userId, path);
 		if (!file) return Error.MissingResource(res, 'File not found');
 
 		// Update the user's recently viewed file history
@@ -143,6 +143,19 @@ export const getContent = (client: Client) => {
 					videoStream.pipe(res);
 				}
 			}
+		}
+	};
+};
+
+export const getStatistics = (client: Client) => {
+	return async (_req: Request, res: Response) => {
+		try {
+			const [totalUsers, diskData, totalFileCount] = await Promise.all([client.userManager.fetchTotalCount(), client.FileManager.getFileSystemStatitics(), client.FileManager.fetchTotalCount()]);
+
+			res.json({ totalUsers, diskData, totalFileCount });
+		} catch (error) {
+			client.logger.error(error);
+			return Error.GenericError(res, 'Failed to get statistics');
 		}
 	};
 };

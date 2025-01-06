@@ -15,7 +15,7 @@ const initalContextMenu = {
 	show: false,
 	x: 0,
 	y: 0,
-	selected: { name: '', type: '', size: 0, modified: 0, path: '' },
+	selected: { name: '', type: '', size: 0, modified: '' } as unknown as fileItem,
 };
 
 export default function Directory({ files, dir, userId }: Props) {
@@ -64,7 +64,14 @@ export default function Directory({ files, dir, userId }: Props) {
 	function openContextMenu(e: MouseEvent<HTMLTableRowElement>, selected: fileItem) {
 		e.preventDefault();
 		const { pageX, pageY } = e;
-		setContextMenu({ show: true, x: pageX, y: pageY, selected });
+
+		// Update this to support multi-selection
+		if (filesSelected.length > 0) {
+			setContextMenu({ show: true, x: pageX, y: pageY, selected });
+		} else {
+			setContextMenu({ show: true, x: pageX, y: pageY, selected });
+		}
+
 	}
 	const closeContextMenu = () => setContextMenu(initalContextMenu);
 
@@ -115,7 +122,7 @@ export default function Directory({ files, dir, userId }: Props) {
 					</tr>
 				</thead>
 				<tbody>
-					{files.children.filter(f => f.type == 'directory').map(_ => (
+					{files.children.filter(f => f.type == 'DIRECTORY').map(_ => (
 						<FileItemRow key={_.name}
 							dir={dir} file={_}
 							userId={userId}
@@ -123,7 +130,7 @@ export default function Directory({ files, dir, userId }: Props) {
 							handleCheckboxToggle={handleCheckboxToggle}
 						/>
 					))}
-					{files.children.filter(f => f.type == 'file').map(_ => (
+					{files.children.filter(f => f.type == 'FILE').map(_ => (
 						<FileItemRow key={_.name}
 							dir={dir} file={_}
 							userId={userId}

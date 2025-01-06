@@ -6,7 +6,7 @@ import axios from 'axios';
 import { useState } from 'react';
 import type { ChangeEvent, MouseEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faSlidersH } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faSearch, faSlidersH } from '@fortawesome/free-solid-svg-icons';
 interface Props {
 	user: User
 }
@@ -17,21 +17,23 @@ interface AutoComplete {
 }
 
 export default function FileNavBar({ user }: Props) {
-	const [text, setText] = useState<Array<AutoComplete>>([]);
+	const [srchRes, setSrchRes] = useState<Array<AutoComplete>>([]);
 
 	async function autoComplete(e: ChangeEvent<HTMLInputElement>) {
-		const search = e.target.value;
+		const search = e.target.value.trim();
+		const fileType = document.getElementById('fileTypeSelector') as HTMLSelectElement;
+		const dateUpdatedSelector = document.getElementById('dateUpdatedSelector') as HTMLSelectElement;
 		if (search) {
-			const { data } = await axios.get(`${window.origin}/api/files/search?search=${search}`);
-			setText(data.query);
+			const { data } = await axios.get(`${window.origin}/api/files/search?query=${search}&fileType=${fileType.value}&updatedSince=${dateUpdatedSelector.value}`);
+			setSrchRes(data.query);
 		} else {
-			setText([]);
+			setSrchRes([]);
 		}
 	}
 
 	function deleteNotification(e: MouseEvent<HTMLButtonElement>, id:string) {
 		e.preventDefault();
-		alert(user.Notifications.find(i => i.id == id)?.text);
+		alert(user.notifications.find(i => i.id == id)?.text);
 	}
 
 	return (
@@ -43,14 +45,16 @@ export default function FileNavBar({ user }: Props) {
 							<form action="/files/search" method="post">
 								<div className="input-group mb-3" style={{ width:'40vw' }}>
 									<div className="input-group-prepend">
-										<button id="searchIconBtn" type="submit" className="input-group-text" style={{ backgroundColor:'#f4f4f4', border:'none', borderRadius:'8px 0px 0px 8px', height:'40px' }} data-toggle="tooltip" data-placement="bottom" title="Search"><i className="fas fa-search"></i></button>
+										<button id="searchIconBtn" type="submit" className="input-group-text" style={{ backgroundColor:'#f4f4f4', border:'none', borderRadius:'8px 0px 0px 8px', height:'40px' }} data-toggle="tooltip" data-placement="bottom" title="Search">
+											<FontAwesomeIcon icon={faSearch} />
+										</button>
 									</div>
 									<input onChange={(e) => autoComplete(e)} type="text" id="myInput" className="form-input form-control text-truncate" style={{ border:'none', backgroundColor:'#f4f4f4' }} placeholder="Search files and folders" name="search" autoComplete="off" />
-									{text.length >= 1 && (
+									{srchRes.length >= 1 && (
 										<div className="autocomplete-items">
-											{text.map((_) => (
-												<div key={_.name}>
-													<a href={`/files/${_.path}`}>{_.name}</a>
+											{srchRes.map((file) => (
+												<div key={file.name}>
+													<a className='btn' href={`/files${file.path}`}>{file.name}</a>
 												</div>
 											))}
 										</div>
@@ -60,19 +64,19 @@ export default function FileNavBar({ user }: Props) {
 											<button className="btn btn-outline-secondary dropdown-toggle" style={{ backgroundColor:'#f4f4f4', borderRadius:'0px 8px 8px 0px', border:'none', color:'#505762', height:'40px' }} type="button" data-bs-toggle="dropdown" aria-expanded="false">
 												<FontAwesomeIcon icon={faSlidersH} />
 											</button>
-											<div className="dropdown-menu p-4" style={{ width:'100%', padding:'15px', boxShadow: '1px 1px 1px 1px rgba(0,0,0,0.25)' }} >
+											<div className="dropdown-menu dropdown-menu-end" style={{ width:'100%', padding:'5px' }} >
 												<div className="form-group">
 													<label htmlFor="inputGroupSelect01">File type(s)</label>
-													<select className="form-select" id="inputGroupSelect01" name="fileType">
-														<option value="0" defaultValue={'true'}>Any type</option>
+													<select className="form-select" id="fileTypeSelector" name="fileType">
+														<option value="0">Any type</option>
 														<option value="1">Files</option>
 														<option value="2">Folders</option>
 													</select>
 												</div>
 												<div className="form-group">
 													<label htmlFor="inputGroupSelect01">Date updated</label>
-													<select className="form-select" id="inputGroupSelect01" name="dateUpdated">
-														<option value="0" selected>Any time</option>
+													<select className="form-select" id="dateUpdatedSelector" name="dateUpdated">
+														<option value="0">Any time</option>
 														<option value="1">Past day</option>
 														<option value="2">Past week</option>
 														<option value="3">Past month</option>
@@ -92,19 +96,19 @@ export default function FileNavBar({ user }: Props) {
 						<div className="dropdown" id="notifications">
 							<button className="btn btn-outline-secondary nav-link position-relative" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 								<FontAwesomeIcon icon={faBell} id="notifIcons" />
-								{user.Notifications?.length > 0 && (
+								{user.notifications?.length > 0 && (
 									<span className="position-absolute top-0 start-100 translate-middle badge border border-light rounded-circle bg-danger p-2"><span className="visually-hidden">unread messages</span></span>
 								)}
 							</button>
 							<div className="dropdown-menu dropdown-menu-end p-1 text-muted" style={{ width: '300px', overflowY: 'scroll', maxHeight: '300px' }}>
-								<h3 className="dropdown-header" style={{ fontSize: '18px' }}>Notifications - {user.Notifications?.length}</h3>
-								{user.Notifications?.map(_ => (
+								<h3 className="dropdown-header" style={{ fontSize: '18px' }}>Notifications - {user.notifications?.length}</h3>
+								{user.notifications?.map(_ => (
 									<div className="alert alert-primary alert-dismissible fade show" role="alert" key={_.id} style={{ padding: '13px' }}>
 										<span style={{ fontSize: '15px' }}>{_.text} <a href="/resend">[Resend Email]</a></span>
 										<button type="button" className="btn-close" aria-label="Close" onClick={(e)=> deleteNotification(e, _.id)}></button>
 									</div>
 								))}
-								{user.Notifications?.length == 0 && (
+								{user.notifications?.length == 0 && (
 									<p className="mb-0">You currently have no notifications.</p>
 								)}
 							</div>

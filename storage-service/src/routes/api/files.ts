@@ -5,9 +5,6 @@ import { Client } from 'src/helpers';
 const router = Router();
 
 export default function(client: Client) {
-	// Fetch user's uploaded files
-	router.get('/?:path(*)', getFiles(client));
-
 	// Upload a new file
 	router.post('/upload', postFileUpload(client));
 
@@ -31,6 +28,9 @@ export default function(client: Client) {
 
 	// Create a new folder
 	router.post('/create-folder', postCreateFolder(client));
+
+	// Fetch user's uploaded files
+	router.get('/?:path(*)', getFiles(client));
 
 	return router;
 }
