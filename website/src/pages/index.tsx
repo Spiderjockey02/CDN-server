@@ -1,28 +1,33 @@
 import '@/styles/Home.module.css';
-import NavBar from '../components/navbars/home-navbar';
-import Footer from '../components/footer';
+import { HomeNavbar, Footer } from '@/components';
 import Link from 'next/link';
 import config from '../config';
 import Script from 'next/script';
+import axios from 'axios';
+import { formatBytes } from '@/utils/functions';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFile } from '@fortawesome/free-solid-svg-icons';
 
 interface Props {
 	totalUserCount: number
+	storageUsed: number
+	totalFileCount: number
 }
 
-export default function Home({ totalUserCount }: Props) {
+export default function Home({ totalUserCount, storageUsed, totalFileCount }: Props) {
 
 	return (
 		<>
 			<Script src="https://cdn.jsdelivr.net/npm/@srexi/purecounterjs/dist/purecounter_vanilla.js" strategy="worker" />
-			<NavBar />
+			<HomeNavbar />
 			<section id="hero" className="d-flex align-items-center">
 				<div className="container">
 					<h1>Welcome to <span>{config.company.name}</span></h1>
 					<h2>{config.company.slogan}</h2>
 					<div className="d-flex">
-						<Link href="/signup" className="btn-get-started" style={{ textDecoration: 'none' }}>Get Started</Link>
+						<Link href="/register" className="btn btn-get-started">Get Started</Link>
             &nbsp;
-						<Link href="#pricing" className="btn-get-started" style={{ textDecoration: 'none' }}>Pricing</Link>
+						<Link href="#pricing" className="btn btn-get-started">Pricing</Link>
 					</div>
 				</div>
 			</section>
@@ -41,7 +46,7 @@ export default function Home({ totalUserCount }: Props) {
 								<div className="icon-box" data-aos="fade-up" data-aos-delay="200">
 									<div className="icon"><i className="bi bi-file-earmark-text"></i></div>
 									<h4 className="title">Back up and protect</h4>
-									<p className="description">If you lose your device, you won’t lose your files and photos when they’re saved in {config.company.name}.</p>
+									<p className="description">If you lose your device, you won&apos;t lose your files and photos when they&apos;re saved in {config.company.name}.</p>
 								</div>
 							</div>
 							<div className="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0">
@@ -75,14 +80,14 @@ export default function Home({ totalUserCount }: Props) {
 							<div className="col-lg-3 col-md-6 mt-5 mt-md-0">
 								<div className="count-box">
 									<i className="fa-solid fa-file"></i>
-									<span data-purecounter-start="0" data-purecounter-end="10" data-purecounter-duration="1" className="purecounter">0</span>
+									<span data-purecounter-start="0" data-purecounter-end={totalFileCount} data-purecounter-duration="1" className="purecounter">{totalFileCount}</span>
 									<p>Total files</p>
 								</div>
 							</div>
 							<div className="col-lg-3 col-md-6 mt-5 mt-lg-0">
 								<div className="count-box">
 									<i className="fa-solid fa-hard-drive"></i>
-									<span data-purecounter-start="0" data-purecounter-end="10" data-purecounter-duration="1" data-purecounter-currency="true" className="purecounter-data">0</span>
+									<span data-purecounter-start="0" data-purecounter-end={(storageUsed)} data-purecounter-duration="1" data-purecounter-currency="true" className="purecounter-data">{formatBytes(storageUsed)}</span>
 									<p>Total storage used</p>
 								</div>
 							</div>
@@ -248,6 +253,11 @@ export default function Home({ totalUserCount }: Props) {
 }
 
 export async function getServerSideProps() {
-	const totalUsers = [ ];
-	return { props: { totalUserCount: totalUsers?.length ?? 0 } };
+	try {
+		const { data } = await axios.get(`${process.env.NEXTAUTH_URL}/api/statistics`);
+
+		return { props: { totalUserCount: data.totalUsers, storageUsed: data.diskData.total - data.diskData.free, totalFileCount: data.totalFileCount } };
+	} catch (err) {
+		return { props: { totalUserCount: 0, storageUsed: 0, totalFileCount: 0 } };
+	}
 }
