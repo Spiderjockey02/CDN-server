@@ -29,7 +29,8 @@ const client = new Client();
 		try {
 			const salt = await bcrypt.genSalt(10);
 			const hashPassword = await bcrypt.hash('admin', salt);
-			await client.userManager.create({ email: 'test@example.com', password: hashPassword, name: 'Admin' });
+			const user = await client.userManager.create({ email: 'test@example.com', password: hashPassword, name: 'Admin' });
+			await client.FileManager.create({ userId: user.id, path: '/', name: '/', type: 'DIRECTORY', size: 0n });
 			client.logger.log('Successfully created account: Admin');
 			client.logger.log('Email: test@example.com, password: admin');
 		} catch (err) {

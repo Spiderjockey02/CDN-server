@@ -31,12 +31,12 @@ export interface User {
 
 export type fileType = 'FILE' | 'DIRECTORY'
 export type fileItem = {
+  id: string
   path: string
   name: string
   children: fileItem[]
   modified: number
   size: number
-  extension: string
   type: fileType
   _count?: {
     children: number

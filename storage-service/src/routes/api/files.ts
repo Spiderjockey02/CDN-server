@@ -1,6 +1,6 @@
 // For upload, delete, move etc endpoints
 import { Router } from 'express';
-import { postCopyFile, postCreateFolder, deleteFile, getDownloadFile, getFiles, postMoveFile, postFileUpload, postRenameFile, getSearchFile } from '../../controllers/files';
+import { postCopyFile, postCreateFolder, deleteFile, getDownloadFile, getFiles, postMoveFile, postFileUpload, postRenameFile, getSearchFile, getAllDirectories } from '../../controllers/files';
 import { Client } from 'src/helpers';
 const router = Router();
 
@@ -28,6 +28,9 @@ export default function(client: Client) {
 
 	// Create a new folder
 	router.post('/create-folder', postCreateFolder(client));
+
+	// Get all user's directories
+	router.get('/directories', getAllDirectories(client));
 
 	// Fetch user's uploaded files
 	router.get('/?:path(*)', getFiles(client));

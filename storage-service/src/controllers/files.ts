@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import { PATHS, Error } from '../utils';
+import { Error, sanitiseObject } from '../utils';
 import { getSession, parseForm } from '../middleware';
-import fs from 'fs/promises';
 import { Client } from '../helpers';
 import path from 'node:path';
 // const trash = new TrashHandler();
@@ -71,10 +70,11 @@ export const postMoveFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
 		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
-		const { newPath, oldPath } = req.body;
+		const { newPath, fileName } = req.body;
+		const oldPath = (req.headers.referer)?.split('/files')[1] ?? '/';
 
 		try {
-			await client.FileManager.move(session.user.id, oldPath, newPath);
+			await client.FileManager.move(session.user.id, `${oldPath}/${fileName}`, newPath);
 			res.json({ success: 'Successfully moved item' });
 		} catch (err) {
 			client.logger.error(err);
@@ -88,10 +88,11 @@ export const postCopyFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
 		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
-		const { newPath, oldPath } = req.body;
+		const { newPath, fileName } = req.body;
+		const oldPath = (req.headers.referer)?.split('/files')[1] ?? '';
 
 		try {
-			await fs.copyFile(`${PATHS.CONTENT}/${session.user.id}/${newPath}`, `${PATHS.CONTENT}/${session.user.id}/${oldPath}`);
+			await client.FileManager.copy(session.user.id, `${oldPath}/${fileName}`, newPath);
 			res.json({ success: 'Successfully copied file' });
 		} catch (err) {
 			client.logger.error(err);
@@ -186,7 +187,22 @@ export const getSearchFile = (client: Client) => {
 			res.json({ query: files.map(f => ({ name: f.name, path: f.path })) });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to searech for item.');
+			Error.GenericError(res, 'Failed to search for item.');
+		}
+	};
+};
+
+export const getAllDirectories = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const session = await getSession(req);
+			if (!session?.user) return res.json({ error: 'Invalid session' });
+
+			const dirs = await client.FileManager.getAllDirectories(session.user.id);
+			return res.json({ dirs: sanitiseObject(dirs) });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to get all user\'s directories.');
 		}
 	};
 };

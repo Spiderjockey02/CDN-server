@@ -54,14 +54,17 @@ export default class FileManager extends FileAccessor {
 		* @param {string} newFilePath The new file path.
 	*/
 	async move(userId: string, oldFilePath: string, newFilePath: string) {
-		const oldFullPath = path.resolve(PATHS.CONTENT, userId, oldFilePath);
-		const newFullPath = path.resolve(PATHS.CONTENT, userId, newFilePath);
-		const isOldPathValid = this._verifyTraversal(userId, oldFullPath);
-		const isNewPathValid = this._verifyTraversal(userId, newFullPath);
-		if (!isOldPathValid || !isNewPathValid) throw new Error('Invalid path');
+		const oldFile = await this.getByFilePath(userId, oldFilePath);
+		const newDir = await this.getByFilePath(userId, newFilePath);
+		if (oldFile == null || newDir == null) throw new Error('Invalid path.');
 
-		// Move the file
-		return fs.rename(oldFullPath, newFullPath);
+		const newFile = await this.update({
+			id: oldFile.id,
+			parentId: newDir.id,
+			path: `${newDir.path}/${oldFilePath.split('/').at(-1)}`,
+		});
+
+		return fs.rename(path.join(PATHS.CONTENT, userId, oldFile.path), path.join(PATHS.CONTENT, userId, newFile.path));
 	}
 
 	async rename(userId: string, filePath: string, newName: string) {
@@ -85,14 +88,24 @@ export default class FileManager extends FileAccessor {
 		* @param {string} newFilePath The new file path.
 	*/
 	async copy(userId: string, oldFilePath: string, newFilePath: string) {
-		const oldFullPath = path.resolve(PATHS.CONTENT, userId, oldFilePath);
-		const newFullPath = path.resolve(PATHS.CONTENT, userId, newFilePath);
-		const isOldPathValid = this._verifyTraversal(userId, oldFullPath);
-		const isNewPathValid = this._verifyTraversal(userId, newFullPath);
-		if (!isOldPathValid || !isNewPathValid) throw new Error('Invalid path');
+		const oldFile = await this.getByFilePath(userId, oldFilePath);
+		const newDir = await this.getByFilePath(userId, newFilePath);
+		if (oldFile == null || newDir == null) throw new Error('Invalid path.');
+
+		console.log(oldFile, newDir);
+		console.log(`${newDir.path}${oldFile.path}`);
+
+		const newFile = await this.create({
+			path: `${newDir.path}${oldFile.path}`,
+			name: oldFile.name,
+			size: oldFile.size,
+			userId: oldFile.userId,
+			type: oldFile.type,
+			parentId: newDir.id,
+		});
 
 		// Copy the file
-		return fs.copyFile(oldFilePath, newFullPath);
+		return fs.copyFile(path.join(PATHS.CONTENT, userId, oldFilePath), path.join(PATHS.CONTENT, userId, newFile.path));
 	}
 
 	/**
@@ -107,7 +120,6 @@ export default class FileManager extends FileAccessor {
 		if (!isPathValid) throw new Error('Invalid path');
 
 		// Create the directory
-		console.log('asdasd', filePath);
 		const dir = await this.getByFilePath(userId, filePath);
 		if (dir !== null) {
 			await this.update({ id: dir.id,

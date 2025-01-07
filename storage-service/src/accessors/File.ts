@@ -2,7 +2,6 @@ import { createFile, updateFile } from 'src/types/database/File';
 import client from './prisma';
 import { LRUCache } from 'lru-cache';
 import { File, FileType } from '@prisma/client';
-import path from 'node:path';
 
 export default class FileAccessor {
 	cache: LRUCache<string, File>;
@@ -22,11 +21,12 @@ export default class FileAccessor {
 	async create(data: createFile): Promise<File> {
 		const file = await client.file.create({
 			data: {
-				path: path.join(data.path, data.name),
+				path: data.path,
 				name: data.name,
 				size: data.size,
 				userId: data.userId,
 				type: data.type,
+				parentId: data.parentId,
 			},
 		});
 		this.cache.set(file.id, file);
@@ -129,5 +129,15 @@ export default class FileAccessor {
 	*/
 	async fetchTotalCount() {
 		return client.file.count();
+	}
+
+
+	getAllDirectories(userId: string) {
+		return client.file.findMany({
+			where: {
+				userId,
+				type: 'DIRECTORY',
+			},
+		});
 	}
 }
