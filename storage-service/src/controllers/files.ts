@@ -3,6 +3,7 @@ import { Error, sanitiseObject } from '../utils';
 import { getSession, parseForm } from '../middleware';
 import { Client } from '../helpers';
 import path from 'node:path';
+import { FileType } from '@prisma/client';
 // const trash = new TrashHandler();
 
 // Endpoint GET /api/files
@@ -180,7 +181,7 @@ export const getSearchFile = (client: Client) => {
 			// Search for file with extra information if sent aswell
 			const srch = req.query.query as string;
 			const fileType = req.query.fileType;
-			const type = Number(fileType) == 1 ? 'FILE' : 'DIRECTORY';
+			const type = [undefined, FileType.FILE, FileType.DIRECTORY][Number(fileType)] ?? undefined;
 			const files = await client.FileManager.searchByName(session.user.id, srch, type);
 
 			// Only need to send the name and path for search query
