@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import os from 'os';
-import { directoryTree, getNumberOfFiles, Error } from '../utils';
+import { Error } from '../utils';
 import { Client } from 'src/helpers';
 
 type data = { [key: string]: boolean}
@@ -13,7 +13,7 @@ export const getStats = (client: Client) => {
 
 			res.json({
 				storage: {
-					totalFiles: getNumberOfFiles(await directoryTree(process.cwd()), 0),
+					totalFiles: 0,
 					total: diskData.total,
 					free: diskData.free,
 				},
