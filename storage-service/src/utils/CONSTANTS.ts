@@ -5,4 +5,4 @@ export const PATHS = {
 	TRASH: `${process.cwd()}/src/uploads/trash`,
 };
 
-export const ipv4Regex = /^(?:(?:\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])\.){3}(?:\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])$/;
+export const ipRegex = /^((\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])(\.(?!$)|$)){4}$|^(([\da-fA-F]{1,4}:){7}[\da-fA-F]{1,4}|::(?:ffff:(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])(\.\d{1,3}){3})?)$/;

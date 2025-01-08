@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { ipv4Regex } from '../utils/CONSTANTS';
+import { ipRegex } from '../utils/CONSTANTS';
 import config from '../config';
 import avatarForm from './avatar-form';
 import parseForm from './parse-form';
@@ -9,34 +9,34 @@ import type { JWT } from 'next-auth/jwt';
 export function getIP(req: Request) {
 	if (req.headers) {
 		// Standard headers used by Amazon EC2, Heroku, and others.
-		if (ipv4Regex.test(req.headers['x-client-ip'] as string)) return req.headers['x-client-ip'];
+		if (ipRegex.test(req.headers['x-client-ip'] as string)) return req.headers['x-client-ip'];
 
 		// CF-Connecting-IP - applied to every request to the origin. (Cloudflare)
-		if (ipv4Regex.test(req.headers['cf-connecting-ip'] as string)) return req.headers['cf-connecting-ip'];
+		if (ipRegex.test(req.headers['cf-connecting-ip'] as string)) return req.headers['cf-connecting-ip'];
 
 		// Fastly and Firebase hosting header (When forwared to cloud function)
-		if (ipv4Regex.test(req.headers['fastly-client-ip'] as string)) return req.headers['fastly-client-ip'];
+		if (ipRegex.test(req.headers['fastly-client-ip'] as string)) return req.headers['fastly-client-ip'];
 
 		// Akamai and Cloudflare: True-Client-IP.
-		if (ipv4Regex.test(req.headers['true-client-ip'] as string)) return req.headers['true-client-ip'];
+		if (ipRegex.test(req.headers['true-client-ip'] as string)) return req.headers['true-client-ip'];
 
 		// Default nginx proxy/fcgi; alternative to x-forwarded-for, used by some proxies.
-		if (ipv4Regex.test(req.headers['x-real-ip'] as string)) return req.headers['x-real-ip'];
+		if (ipRegex.test(req.headers['x-real-ip'] as string)) return req.headers['x-real-ip'];
 
 		// (Rackspace LB and Riverbed's Stingray)
 		// http://www.rackspace.com/knowledge_center/article/controlling-access-to-linux-cloud-sites-based-on-the-client-ip-address
 		// https://splash.riverbed.com/docs/DOC-1926
-		if (ipv4Regex.test(req.headers['x-cluster-client-ip'] as string)) return req.headers['x-cluster-client-ip'];
+		if (ipRegex.test(req.headers['x-cluster-client-ip'] as string)) return req.headers['x-cluster-client-ip'];
 
-		if (ipv4Regex.test(req.headers['x-forwarded'] as string)) return req.headers['x-forwarded'];
+		if (ipRegex.test(req.headers['x-forwarded-for'] as string)) return req.headers['x-forwarded-for'];
 
-		if (ipv4Regex.test(req.headers['forwarded-for'] as string)) return req.headers['forwarded-for'];
+		if (ipRegex.test(req.headers['forwarded-for'] as string)) return req.headers['forwarded-for'];
 
-		if (ipv4Regex.test(req.headers.forwarded as string)) return req.headers.forwarded;
+		if (ipRegex.test(req.headers.forwarded as string)) return req.headers.forwarded;
 	}
 
 	// Remote address checks.
-	if (req.socket && ipv4Regex.test(req.socket.remoteAddress as string)) return req.socket.remoteAddress;
+	if (req.socket && ipRegex.test(req.socket.remoteAddress as string)) return req.socket.remoteAddress;
 	return req.ip;
 }
 
