@@ -13,9 +13,18 @@ export default class RecentlyViewedFileManager {
 		});
 	}
 
-	create(data: CreateRecentlyViewedFile): Promise<RecentlyViewedFile> {
-		return client.recentlyViewedFile.create({
-			data: {
+	upsert(data: CreateRecentlyViewedFile): Promise<RecentlyViewedFile> {
+		return client.recentlyViewedFile.upsert({
+			where: {
+				fileId_userId: {
+					fileId: data.fileId,
+					userId: data.userId,
+				},
+			},
+			update: {
+				viewedAt: new Date(),
+			},
+			create: {
 				file: {
 					connect: {
 						id: data.fileId,
@@ -30,16 +39,16 @@ export default class RecentlyViewedFileManager {
 		});
 	}
 
-	update(data: CreateRecentlyViewedFile): Promise<RecentlyViewedFile> {
-		return client.recentlyViewedFile.update({
+	fetchUsers(userId: string) {
+		return client.recentlyViewedFile.findMany({
 			where: {
-				fileId_userId: {
-					fileId: data.fileId,
-					userId: data.userId,
-				},
+				userId,
 			},
-			data: {
-				viewedAt: new Date(),
+			orderBy: {
+				viewedAt: 'asc',
+			},
+			include: {
+				file: true,
 			},
 		});
 	}

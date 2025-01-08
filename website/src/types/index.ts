@@ -32,6 +32,7 @@ export interface User {
 export type fileType = 'FILE' | 'DIRECTORY'
 export type fileItem = {
   id: string
+  userId: string
   path: string
   name: string
   children: fileItem[]

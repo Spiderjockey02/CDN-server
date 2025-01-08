@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { avatarForm, getSession } from '../middleware';
-import { Error } from '../utils';
+import { Error, sanitiseObject } from '../utils';
 import emailValidate from 'deep-email-validator';
 import { Client } from 'src/helpers';
 
@@ -76,6 +76,22 @@ export const postChangeEmail = (client: Client) => {
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to update email.');
+		}
+	};
+};
+
+// Endpoint: GET /api/session/recently-viewed
+export const getRecentlyViewed = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const session = await getSession(req);
+			if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+
+			const files = await client.recentlyViewedFileManager.fetchUsers(session.user.id);
+			res.json({ files: sanitiseObject(files) });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to fetch recently viewed files.');
 		}
 	};
 };

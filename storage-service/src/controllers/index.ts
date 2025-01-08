@@ -6,7 +6,6 @@ import { createThumbnail } from '../utils/functions';
 import { PATHS, Error } from '../utils';
 import { getSession } from '../middleware';
 import { Client } from 'src/helpers';
-import { Prisma } from '@prisma/client';
 
 // Endpoint GET /avatar/:userId?
 export const getAvatar = () => {
@@ -90,14 +89,9 @@ export const getContent = (client: Client) => {
 
 		// Update the user's recently viewed file history
 		try {
-			await client.recentlyViewedFileManager.create({ userId, fileId: file.id });
+			await client.recentlyViewedFileManager.upsert({ userId, fileId: file.id });
 		} catch (error) {
-			// If the user has already viewed the file just update the viewedAt value
-			if (error instanceof Prisma.PrismaClientKnownRequestError) {
-				if (error.code === 'P2002') await client.recentlyViewedFileManager.update({ userId, fileId: file.id });
-			} else {
-				client.logger.error(error);
-			}
+			client.logger.error(error);
 		}
 
 		const fileType = lookup(path);

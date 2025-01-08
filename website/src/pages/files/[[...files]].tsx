@@ -1,5 +1,5 @@
 import { FileNavBar, Sidebar, Directory, PhotoAlbum, ImageViewer, RecentNavbar, Toast } from '@/components';
-import type { fileItem } from '../../types';
+import type { fileItem, RecentlyViewed } from '../../types';
 import type { GetServerSidePropsContext } from 'next';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
@@ -24,6 +24,7 @@ export default function Files({ path = '/' }: Props) {
 	const { data: session, status } = useSession({ required: true });
 
 	const [file, setFile] = useState<fileItem>();
+	const [recents, setRecents] = useState<RecentlyViewed[]>([]);
 	const [progress, setProgress] = useState(0);
 	const [, setRemaining] = useState(0);
 	const [filename, setFilename] = useState('');
@@ -94,9 +95,19 @@ export default function Files({ path = '/' }: Props) {
 		}
 	}
 
+	async function fetchRecentlyViewedFiles() {
+		try {
+			const { data } = await axios.get('/api/session/recently-viewed');
+			setRecents(data.files);
+		} catch (err) {
+			console.log(err);
+		}
+	}
+
 
 	useEffect(() => {
 		fetchFiles();
+		if (path.length == 0) fetchRecentlyViewedFiles();
 	}, [path]);
 
 	if (status == 'loading') return null;
@@ -109,8 +120,8 @@ export default function Files({ path = '/' }: Props) {
 					<FileNavBar user={session.user} />
 					<div className="container-fluid">
 						<BreadcrumbNav path={path} isFile={file?.path == path} setviewType={setviewType} onUpload={onFileUploadChange} fetchFiles={fetchFiles} />
-						{(path.length <= 1 && session.user.recentlyViewed?.length >= 1) &&
-							<RecentNavbar user={session.user}/>
+						{(path.length == 0 && recents.length > 0) &&
+							<RecentNavbar files={recents} />
 						}
 						{file == undefined ?
 							null :

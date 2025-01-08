@@ -2,12 +2,27 @@ import { FileNavBar, Sidebar } from '@/components';
 import { useSession } from 'next-auth/react';
 import type { RecentlyViewed } from '@/types';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 export default function Recent() {
 	const { data: session, status } = useSession({ required: true });
-	if (status == 'loading') return null;
-	const files: Array<RecentlyViewed> = session.user.recentlyViewed;
+	const [files, setFiles] = useState<RecentlyViewed[]>([]);
 
+	async function fetchFiles() {
+		try {
+			const { data } = await axios.get('/api/session/recently-viewed');
+			setFiles(data.files);
+		} catch (err) {
+			console.log(err);
+		}
+	}
+
+	useEffect(() => {
+		fetchFiles();
+	}, []);
+
+	if (status == 'loading') return null;
 	return (
 		<>
 			<div className="wrapper" style={{ height:'100vh' }}>

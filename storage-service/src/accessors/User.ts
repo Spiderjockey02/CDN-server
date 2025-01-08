@@ -33,11 +33,6 @@ export default class UserManager {
 			include: {
 				group: true,
 				notifications: true,
-				recentlyViewed: {
-					include: {
-						file: true,
-					},
-				},
 			},
 		});
 		this.cache.set(user.id, user);
@@ -62,11 +57,6 @@ export default class UserManager {
 			include: {
 				group: true,
 				notifications: true,
-				recentlyViewed: {
-					include: {
-						file: true,
-					},
-				},
 			},
 		});
 		this.cache.set(user.id, user);
@@ -127,11 +117,6 @@ export default class UserManager {
 				include: {
 					group: true,
 					notifications: true,
-					recentlyViewed: {
-						include: {
-							file: true,
-						},
-					},
 				},
 			});
 			if (user != null) this.cache.set(user?.id, user);
