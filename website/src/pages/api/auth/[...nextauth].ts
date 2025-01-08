@@ -58,6 +58,9 @@ export const AuthOption = {
 				});
 				if (data.user) session.user = data.user;
 			}
+
+			// Ensure the user's account has not been deleted or removed (from the backend)
+			if (token.user == null || session.user == null) return null;
 			return session;
 		},
 		redirect: ({ url, baseUrl }) => {
