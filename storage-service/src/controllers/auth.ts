@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { Error, sanitiseObject } from '../utils';
 import bcrypt from 'bcrypt';
-import { createNotification } from '../accessors/Notification';
 import { getSession } from '../middleware';
 import emailValidate from 'deep-email-validator';
 import { Client } from 'src/helpers';
@@ -74,7 +73,7 @@ export const postRegister = (client: Client) => {
 		// Save the new user to database + make sure to create folder
 		try {
 			const user = await client.userManager.create({ email, name: username, password: Hashpassword });
-			await createNotification({ userId: user.id, text: 'Please remember to verify your email.' });
+			await client.notificationManager.create({ userId: user.id, text: 'Please remember to verify your email.' });
 			res.json({ success: 'User successfully created' });
 		} catch (err) {
 			client.logger.error(err);
