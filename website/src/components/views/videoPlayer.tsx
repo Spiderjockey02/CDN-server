@@ -1,38 +1,40 @@
-import type { User } from '@/types';
 import { useRef } from 'react';
+import type { KeyboardEvent, ChangeEvent, MouseEvent } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCompress, faExpand, faGear, faPause, faPlay, faVolumeHigh, faVolumeLow, faVolumeOff, faWindowMaximize } from '@fortawesome/free-solid-svg-icons';
+import styles from '@/styles/VideoPlayer.module.css';
+import { formatTime } from '@/utils/functions';
+
 interface Props {
-  dir: string
-  user: User
+	userId: string
+	path: string
 }
 
-export default function VideoPlayer({ dir, user }: Props) {
+export default function VideoPlayer({ userId, path }: Props) {
+	// Buttons and anything that can change
 	const video = useRef<HTMLVideoElement>(null);
 	const videoContainer = useRef<HTMLDivElement>(null);
+	const videoControls = useRef<HTMLDivElement>(null);
 	const duration = useRef<HTMLTimeElement>(null);
 	const seek = useRef<HTMLInputElement>(null);
 	const timeElapsed = useRef<HTMLTimeElement>(null);
 	const progressBar = useRef<HTMLDivElement>(null);
-	const playbackAnimation = useRef<HTMLDivElement>(null);
 	const seekTooltip = useRef<HTMLDivElement>(null);
 	const buffer = useRef<HTMLProgressElement>(null);
 	const volume = useRef<HTMLInputElement>(null);
 	const fullscreenBtn = useRef<HTMLButtonElement>(null);
 	const pipButton = useRef<HTMLButtonElement>(null);
+	const settingsTab = useRef<HTMLDivElement>(null);
+	const playbackText = useRef<HTMLLabelElement>(null);
+	const volumeButton = useRef<HTMLButtonElement>(null);
 
 	// Icons
-	const fullscreenBtns = useRef<Array<any>>([]);
-	const playBtnIcons = useRef<Array<any>>([]);
-	const volumnBtnIcons = useRef<Array<any>>([]);
-	const playIcons = useRef<Array<any>>([]);
+	const fullscreenBtns = useRef<Array<SVGUseElement | null>>([]);
+	const playBtnIcons = useRef<Array<SVGElement | null>>([]);
+	const volumnBtnIcons = useRef<Array<SVGElement | null>>([]);
+	const playIcons = useRef<Array<SVGUseElement | null>>([]);
 
-	function formatTime(timeInSeconds: number) {
-		const result = new Date(timeInSeconds * 1000).toISOString().substr(11, 8);
-		return {
-			minutes: result.substr(3, 2),
-			seconds: result.substr(6, 2),
-		};
-	}
-
+	// Initalise the video (Get duration)
 	function initVideo() {
 		const videoDuration = (video.current as HTMLVideoElement).duration;
 		seek.current?.setAttribute('max', `${videoDuration}`);
@@ -41,25 +43,14 @@ export default function VideoPlayer({ dir, user }: Props) {
 		(duration.current as HTMLTimeElement).setAttribute('datetime', `${time.minutes}m ${time.seconds}s`);
 	}
 
-	function skipAhead(event: any, pressed = false) {
-		const skipTo = (pressed) ? event : (event.target.dataset.seek ?? event.target.value);
+	// Update seek time
+	function updateSeekTime(event: ChangeEvent<HTMLInputElement>) {
+		const skipTo = event.target.dataset.seek ?? event.target.value;
 		(seek.current as HTMLInputElement).value = skipTo;
-		(video.current as HTMLVideoElement).currentTime = skipTo;
+		(video.current as HTMLVideoElement).currentTime = Number(skipTo);
 	}
 
-	function clickedVideo() {
-		togglePlay();
-
-		// Animate
-		(playbackAnimation.current as HTMLDivElement).animate(
-			[
-				{ opacity: 1, transform: 'scale(1)' },
-				{ opacity: 0, transform: 'scale(1.3)' },
-			],
-			{ duration: 500 },
-		);
-	}
-
+	// Update all text that displays seek time
 	function timeUpdate() {
 		const time = formatTime((video.current as HTMLVideoElement).currentTime);
 		(timeElapsed.current as HTMLTimeElement).innerText = `${time.minutes}:${time.seconds}`;
@@ -69,8 +60,9 @@ export default function VideoPlayer({ dir, user }: Props) {
 		(progressBar.current as HTMLDivElement).style.width = `${((video.current as HTMLVideoElement).currentTime / (video.current as HTMLVideoElement).duration * 100) + 0.4}%`;
 	}
 
-	function updateSeekTooltip(event: any) {
-		const skipTo = (event.offsetX / (event.target as HTMLDivElement).clientWidth) * Number((event.target as HTMLDivElement).getAttribute('max'));
+	// Update seek tooltip and relevant information
+	function updateSeekTooltip(event: MouseEvent<HTMLDivElement>) {
+		const skipTo = (event.nativeEvent.offsetX / (event.target as HTMLDivElement).clientWidth) * Number((event.target as HTMLDivElement).getAttribute('max'));
 		(seek.current as HTMLInputElement).setAttribute('data-seek', `${skipTo}`);
 		const t = formatTime(skipTo);
 		(seekTooltip.current as HTMLDivElement).textContent = `${t.minutes}:${t.seconds}`;
@@ -78,10 +70,11 @@ export default function VideoPlayer({ dir, user }: Props) {
 		(seekTooltip.current as HTMLDivElement).style.left = `${event.pageX - rect.left}px`;
 	}
 
+	// Toggle play/pause state
 	function togglePlay() {
 		if (video.current == null) return;
-		playBtnIcons.current.forEach((icon) => icon.classList.toggle('hidden'));
-		playIcons.current.forEach((icon) => icon.classList.toggle('hidden'));
+		playBtnIcons.current.forEach((icon) => icon?.classList.toggle(styles.hidden));
+		playIcons.current.forEach((icon) => icon?.classList.toggle(styles.hidden));
 		if (video.current.paused || video.current.ended) {
 			video.current.play();
 		} else {
@@ -89,23 +82,25 @@ export default function VideoPlayer({ dir, user }: Props) {
 		}
 	}
 
+	// Update the volume icons
 	function updateVolumeIcon() {
 		const vid = (video.current as HTMLVideoElement);
 		const volumeIcons = volumnBtnIcons.current;
-		volumeIcons.forEach((icon) => icon.classList.add('hidden'));
-		// volumeButton.setAttribute('data-title', 'Mute (m)');
+		volumeIcons.forEach((icon) => icon?.classList.add(styles.hidden));
+		volumeButton.current?.setAttribute('data-title', 'Mute (m)');
 
 		if (vid.muted || vid.volume === 0) {
-			volumeIcons[0].classList.remove('hidden');
-			// volumeButton.setAttribute('data-title', 'Unmute (m)');
+			volumeIcons[0]?.classList.remove(styles.hidden);
+			volumeButton.current?.setAttribute('data-title', 'Unmute (m)');
 		} else if (vid.volume > 0 && vid.volume <= 0.5) {
-			volumeIcons[1].classList.remove('hidden');
+			volumeIcons[1]?.classList.remove(styles.hidden);
 		} else {
-			volumeIcons[2].classList.remove('hidden');
+			volumeIcons[2]?.classList.remove(styles.hidden);
 		}
 		(volume.current as HTMLInputElement).value = `${vid.volume}`;
 	}
 
+	// Toggle mute
 	function toggleMute() {
 		const vid = (video.current as HTMLVideoElement);
 		const vol = (volume.current as HTMLInputElement);
@@ -118,6 +113,7 @@ export default function VideoPlayer({ dir, user }: Props) {
 		}
 	}
 
+	// Update video progress (current time etc)
 	function updateProgress() {
 		const vid = (video.current as HTMLVideoElement);
 		if (vid.buffered.length == 0) return;
@@ -127,6 +123,7 @@ export default function VideoPlayer({ dir, user }: Props) {
 		if (durationTime > 0) (buffer.current as HTMLProgressElement).value = (bufferedEnd / durationTime) * 100;
 	}
 
+	// Toggle full screen mode
 	function toggleFullScreen() {
 		const container = (videoContainer.current as HTMLDivElement);
 		if (document.fullscreenElement) {
@@ -135,9 +132,9 @@ export default function VideoPlayer({ dir, user }: Props) {
 			container.requestFullscreen();
 		}
 		updateFullscreenButton(!document.fullscreenElement);
-		// hideControlsOnMobile();
 	}
 
+	// Toggle the picture=in-picture mode
 	async function togglePip() {
 		const vid = (video.current as HTMLVideoElement);
 		try {
@@ -154,8 +151,9 @@ export default function VideoPlayer({ dir, user }: Props) {
 		}
 	}
 
+	// Update the fullscreen buttons
 	function updateFullscreenButton(toggle: boolean) {
-		fullscreenBtns.current.forEach((icon) => icon.classList.toggle('hidden'));
+		fullscreenBtns.current?.forEach((icon) => icon?.classList.toggle(styles.hidden));
 		if (toggle) {
 			(video.current as HTMLVideoElement).style.maxHeight = '100%';
 			fullscreenBtn.current?.setAttribute('data-title', 'Exit full screen (f)');
@@ -165,110 +163,110 @@ export default function VideoPlayer({ dir, user }: Props) {
 		}
 	}
 
-	if (status == 'loading') return null;
+	function handleKeyPress(e: KeyboardEvent<HTMLDivElement>) {
+		e.preventDefault();
+		// 75,32 = k (or space), 77 = m, p= 80, 83 = s
+		switch(e.keyCode) {
+			case 75:
+			case 32:
+				return togglePlay();
+			case 77:
+				return toggleMute();
+			case 80:
+				return togglePip();
+			case 83:
+				return toggleSettings();
+			case 70:
+				return toggleFullScreen();
+		}
+	}
+
+	// Toggle settings tab visibility
+	function toggleSettings() {
+		const settingsDiv = settingsTab.current as HTMLDivElement;
+		if (settingsDiv.style.display === 'none') {
+			settingsDiv.style.display = 'block';
+		} else {
+			settingsDiv.style.display = 'none';
+		}
+	}
+
+	// Update the playback speed
+	function updatePlaybackSpeed(e: ChangeEvent<HTMLInputElement>) {
+		const speed = e.target.value;
+		const curVideo = video.current as HTMLVideoElement;
+		const label = playbackText.current as HTMLLabelElement;
+		curVideo.playbackRate = Number(speed);
+		label.textContent = `Playback speed: ${speed}x`;
+	}
+
+	// On mouse enter, show the volume slider
+	function showVolumeBar() {
+		const volumeBar = volume.current as HTMLInputElement;
+		volumeBar.classList.remove(styles.hidden);
+	}
+
+	// On mouse leave, hide the volume slider
+	function hideVolumeBar() {
+		const volumeBar = volume.current as HTMLInputElement;
+		volumeBar.classList.add(styles.hidden);
+	}
+
 	return (
 		<>
-			<link rel="stylesheet" href="/videoplayer.css" />
-			<div className="video-container" id="video-container" ref={videoContainer}>
-				<div className="playback-animation" id="playback-animation" ref={playbackAnimation}>
-					<svg className="svg playback-icons">
-						<use href="#pause" ref={i => playIcons.current[0] = i}></use>
-						<use className="hidden" href="#play-icon" ref={i => playIcons.current[1] = i}></use>
-					</svg>
-				</div>
-				<video className="video" id="my-video" preload="metadata" ref={video}
-					onLoadedMetadata={() => initVideo()} onTimeUpdate={() => timeUpdate()} onClick={() => clickedVideo()} onProgress={() => updateProgress()} onVolumeChange={() => updateVolumeIcon()}>
-					<source src={`/content/${user.id}/${dir}`} type="video/mp4" />
+			<div className={styles.video_container} tabIndex={0} ref={videoContainer} onKeyDown={handleKeyPress}>
+				<video className={styles.video} preload="metadata" poster={`/thumbnail/${userId}/${path}`} ref={video}
+					onLoadedMetadata={initVideo} onTimeUpdate={timeUpdate} onClick={togglePlay} onProgress={updateProgress} onVolumeChange={updateVolumeIcon}>
+					<source src={`/content/${userId}/${encodeURI(path)}`} />
 				</video>
-				<div id="settings-tab" className="video-controls hidden">
-					<div className="form-group">
-						<label htmlFor="formControlRange" id="textInput">Playback speed: 1.0x</label>
-						<input type="range" className="input-range form-control-range" id="formControlRange" value="1" max="2" step="0.50" />
+				<div className={`${styles.video_controls}`} ref={videoControls}>
+					<div className={styles.video_progress}>
+						<div className={`${styles.progress_bar} ${styles.seek_bar}`} style={{ width: '0%' }} ref={progressBar}></div>
+						<input className={`${styles.input_range} ${styles.seek}`} ref={seek} defaultValue="0" min="0" type="range" step="0.01" onChange={updateSeekTime}/>
+						<progress className={`${styles.progress_bar} ${styles.buffer}`} defaultValue="0" max="100" ref={buffer} />
+						<div className={styles.hidden} ref={seekTooltip} onMouseMove={updateSeekTooltip}>00:00</div>
 					</div>
-				</div>
-				<div className="video-controls" id="video-controls">
-					<div className="video-progress">
-						<div className="progress-bar" id="seek-bar" ref={progressBar}></div>
-						<input className="input-range seek" id="seek" ref={seek} value="0" min="0" type="range" step="0.01" onInput={(e) => skipAhead(e)}/>
-						<progress className="progress-bar" id="buffer" value="0" max="100" ref={buffer}></progress>
-						<div className="seek-tooltip" id="seek-tooltip" ref={seekTooltip} onMouseMove={(e) => updateSeekTooltip(e)}>00:00</div>
-					</div>
-					<div className="bottom-controls">
-						<div className="left-controls">
-							<button className="button" data-title="Play (k)" id="play" onClick={() => togglePlay()}>
-								<svg className="svg playback-icons">
-									<use href="#play-icon" ref={i => playBtnIcons.current[0] = i}></use>
-									<use className="hidden" href="#pause" ref={i => playBtnIcons.current[1] = i}></use>
-								</svg>
+					<div className={styles.bottom_controls}>
+						<div className={styles.left_controls}>
+							<button className={styles.button} data-title="Play (k)" onClick={togglePlay}>
+								<FontAwesomeIcon icon={faPlay} className={styles.icon} ref={i => playBtnIcons.current[0] = i} />
+								<FontAwesomeIcon icon={faPause} className={`${styles.icon} ${styles.hidden}`} ref={i => playBtnIcons.current[1] = i} />
 							</button>
-							<div className="volume-controls" id="volume-controls">
-								<button className="button volume-button" data-title="Mute (m)" id="volume-button" onClick={() => toggleMute()}>
-									<svg className="svg">
-										<use className="hidden" href="#volume-mute" ref={i => volumnBtnIcons.current[0] = i}></use>
-										<use className="hidden" href="#volume-low" ref={i => volumnBtnIcons.current[1] = i}></use>
-										<use href="#volume-high" ref={i => volumnBtnIcons.current[2] = i}></use>
-									</svg>
+							<div className={styles.volume_controls} onMouseEnter={showVolumeBar} onMouseLeave={hideVolumeBar}>
+								<button className={styles.button} ref={volumeButton} data-title="Mute (m)" onClick={toggleMute}>
+									<FontAwesomeIcon icon={faVolumeOff} className={`${styles.icon} ${styles.hidden}`} ref={i => volumnBtnIcons.current[0] = i} />
+									<FontAwesomeIcon icon={faVolumeLow} className={`${styles.icon} ${styles.hidden}`} ref={i => volumnBtnIcons.current[1] = i} />
+									<FontAwesomeIcon icon={faVolumeHigh} className={styles.icon} ref={i => volumnBtnIcons.current[2] = i} />
 								</button>
-								<input className="volume" id="volume" value="1" data-mute="0.5" type="range" max="1" min="0" step="0.05" ref={volume} onInput={(i) => (video.current as HTMLVideoElement).volume = Number(i.currentTarget.value)}/>
+								<input className={`${styles.volume} ${styles.hidden}`} defaultValue="1" type="range" max="1" min="0" step="0.05" ref={volume} onInput={(i) => (video.current as HTMLVideoElement).volume = Number(i.currentTarget.value)}/>
 							</div>
-							<div className="time">
-								<time id="time-elapsed" ref={timeElapsed}>00:00</time>
+							<div>
+								<time ref={timeElapsed}>00:00</time>
 								<span> / </span>
-								<time id="duration" ref={duration}>00:00</time>
+								<time ref={duration}>00:00</time>
 							</div>
 						</div>
-						<div className="right-controls">
-							<button className="button pip-button" data-title="PIP (p)" id="pip-button" ref={pipButton} onClick={() => togglePip()}>
-								<svg className="svg">
-									<use href="#pip"></use>
-								</svg>
+						<div>
+							<button className={`${styles.button} ${styles.pip_button}`} data-title="PIP (p)" ref={pipButton} onClick={togglePip}>
+								<FontAwesomeIcon icon={faWindowMaximize} className={styles.icon} />
 							</button>
-							<button data-title="Settings (s)" className="settings-button" id="settings-button">
-								<svg className="svg">
-									<use href="#gear"></use>
-								</svg>
+							<button data-title="Settings (s)" className={styles.button} onClick={toggleSettings}>
+								<FontAwesomeIcon className={styles.icon} icon={faGear} />
 							</button>
-							<button data-title="Full screen (f)" className="fullscreen-button" id="fullscreen-button" ref={fullscreenBtn} onClick={() => toggleFullScreen()}>
-								<svg className="svg">
-									<use href="#fullscreen" ref={i => fullscreenBtns.current[0] = i}></use>
-									<use href="#fullscreen-exit" className="hidden" ref={i => fullscreenBtns.current[1] = i}></use>
-								</svg>
+							<button data-title="Full screen (f)" className={`${styles.button} ${styles.fullscreen_button}`} ref={fullscreenBtn} onClick={toggleFullScreen}>
+								<FontAwesomeIcon className={styles.icon} icon={faExpand} ref={i => fullscreenBtns.current[0] = i} />
+								<FontAwesomeIcon className={`${styles.icon} ${styles.hidden}`} icon={faCompress} ref={i => fullscreenBtns.current[1] = i} />
 							</button>
+						</div>
+					</div>
+					<div className={`${styles.settings_popup}`} ref={settingsTab} style={{ display: 'none' }}>
+						<div>
+							<label htmlFor="playbackSpeed" ref={playbackText}>Playback speed: 1.0x</label>
+							<input type="range" id="playbackSpeed" defaultValue="1" max="2" step="0.50" onChange={(e) => updatePlaybackSpeed(e)}/>
 						</div>
 					</div>
 				</div>
 			</div>
-			<svg className="svg" style={{ display: 'none' }}>
-				<defs>
-					<symbol id="pause" viewBox="0 0 24 24">
-						<path d="M14.016 5.016h3.984v13.969h-3.984v-13.969zM6 18.984v-13.969h3.984v13.969h-3.984z"></path>
-					</symbol>
-					<symbol id="play-icon" viewBox="0 0 24 24">
-						<path d="M8.016 5.016l10.969 6.984-10.969 6.984v-13.969z"></path>
-					</symbol>
-					<symbol id="volume-high" viewBox="0 0 24 24">
-						<path d="M14.016 3.234q3.047 0.656 5.016 3.117t1.969 5.648-1.969 5.648-5.016 3.117v-2.063q2.203-0.656 3.586-2.484t1.383-4.219-1.383-4.219-3.586-2.484v-2.063zM16.5 12q0 2.813-2.484 4.031v-8.063q1.031 0.516 1.758 1.688t0.727 2.344zM3 9h3.984l5.016-5.016v16.031l-5.016-5.016h-3.984v-6z"></path>
-					</symbol>
-					<symbol id="volume-low" viewBox="0 0 24 24">
-						<path d="M5.016 9h3.984l5.016-5.016v16.031l-5.016-5.016h-3.984v-6zM18.516 12q0 2.766-2.531 4.031v-8.063q1.031 0.516 1.781 1.711t0.75 2.32z"></path>
-					</symbol>
-					<symbol id="volume-mute" viewBox="0 0 24 24">
-						<path d="M12 3.984v4.219l-2.109-2.109zM4.266 3l16.734 16.734-1.266 1.266-2.063-2.063q-1.547 1.313-3.656 1.828v-2.063q1.172-0.328 2.25-1.172l-4.266-4.266v6.75l-5.016-5.016h-3.984v-6h4.734l-4.734-4.734zM18.984 12q0-2.391-1.383-4.219t-3.586-2.484v-2.063q3.047 0.656 5.016 3.117t1.969 5.648q0 2.203-1.031 4.172l-1.5-1.547q0.516-1.266 0.516-2.625zM16.5 12q0 0.422-0.047 0.609l-2.438-2.438v-2.203q1.031 0.516 1.758 1.688t0.727 2.344z"></path>
-					</symbol>
-					<symbol id="fullscreen" viewBox="0 0 24 24">
-						<path d="M14.016 5.016h4.969v4.969h-1.969v-3h-3v-1.969zM17.016 17.016v-3h1.969v4.969h-4.969v-1.969h3zM5.016 9.984v-4.969h4.969v1.969h-3v3h-1.969zM6.984 14.016v3h3v1.969h-4.969v-4.969h1.969z"></path>
-					</symbol>
-					<symbol id="fullscreen-exit" viewBox="0 0 24 24">
-						<path d="M15.984 8.016h3v1.969h-4.969v-4.969h1.969v3zM14.016 18.984v-4.969h4.969v1.969h-3v3h-1.969zM8.016 8.016v-3h1.969v4.969h-4.969v-1.969h3zM5.016 15.984v-1.969h4.969v4.969h-1.969v-3h-3z"></path>
-					</symbol>
-					<symbol id="pip" viewBox="0 0 24 24">
-						<path d="M21 19.031v-14.063h-18v14.063h18zM23.016 18.984q0 0.797-0.609 1.406t-1.406 0.609h-18q-0.797 0-1.406-0.609t-0.609-1.406v-14.016q0-0.797 0.609-1.383t1.406-0.586h18q0.797 0 1.406 0.586t0.609 1.383v14.016zM18.984 11.016v6h-7.969v-6h7.969z"></path>
-					</symbol>
-					<symbol id="gear" viewBox="0 0 24 24">
-						<path d="M24 13.616v-3.232l-2.869-1.02c-.198-.687-.472-1.342-.811-1.955l1.308-2.751-2.285-2.285-2.751 1.307c-.613-.339-1.269-.613-1.955-.811l-1.021-2.869h-3.232l-1.021 2.869c-.686.198-1.342.471-1.955.811l-2.751-1.308-2.285 2.285 1.308 2.752c-.339.613-.614 1.268-.811 1.955l-2.869 1.02v3.232l2.869 1.02c.197.687.472 1.342.811 1.955l-1.308 2.751 2.285 2.286 2.751-1.308c.613.339 1.269.613 1.955.811l1.021 2.869h3.232l1.021-2.869c.687-.198 1.342-.472 1.955-.811l2.751 1.308 2.285-2.286-1.308-2.751c.339-.613.613-1.268.811-1.955l2.869-1.02zm-12 2.384c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4z"/>
-					</symbol>
-				</defs>
-			</svg>
 		</>
 	);
 }
