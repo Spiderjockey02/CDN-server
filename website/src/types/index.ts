@@ -35,7 +35,9 @@ export type fileItem = {
   path: string
   name: string
   children: fileItem[]
-  modified: number
+  createdAt: Date
+  deletedAt: Date
+  updatedAt: Date
   size: number
   type: fileType
   _count?: {

@@ -48,7 +48,9 @@ model File {
   name        String
   size        BigInt
   type        FileType  @default(FILE)    
-  modified    DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
   children    File[]    @relation("FileToParent")
   parent      File?     @relation("FileToParent", fields: [parentId], references: [id])
   parentId    String?   

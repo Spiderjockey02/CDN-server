@@ -76,7 +76,7 @@ export default function BreadcrumbNav({ path, isFile, setviewType, onUpload, fet
           		</label>
           		<input type="hidden" value="test" name="path" />
           		<label className="dropdown-item btn" id="fileHover">
-								Folder upload<input type="file" hidden name="sampleFile" className="upload-input" ref={input => {
+								Folder upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onUpload} ref={input => {
           				if (input) {
           					input.setAttribute('webkitdirectory', '');
           					input.setAttribute('mozdirectory', '');

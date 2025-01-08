@@ -51,9 +51,9 @@ export default function Directory({ files, dir, userId }: Props) {
 			case 'Date_Mod': {
 				setSortOrder(sortOrder == 'ascn' ? 'dscn' : 'ascn');
 				if (sortOrder == 'ascn') {
-					files.children = files.children.sort((a, b) => a.modified > b.modified ? 1 : -1);
+					files.children = files.children.sort((a, b) => a.createdAt > b.createdAt ? 1 : -1);
 				} else {
-					files.children = files.children.sort((a, b) => a.modified < b.modified ? 1 : -1);
+					files.children = files.children.sort((a, b) => a.createdAt < b.createdAt ? 1 : -1);
 				}
 				setSortKey(sort);
 				break;

@@ -1,12 +1,12 @@
 import { FileNavBar, Sidebar } from '@/components';
 import { useSession } from 'next-auth/react';
-import type { RecentFiles } from '@/types';
+import type { RecentlyViewed } from '@/types';
 import Link from 'next/link';
 
 export default function Recent() {
 	const { data: session, status } = useSession({ required: true });
 	if (status == 'loading') return null;
-	const files: Array<RecentFiles> = session.user.recentFiles;
+	const files: Array<RecentlyViewed> = session.user.recentlyViewed;
 
 	return (
 		<>
@@ -20,7 +20,7 @@ export default function Recent() {
 								<nav style={{ fontSize:'18.72px' }} aria-label="breadcrumb">
 									<ol className="breadcrumb" style={{ backgroundColor:'white' }}>
 										<li className="breadcrumb-item">
-											<b style={{ color:'black' }}>Recent</b>
+											<b style={{ color:'black' }}>Recently viewed files</b>
 										</li>
 									</ol>
 								</nav>
@@ -40,12 +40,12 @@ export default function Recent() {
 								</tr>
 							</thead>
 							<tbody>
-								{files.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(_ => (
-									<tr key={_.location}>
+								{files.sort((a, b) => new Date(b.viewedAt).getTime() - new Date(a.viewedAt).getTime()).map(_ => (
+									<tr key={_.id}>
 										<th scope="row" className="text-truncate" style={{ maxWidth: 'calc( 70 * 1vw )' }}>
-											<Link href={`/files/${_.location}`}>{_.location}</Link>
+											<Link style={{ textDecoration: 'none', color: 'black' }} href={`/files${_.file.path}`}>{_.file.path}</Link>
 										</th>
-										<td>{new Date(_.createdAt).toLocaleString('en-US')}</td>
+										<td>{new Date(_.viewedAt).toLocaleString('en-US')}</td>
 									</tr>
 								))}
 							</tbody>

@@ -5,8 +5,6 @@ import config from '../config';
 import Script from 'next/script';
 import axios from 'axios';
 import { formatBytes } from '@/utils/functions';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFile } from '@fortawesome/free-solid-svg-icons';
 
 interface Props {
 	totalUserCount: number

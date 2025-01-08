@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useOnClickOutside } from '@/utils/useOnClickOutisde';
-import type { BaseSyntheticEvent } from 'react';
+import type { BaseSyntheticEvent, RefObject } from 'react';
 import Modal from '../UI/Modal';
 import axios from 'axios';
 import { fileItem } from '@/types';
@@ -20,7 +20,7 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 	const [action, setAction] = useState<'copy' | 'move' | ''>('');
 	const [selectedDestination, setSelectedDestination] = useState('');
 
-	useOnClickOutside(contextMenuRef, closeContextMenu);
+	useOnClickOutside(contextMenuRef as RefObject<HTMLDivElement>, closeContextMenu);
 	function closeModal(id: string) {
 		document.getElementById(id)?.classList.remove('show');
 		document.getElementById(id)?.setAttribute('aria-hidden', 'true');

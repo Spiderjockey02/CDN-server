@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import { useState, type MouseEvent } from 'react';
 import path from 'path';
 import Image from 'next/image';
-import { faShareAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faDownload, faFileSignature, faShareAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 interface Props {
@@ -31,17 +31,17 @@ export default function FileItemRow({ dir, userId, file, isChecked, openContextM
 	return (
 		<>
 			<tr key={file.name} style={{ cursor: 'pointer' }} onContextMenu={(e) => openContextMenu(e, file)} onClick={handleRowClick}>
-				<th className="dot" style={{ textAlign:'center' }} onClick={(e) => handleCheckboxToggle(e, file.name)}>
+				<th className="dot" style={{ textAlign:'center' }} >
 					<div className="form-check form-check-inline hide">
-						<input className="form-check-input" type="checkbox" name="exampleRadios" id={encodeURI(file.name)} checked={isChecked} />
+						<input className="form-check-input" type="checkbox" name="exampleRadios" id={encodeURI(file.name)} checked={isChecked} onClick={(e) => handleCheckboxToggle(e, file.name)} />
 					</div>
 				</th>
 				<th id="Type" scope="col" style={{ textAlign:'center' }}>{getFileIcon(file)}</th>
 				<th scope="row" className="text-truncate" style={{ maxWidth: 'calc( 70 * 1vw )' }}>
 					<Link onClick={handleTextClick} style={{ textDecoration: 'none', color: 'black' }} href="#">{file.name}</Link>
 				</th>
-				<td>{file.type == 'file' ? formatBytes(file.size) : file.children?.length ?? 0} file{file.children?.length !== 1 ? 's' : ''}</td>
-				<td>{new Date(file.modified).toLocaleString('en-US')}</td>
+				<td>{file.type == 'FILE' ? formatBytes(file.size) : `${file._count?.children ?? 0} files`}</td>
+				<td>{new Date(file.createdAt).toLocaleString('en-US')}</td>
 			</tr>
 			<div className={`offcanvas offcanvas-end ${show ? 'show' : ''}`} id="offcanvasExample" aria-labelledby="offcanvasExampleLabel" style={{ maxWidth: '75%' }}>
 				<div className="offcanvas-header">
@@ -55,8 +55,28 @@ export default function FileItemRow({ dir, userId, file, isChecked, openContextM
 							<br />
 							<h4>{file.name}</h4>
 						</span>
-						<p>Created on: {new Date(file.modified).toLocaleString('en-US')}</p>
-						<p>{file.type == 'file' ? `Size: ${formatBytes(file.size)}` : file.children?.length ?? 0} file{file.children?.length !== 1 ? 's' : ''}</p>
+						<p>Created on: {new Date(file.createdAt).toLocaleString('en-US')}</p>
+						<p>{file.type == 'FILE' ? `Size: ${formatBytes(file.size)}` : file.children?.length ?? 0} file{file.children?.length !== 1 ? 's' : ''}</p>
+					</div>
+					<div className='d-flex justify-content-evenly'>
+						<button className='btn'>
+							<FontAwesomeIcon icon={faShareAlt} />
+						</button>
+						<button className='btn'>
+							<FontAwesomeIcon icon={faCopy} />
+						</button>
+						<button className='btn'>
+							<FontAwesomeIcon icon={faDownload} />
+						</button>
+						<button className='btn'>
+							<FontAwesomeIcon icon={faTrash} />
+						</button>
+						<button className='btn'>
+							<FontAwesomeIcon icon={faCopy} />
+						</button>
+						<button className='btn'>
+							<FontAwesomeIcon icon={faFileSignature} />
+						</button>
 					</div>
 				</div>
 			</div>
