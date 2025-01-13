@@ -80,12 +80,18 @@ export const getThumbnail = (client: Client) => {
 // Endpoint GET /content/:userid/:path(*)
 export const getContent = (client: Client) => {
 	return async (req: Request, res: Response) => {
+		const session = await getSession(req);
+		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+
 		const userId = req.params.userid as string;
 		const path = req.params.path as string;
 
 		// Fetch file from database
 		const file = await client.FileManager.getByFilePath(userId, path);
 		if (!file) return Error.MissingResource(res, 'File not found');
+
+		// Make sure the file is being accessed by the owner
+		if (file.userId !== session.user.id) return Error.MissingAccess(res);
 
 		// Update the user's recently viewed file history
 		try {
@@ -94,8 +100,12 @@ export const getContent = (client: Client) => {
 			client.logger.error(error);
 		}
 
-		const fileType = lookup(path);
-		if (fileType == false) return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
+		const fileType = lookup(file.path);
+		if (fileType == false) {
+			const t = fs.readFileSync(`${PATHS.CONTENT}/${userId}/${path}`, { encoding: 'utf-8' });
+			res.type('text/plain');
+			return res.send(t);
+		}
 
 		// Check what type of file it is, to send the relevent data
 		switch(fileType.split('/')[0]) {
@@ -136,6 +146,12 @@ export const getContent = (client: Client) => {
 					// Stream the video chunk to the client
 					videoStream.pipe(res);
 				}
+				break;
+			}
+			case 'text': {
+				const t = fs.readFileSync(`${PATHS.CONTENT}/${userId}/${path}`, { encoding: 'utf-8' });
+				res.type('text/plain');
+				return res.send(t);
 			}
 		}
 	};
