@@ -17,7 +17,7 @@ import Modal from './UI/Modal';
 
 // Views
 import FileItemRow from './views/FileItemRow';
-import ImageViewer from './views/ImageViewer';
+import FileViewer from './views/FileViewer';
 import VideoPlayer from './views/VideoPlayer';
 import Directory from './views/directory';
 import PhotoAlbum from './views/photoAlbum';
@@ -25,4 +25,4 @@ import PhotoAlbum from './views/photoAlbum';
 
 export { ContextMenu, ErrorPopup, SuccessPopup, Toast, BreadcrumbNav,
 	FileNavBar, Footer, HomeNavbar, RecentNavbar, Sidebar, Modal, FileItemRow,
-	ImageViewer, VideoPlayer, Directory, PhotoAlbum };
+	FileViewer, VideoPlayer, Directory, PhotoAlbum };

@@ -1,4 +1,4 @@
-import { FileNavBar, Sidebar, Directory, PhotoAlbum, ImageViewer, RecentNavbar, Toast } from '@/components';
+import { FileNavBar, Sidebar, Directory, PhotoAlbum, FileViewer, RecentNavbar, Toast } from '@/components';
 import type { fileItem, RecentlyViewed } from '../../types';
 import type { GetServerSidePropsContext } from 'next';
 import { ChangeEvent, useEffect, useState } from 'react';
@@ -126,7 +126,7 @@ export default function Files({ path = '/' }: Props) {
 						{file == undefined ?
 							null :
 							file.type == 'FILE' ?
-						 <ImageViewer files={file} dir={path} user={session.user} /> :
+						 <FileViewer file={file} userId={session.user.id} /> :
 								viewType == 'Tiles' ?
 									<PhotoAlbum files={file} dir={path} user={session.user} /> :
 									<Directory files={file} dir={path} userId={session.user.id} />
