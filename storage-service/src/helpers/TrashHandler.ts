@@ -1,61 +1,25 @@
-import type { DeleteFile } from '@prisma/client';
+import path from 'node:path';
+import FileAccessor from '../accessors/File';
+import fs from 'node:fs/promises';
 import { PATHS } from '../utils';
-import fs from 'fs/promises';
-import { addDeleteFile, deleteDeleteFile, fetchAllDeleteFiles } from '../accessors/DeleteFile';
-import { getRecentFilebyPath, deleteRecentFileById } from '../accessors/Recent';
-const HOUR_IN_TIME = 60 * 60 * 1000;
 
-export default class TrashHandler {
-	public files: Array<DeleteFile>;
+export default class TrashHandler extends FileAccessor {
 	constructor() {
-		this.files = [];
-		this.init();
+		super();
 	}
 
-	async init() {
-		this.files = await fetchAllDeleteFiles();
-		setInterval(() => {
-			for (const file of this.files) {
-				if (new Date(file.DeleteFileAt).getTime() <= new Date().getTime()) this.deleteFile(file);
-			}
-		}, HOUR_IN_TIME);
-	}
+	async addFile(userId: string, filePath: string) {
+		const file = await this.getByFilePath(userId, filePath);
+		if (file == null) throw new Error('Invalid path');
 
-	/**
-	 * Function for deleting file.
-	 * @param {string} userId The user Id
-	 * @param {string} originalPath The path to the file
-	 * @param {string} name The name of the file
-	 * @return Promise<void>
-	*/
-	async addFileToPending(userId: string, originalPath: string, name: string) {
-		try {
-			await fs.mkdir(`${PATHS.TRASH}/${userId}${originalPath}`, { recursive: true });
-			await fs.rename(`${PATHS.CONTENT}/${userId}${originalPath}${name}`, `${PATHS.TRASH}/${userId}${originalPath}${name}`);
-			const file = await addDeleteFile({ userId, location: `${originalPath}${name}` });
-			this.files.push(file);
-		} catch (err) {
-			console.log(err);
-		}
-	}
+		this.update({
+			id: file.id,
+			deletedAt: new Date(),
+		});
 
-	/**
-	 * Function for deleting file.
-	 * @param {DeleteFile} file The file for deleting
-	 * @return Promise<void>
-	*/
-	private async deleteFile(file: DeleteFile) {
-		try {
-			const recentFile = await getRecentFilebyPath({ userId: file.userId, path: `/${file.location}` });
-			if (recentFile) await deleteRecentFileById({ id: recentFile.id });
-			await deleteDeleteFile({ id: file.id });
-			await fs.rm(`${PATHS.TRASH}/${file.userId}${file.location}`);
-
-			// remove from cache
-			const index = this.files.indexOf(file);
-			if (index > -1) this.files.splice(index, 1);
-		} catch (err) {
-			console.log(err);
-		}
+		// Make sure the folders exist
+		const targetDir = path.join(PATHS.TRASH, userId, file.path);
+		await fs.mkdir(path.dirname(targetDir), { recursive: true });
+		await fs.rename(path.join(PATHS.CONTENT, userId, file.path), path.join(PATHS.TRASH, userId, file.path));
 	}
 }

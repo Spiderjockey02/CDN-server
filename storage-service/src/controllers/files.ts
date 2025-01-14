@@ -55,8 +55,7 @@ export const deleteFile = (client: Client) => {
 		const userPath = (req.headers.referer)?.split('/files')[1] ?? '';
 
 		try {
-			await client.FileManager.delete(session.user.id, path.join(userPath, fileName));
-			// await trash.addFileToPending(session.user.id, userPath, fileName);
+			await client.FileManager.delete(session.user.id, `${userPath}/${fileName}`);
 			res.json({ success: 'Successfully deleted item.' });
 		} catch (err) {
 			client.logger.error(err);

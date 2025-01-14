@@ -14,6 +14,7 @@ export interface updateFile {
   path?: string
   name?: string
   size?: bigint
+  deletedAt?: Date
   parentId?: string
   children?: createFile
 }

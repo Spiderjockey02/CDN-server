@@ -6,6 +6,7 @@ import { exec } from 'node:child_process';
 import type { Response } from 'express';
 import FileAccessor from '../accessors/File';
 import archiver from 'archiver';
+import TrashHandler from './TrashHandler';
 const cmd = util.promisify(exec);
 
 interface diskStorage {
@@ -14,11 +15,13 @@ interface diskStorage {
 }
 export default class FileManager extends FileAccessor {
 	diskData: diskStorage;
+	TrashHandler: TrashHandler;
 	constructor() {
 		super();
-		this.diskData = { free: 0, total: 0 };
+		this.TrashHandler = new TrashHandler();
 
 		// Fetch disk data & update every 5 minutes
+		this.diskData = { free: 0, total: 0 };
 		this._fetchDiskData();
 		setInterval(() => this._fetchDiskData(), 1000 * 60 * 10);
 	}
@@ -39,12 +42,7 @@ export default class FileManager extends FileAccessor {
 	  * @param {string} filePath file path of the file.
 	*/
 	async delete(userId: string, filePath: string) {
-		const fullPath = path.resolve(PATHS.CONTENT, userId, filePath);
-		console.log(fullPath);
-		const isPathValid = this._verifyTraversal(userId, fullPath);
-		if (!isPathValid) throw new Error('Invalid path');
-
-		// Update this so it moves to trash instead of deleting (TrashHandler)
+		this.TrashHandler.addFile(userId, filePath);
 	}
 
 	/**

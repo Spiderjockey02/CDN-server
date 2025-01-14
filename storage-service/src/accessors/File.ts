@@ -48,6 +48,7 @@ export default class FileAccessor {
 				name: data.name,
 				size: data.size,
 				parentId: data.parentId,
+				deletedAt: data.deletedAt,
 				children: {
 					create: data.children,
 				},
@@ -77,7 +78,9 @@ export default class FileAccessor {
 		let file = this.cache.get(id) ?? null;
 		if (file == null) {
 			file = await client.file.findUnique({
-				where: { id },
+				where: {
+					id, deletedAt: null,
+				},
 			});
 			if (file !== null) this.cache.set(id, file);
 		}
@@ -87,17 +90,26 @@ export default class FileAccessor {
 
 	async getByFilePath(userId: string, filePath: string) {
 		return client.file.findFirst({
-			where: { userId,
+			where: {
+				userId,
+				deletedAt: null,
 				path: {
 					equals: filePath.startsWith('/') ? filePath : `/${filePath}`,
 				},
 			},
 			include: {
 				children: {
+					where: {
+						deletedAt: null,
+					},
 					include: {
 						_count: {
 							select: {
-								children: true,
+								children: {
+									where: {
+										deletedAt: null,
+									},
+								},
 							},
 						},
 					},
@@ -119,6 +131,7 @@ export default class FileAccessor {
 					startsWith: name,
 				},
 				type,
+				deletedAt: null,
 			},
 		});
 	}
@@ -137,6 +150,17 @@ export default class FileAccessor {
 			where: {
 				userId,
 				type: 'DIRECTORY',
+			},
+		});
+	}
+
+	getAllDeletedFiles(userId?: string) {
+		return client.file.findMany({
+			where: {
+				userId,
+				deletedAt: {
+					not: null,
+				},
 			},
 		});
 	}
