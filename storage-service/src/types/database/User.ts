@@ -7,21 +7,16 @@ export interface GetUsers {
 	analyse?: boolean
 }
 
-
 export type fetchUserbyParam = {
 	email?: string
 	id?: string
 }
-
-// Find a user by email (for login)
-
 
 export interface createUser {
 	email: string
 	name: string
 	password: string
 }
-// Create a user
 
 export interface updateUser {
 	id: string
@@ -29,7 +24,6 @@ export interface updateUser {
 	email?: string
 	totalStorageSize?: bigint
 }
-
 
 export interface UserToGroupProps {
 	userId: string
@@ -39,5 +33,6 @@ export interface UserToGroupProps {
 export type UserWithGroup = Prisma.UserGetPayload<{
   include: {
     group: true
+		notifications: true
   }
 }>

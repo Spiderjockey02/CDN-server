@@ -21,8 +21,9 @@ import FileViewer from './views/FileViewer';
 import VideoPlayer from './views/VideoPlayer';
 import Directory from './views/directory';
 import PhotoAlbum from './views/photoAlbum';
+import TextViewer from './views/TextViewer';
 
 
 export { ContextMenu, ErrorPopup, SuccessPopup, Toast, BreadcrumbNav,
 	FileNavBar, Footer, HomeNavbar, RecentNavbar, Sidebar, Modal, FileItemRow,
-	FileViewer, VideoPlayer, Directory, PhotoAlbum };
+	FileViewer, VideoPlayer, Directory, PhotoAlbum, TextViewer };

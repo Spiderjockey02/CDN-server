@@ -15,9 +15,13 @@ export default function FileViewer({ file }: Props) {
 
 	switch (mimeType.split('/')[0]) {
 		case 'image':
-			return <Image className="center" src={`/content/${file.userId}${file.path}`}
-				alt={file.name} width={1000} height={1000} style={{ maxHeight: '80vh', maxWidth: '80vw', height: 'auto' }}
-			/>;
+			return (
+				<div className='d-flex justify-content-center'>
+					<Image className="center" src={`/content/${file.userId}${file.path}`}
+						alt={file.name} width={1000} height={1000} style={{ maxHeight: '80vh', width: 'auto' }}
+					/>;
+				</div>
+			);
 		case 'video':
 			return <VideoPlayer path={file.path} userId={file.userId} />;
 		case 'text':
