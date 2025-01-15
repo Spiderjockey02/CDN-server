@@ -1,12 +1,9 @@
-import 'bootstrap/dist/css/bootstrap.css';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import type { BaseSyntheticEvent } from 'react';
-const REGEX = /^[-a-z0-9~!$%^&*_=+}{'?]+(\.[-a-z0-9~!$%^&*_=+}{'?]+)*@([a-z0-9_][-a-z0-9_]*(\.[-a-z0-9_]+)*\.(aero|arpa|biz|com|coop|edu|gov|info|int|mil|museum|name|net|org|pro|travel|mobi|[a-z][a-z])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?$/i;
 import Link from 'next/link';
 import Image from 'next/image';
 import ErrorPopup from '../components/menus/Error-pop';
-import config from 'src/config';
 import axios from 'axios';
 import { getServerSession } from 'next-auth/next';
 import type { GetServerSidePropsContext } from 'next';
@@ -19,59 +16,59 @@ type ErrorTypes = {
 export default function Register() {
 	const [disabled, setDisabled] = useState(true);
 	const [errors, setErrors] = useState<ErrorTypes[]>([]);
+	const [user, setUser] = useState({
+		username: '',
+		email: '',
+		password: '',
+		password2: '',
+	});
+	const [birth, setBirth] = useState({
+		day: 0,
+		month: 0,
+		year: 0,
+	});
+
+
 	const router = useRouter();
 
 	const handleSubmit = async (event: BaseSyntheticEvent) => {
 		event.preventDefault();
 
-		const username = (document.getElementById('username') as HTMLInputElement).value;
-		const email = (document.getElementById('email') as HTMLInputElement).value;
-		const password = (document.getElementById('password') as HTMLInputElement).value;
-		const password2 = (document.getElementById('password2') as HTMLInputElement).value;
-		const day = (document.getElementById('day') as HTMLSelectElement).value;
-		const month = (document.getElementById('month') as HTMLSelectElement).value;
-		const year = Number((document.getElementById('year') as HTMLSelectElement).value);
-
 		// Check if a username was entered
-		if (username.length == 0) {
+		if (user.username.length == 0) {
 			return setErrors([{ type: 'username', error: 'This field is missing' }]);
-		} else if (username.includes('bad')) {
+		} else if (user.username.includes('bad')) {
 			// Sanitise usernames (Show error of what characters are invalid)
 			return setErrors([{ type: 'username', error: 'Contains prohibited words/letters.' }]);
 		}
 
 		// Check if an email was entered
-		if (email.length == 0) {
-			return setErrors([{ type: 'email', error: 'This field is missing' }]);
-		} else if (!REGEX.test(email)) {
-			return setErrors([{ type: 'email', error: 'Invalid email address' }]);
-		}
+		if (user.email.length == 0) return setErrors([{ type: 'email', error: 'This field is missing' }]);
 
 		// Make sure passwords match
-		if (password.length == 0 || password2.length == 0) {
+		if (user.password.length == 0 || user.password2.length == 0) {
 			return setErrors([{ type: 'password', error: 'This field is missing' }]);
-		} else if (password != password2) {
+		} else if (user.password != user.password2) {
 			return setErrors([{ type: 'password', error: 'The passwords do not match' }]);
-		} else if (password.length <= 8) {
+		} else if (user.password.length <= 8) {
 			return setErrors([{ type: 'password', error: 'Your password must be more than 8 characters' }]);
 		}
 
 		// Make sure it's a valid date of birth (for example not 30 days in February)
-		if (typeof Date.parse(`${month} ${day} ${year}`) !== 'number') {
+		if (typeof Date.parse(`${birth.month} ${birth.day} ${birth.year}`) !== 'number') {
 			return setErrors([{ type: 'age', error: 'Invalid date of birth' }]);
-		} else if (year >= (new Date().getFullYear() - 13)) {
+		} else if (birth.year >= (new Date().getFullYear() - 13)) {
 			// Make sure the user isn't younger than 13 years old.
 			return setErrors([{ type: 'age', error: 'You are too young to use this website.' }]);
 		}
-		console.log('errors', errors);
 
 		// Create the new user
-		const { data } = await axios.post(`${config.backendURL}/api/auth/register`, {
-			headers: {
-				'Access-Control-Allow-Origin': 'http://192.168.0.14:3000',
-			},
+		const { data } = await axios.post('/api/auth/register', {
 			data: {
-				username, email, password, password2: password,
+				username: user.username,
+				email: user.email,
+				password: user.password,
+				password2: user.password,
 			},
 		});
 
@@ -103,7 +100,7 @@ export default function Register() {
 														<label className="form-label text-danger" htmlFor="username">Username - {errors.find(i => i.type == 'username')?.error}</label>
 														: <label className="form-label" htmlFor="username">Username</label>
 													}
-													<input type="text" id="username" className="form-control" name="username" />
+													<input type="text" id="username" className="form-control" name="username" onChange={(e) => setUser(u => ({ ...u, username: e.target.value }))} />
 												</div>
 											</div>
 
@@ -114,7 +111,7 @@ export default function Register() {
 														<label className="form-label text-danger" htmlFor="email">Email - {errors.find(i => i.type == 'email')?.error}</label>
 														: <label className="form-label" htmlFor="email">Email</label>
 													}
-													<input type="email" id="email" className="form-control" name="email" />
+													<input type="email" id="email" className="form-control" name="email" onChange={(e) => setUser(u => ({ ...u, email: e.target.value }))} />
 												</div>
 											</div>
 
@@ -127,13 +124,13 @@ export default function Register() {
 																<label className="form-label text-danger" htmlFor="password">Password - {errors.find(i => i.type == 'password')?.error}</label>
 																: <label className="form-label" htmlFor="password">Password</label>
 															}
-															<input type="password" id="password" className="form-control" />
+															<input type="password" id="password" className="form-control" onChange={(e) => setUser(u => ({ ...u, password: e.target.value }))} />
 														</div>
 													</div>
 													<div className="col-sm-6">
 														<div className="form-outline flex-fill mb-0">
 															<label className="form-label" htmlFor="password">Repeat Password</label>
-															<input type="password" id="password2" className="form-control" />
+															<input type="password" id="password2" className="form-control" onChange={(e) => setUser(u => ({ ...u, password2: e.target.value }))} />
 														</div>
 													</div>
 												</div>
@@ -146,7 +143,7 @@ export default function Register() {
 														: <label className="form-label">Date of birth</label>
 													}
 													<div className="col-sm-4">
-														<select className="form-select" aria-label="Default select example" id="day" name="day">
+														<select className="form-select" aria-label="Default select example" id="day" name="day" onChange={(e) => setBirth(b => ({ ...b, day:  Number(e.target.value) }))}>
 															<option defaultValue="true" disabled>Day</option>
 															{[...Array(31)].map((_, index) => (
 																<option key={index} value={String(index + 1)}>{index + 1}</option>
@@ -154,7 +151,7 @@ export default function Register() {
 														</select>
 													</div>
 													<div className="col-sm-4">
-														<select className="form-select" aria-label="Default select example" id="month" name="month">
+														<select className="form-select" aria-label="Default select example" id="month" name="month" onChange={(e) => setBirth(b => ({ ...b, month: Number(e.target.value) }))}>
 															<option defaultValue="true" disabled>Month</option>
 															{[ 'January', 'February', 'March', 'April', 'May', 'June',
 																'July', 'August', 'September', 'October', 'November', 'December' ].map((i, index) => (
@@ -163,7 +160,7 @@ export default function Register() {
 														</select>
 													</div>
 													<div className="col-sm-4">
-														<select className="form-select" aria-label="Default select example" id="year" name="year">
+														<select className="form-select" aria-label="Default select example" id="year" name="year" onChange={(e) => setBirth(b => ({ ...b, year:  Number(e.target.value) }))}>
 															<option defaultValue="true" disabled>Year</option>
 															{[...Array(100)].map((_, index) => (
 																<option key={index} value={String(new Date().getFullYear() - index)}>{new Date().getFullYear() - index}</option>
@@ -176,7 +173,7 @@ export default function Register() {
 											<div className="form-check d-flex justify-content-center mb-5">
 												<input className="form-check-input me-2" type="checkbox" value="" id="T&S" onClick={changeState}/>
 												<label className="form-check-label" htmlFor="T&S">
-                  I agree to the <a href="/terms">Terms of service</a>.
+                  				I agree to the <a href="/terms">Terms of service</a>.
 												</label>
 											</div>
 
@@ -187,7 +184,7 @@ export default function Register() {
 										<p>Already have an account? <Link href="/login">Click here</Link></p>
 									</div>
 									<div className="col-md-10 col-lg-6 col-xl-7 d-flex align-items-center order-1 order-lg-2">
-										<Image src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-registration/draw1.webp"
+										<Image src="/register.webp"
 											className="img-fluid" alt="Sample image" width={530} height={280}/>
 									</div>
 								</div>

@@ -58,7 +58,7 @@ export const postRegister = (client: Client) => {
 		if (!isEmailValid.valid) error = { type: 'email', text: 'Email is invalid.' };
 
 		// If an error was found notify user
-		if (error.type !== null) return res.status(400).json({ error });
+		if (error == null) return res.status(400).json({ error });
 
 		// Encrypt password (Dont save raw password to database)
 		let Hashpassword;
