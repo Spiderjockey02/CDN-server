@@ -41,7 +41,7 @@ export default function ChangeModal({ file, closeContextMenu }: Props) {
 
 		const observer = new MutationObserver((mutations) => {
 			mutations.forEach((mutation) => {
-				if (mutation.target.className.includes('show')) {
+				if ((mutation.target as HTMLDivElement).className.includes('show')) {
 					axios.get('/api/files/directories').then(({ data }) => {
 						setDirs(data.dirs);
 					});

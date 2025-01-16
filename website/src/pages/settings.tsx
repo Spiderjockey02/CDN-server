@@ -38,7 +38,7 @@ export default function Settings() {
 
 			if (data.success) setSuccess(data.success);
 		} catch (error) {
-			setErrors([{ type: 'av', error: 'Failed to upload avatar' }]);
+			setErrors([{ type: 'av', text: 'Failed to upload avatar' }]);
 		}
 	};
 
@@ -47,7 +47,7 @@ export default function Settings() {
 			const { data } = await axios.delete('/api/session/reset-avatar');
 			if (data.success) setSuccess(data.success);
 		} catch (error) {
-			setErrors([{ type: 'av', error: 'Failed to delete avatar' }]);
+			setErrors([{ type: 'av', text: 'Failed to delete avatar' }]);
 		}
 	};
 

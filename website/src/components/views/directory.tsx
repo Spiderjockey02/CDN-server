@@ -21,7 +21,7 @@ const initalContextMenu = {
 };
 
 export default function Directory({ files, dir, userId }: Props) {
-	const [sortKey, setSortKey] = useState<sortKeyTypes>('Name');
+	const [, setSortKey] = useState<sortKeyTypes>('Name');
 	const [sortOrder, setSortOrder] = useState<SortOrder>('ascn');
 	const [contextMenu, setContextMenu] = useState(initalContextMenu);
 	const [filesSelected, setFilesSelected] = useState<string[]>([]);

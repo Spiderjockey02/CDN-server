@@ -21,8 +21,8 @@ export function formatTime(timeInSeconds: number) {
 
 export function getFileIcon(file: fileItem) {
 	// Check folder stuff
-	if (!file.extension && file.children) {
-		return (file.children.filter(item => ['image', 'video'].includes((mimeType.lookup(item.extension) || '').split('/')[0])).length / file.children.length >= 0.60)
+	if (file.children) {
+		return (file.children.filter(item => ['image', 'video'].includes((mimeType.lookup(item.name) || '').split('/')[0])).length / file.children.length >= 0.60)
 			? <FontAwesomeIcon icon={faImages} /> : <FontAwesomeIcon icon={faFolder} /> ;
 	}
 

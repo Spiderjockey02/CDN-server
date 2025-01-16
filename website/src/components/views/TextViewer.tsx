@@ -23,8 +23,8 @@ export default function TextReader({ path }: Props) {
 
 	return (
 		<div>
-			<h1>File Content</h1>
-			<textarea rows={35} cols={200} readOnly={true} value={fileContent}>
+			&nbsp;
+			<textarea rows={35} readOnly={true} value={fileContent} style={{ width: '100%' }}>
 			</textarea>
 		</div>
 	);

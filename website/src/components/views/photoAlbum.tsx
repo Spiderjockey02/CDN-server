@@ -47,10 +47,10 @@ export default function PhotoAlbum({ files, dir, user }: Props) {
 						</li>
 						<li className="page-item"><p className="page-link">{page + 1}</p></li>
 						<li className="page-item">
-							<a className="page-link" href="#" onClick={() => setPage(Math.floor(files.length / pageCount))} >{Math.floor(files.length / 10) + 1}</a>
+							<a className="page-link" href="#" onClick={() => setPage(Math.floor(files.children.length / pageCount))} >{Math.floor(files.children.length / 10) + 1}</a>
 						</li>
 						<li className="page-item">
-							<a className="page-link" href="#" aria-label="Next" onClick={() => setPage(page + 1 > Math.floor(files.length / pageCount) ? Math.floor(files.length / pageCount) : page + 1)}>
+							<a className="page-link" href="#" aria-label="Next" onClick={() => setPage(page + 1 > Math.floor(files.children.length / pageCount) ? Math.floor(files.children.length / pageCount) : page + 1)}>
 								<span aria-hidden="true">&raquo;</span>
 								<span className="sr-only">Next</span>
 							</a>

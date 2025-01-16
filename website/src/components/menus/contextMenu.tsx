@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useOnClickOutside } from '@/utils/useOnClickOutisde';
 import type { BaseSyntheticEvent, RefObject } from 'react';
 import Modal from '../UI/Modal';
@@ -71,7 +71,18 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 
 	const handleCopyURL = async () => {
 		const url = `${window.location.origin}${window.location.pathname}/${encodeURI(selected.name)}`;
-		const unsecuredCopyToClipboard = (text: string) => { const textArea = document.createElement('textarea'); textArea.value = text; document.body.appendChild(textArea); textArea.focus();textArea.select(); try{document.execCommand('copy');}catch(err) {console.error('Unable to copy to clipboard', err);}document.body.removeChild(textArea);};
+		const unsecuredCopyToClipboard = (text: string) => {
+			const textArea = document.createElement('textarea');
+			textArea.value = text;
+			document.body.appendChild(textArea);
+			textArea.focus();
+			textArea.select();
+			try {
+				document.execCommand('copy');
+			} catch(err) {
+				console.error('Unable to copy to clipboard', err);
+			}document.body.removeChild(textArea);
+		};
 		if (window.isSecureContext && navigator.clipboard) {
 			navigator.clipboard.writeText(url);
 		} else {

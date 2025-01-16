@@ -29,10 +29,10 @@ export default function VideoPlayer({ userId, path }: Props) {
 	const volumeButton = useRef<HTMLButtonElement>(null);
 
 	// Icons
-	const fullscreenBtns = useRef<Array<SVGUseElement | null>>([]);
+	const fullscreenBtns = useRef<Array<SVGElement | null>>([]);
 	const playBtnIcons = useRef<Array<SVGElement | null>>([]);
 	const volumnBtnIcons = useRef<Array<SVGElement | null>>([]);
-	const playIcons = useRef<Array<SVGUseElement | null>>([]);
+	const playIcons = useRef<(SVGElement | null)[]>([]);
 
 	// Initalise the video (Get duration)
 	function initVideo() {
@@ -229,14 +229,14 @@ export default function VideoPlayer({ userId, path }: Props) {
 					<div className={styles.bottom_controls}>
 						<div className={styles.left_controls}>
 							<button className={styles.button} data-title="Play (k)" onClick={togglePlay}>
-								<FontAwesomeIcon icon={faPlay} className={styles.icon} ref={i => playBtnIcons.current[0] = i} />
-								<FontAwesomeIcon icon={faPause} className={`${styles.icon} ${styles.hidden}`} ref={i => playBtnIcons.current[1] = i} />
+								<FontAwesomeIcon icon={faPlay} className={styles.icon} ref={(i) => {if (i) playBtnIcons.current[0] = i;}} />
+								<FontAwesomeIcon icon={faPause} className={`${styles.icon} ${styles.hidden}`} ref={i =>{if (i) playBtnIcons.current[1] = i;}} />
 							</button>
 							<div className={styles.volume_controls} onMouseEnter={showVolumeBar} onMouseLeave={hideVolumeBar}>
 								<button className={styles.button} ref={volumeButton} data-title="Mute (m)" onClick={toggleMute}>
-									<FontAwesomeIcon icon={faVolumeOff} className={`${styles.icon} ${styles.hidden}`} ref={i => volumnBtnIcons.current[0] = i} />
-									<FontAwesomeIcon icon={faVolumeLow} className={`${styles.icon} ${styles.hidden}`} ref={i => volumnBtnIcons.current[1] = i} />
-									<FontAwesomeIcon icon={faVolumeHigh} className={styles.icon} ref={i => volumnBtnIcons.current[2] = i} />
+									<FontAwesomeIcon icon={faVolumeOff} className={`${styles.icon} ${styles.hidden}`} ref={i => {if (i) volumnBtnIcons.current[0] = i;}} />
+									<FontAwesomeIcon icon={faVolumeLow} className={`${styles.icon} ${styles.hidden}`} ref={i => {if (i) volumnBtnIcons.current[1] = i;}} />
+									<FontAwesomeIcon icon={faVolumeHigh} className={styles.icon} ref={i => {if (i) volumnBtnIcons.current[2] = i;}} />
 								</button>
 								<input className={`${styles.volume} ${styles.hidden}`} defaultValue="1" type="range" max="1" min="0" step="0.05" ref={volume} onInput={(i) => (video.current as HTMLVideoElement).volume = Number(i.currentTarget.value)}/>
 							</div>
@@ -254,8 +254,8 @@ export default function VideoPlayer({ userId, path }: Props) {
 								<FontAwesomeIcon className={styles.icon} icon={faGear} />
 							</button>
 							<button data-title="Full screen (f)" className={`${styles.button} ${styles.fullscreen_button}`} ref={fullscreenBtn} onClick={toggleFullScreen}>
-								<FontAwesomeIcon className={styles.icon} icon={faExpand} ref={i => fullscreenBtns.current[0] = i} />
-								<FontAwesomeIcon className={`${styles.icon} ${styles.hidden}`} icon={faCompress} ref={i => fullscreenBtns.current[1] = i} />
+								<FontAwesomeIcon className={styles.icon} icon={faExpand} ref={i => {if (i) fullscreenBtns.current[0] = i;}} />
+								<FontAwesomeIcon className={`${styles.icon} ${styles.hidden}`} icon={faCompress} ref={i => {if (i) fullscreenBtns.current[1] = i;}} />
 							</button>
 						</div>
 					</div>
