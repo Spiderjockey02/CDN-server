@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { avatarForm, getSession } from '../middleware';
-import { Error, sanitiseObject } from '../utils';
+import { Error, PATHS, sanitiseObject } from '../utils';
 import emailValidate from 'deep-email-validator';
 import { Client } from 'src/helpers';
+import fs from 'node:fs';
+import { Prisma } from '@prisma/client';
 
 // Endpoint: POST /api/session/change-password
 export const postChangePassword = (client: Client) => {
@@ -51,7 +53,7 @@ export const postChangeAvatar = (client: Client) => {
 			// Parse and save file(s)
 			await avatarForm(req, session.user.id);
 			return res
-				.json({ success: 'File successfully uploaded.' });
+				.json({ success: 'Successfully uploaded user\'s avatar' });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to upload file.');
@@ -75,7 +77,11 @@ export const postChangeEmail = (client: Client) => {
 			res.json({ success: 'Successfully updated email.' });
 		} catch (err) {
 			client.logger.error(err);
-			Error.GenericError(res, 'Failed to update email.');
+			if (err instanceof Prisma.PrismaClientKnownRequestError) {
+				if (err.code === 'P2002') return Error.GenericError(res, 'Email is already in use.');
+			} else {
+				Error.GenericError(res, 'Failed to update email.');
+			}
 		}
 	};
 };
@@ -92,6 +98,22 @@ export const getRecentlyViewed = (client: Client) => {
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch recently viewed files.');
+		}
+	};
+};
+
+// Endpoint DELETE /api/session/reset-avatar
+export const deleteResetAvatar = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const session = await getSession(req);
+			if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+
+			if (fs.existsSync(`${PATHS.AVATAR}/${session.user.id}.webp`)) fs.rmSync(`${PATHS.AVATAR}/${session.user.id}.webp`);
+			res.json({ success: 'Successfully deleted avatar' });
+		} catch (err) {
+			client.logger.error(err);
+			Error.GenericError(res, 'Failed to delete user\'s avatar.');
 		}
 	};
 };

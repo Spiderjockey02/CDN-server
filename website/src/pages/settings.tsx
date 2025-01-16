@@ -4,18 +4,24 @@ import type { BaseSyntheticEvent } from 'react';
 import { useState } from 'react';
 import axios from 'axios';
 import Image from 'next/image';
+import InputForm from '@/components/Form/InputForm';
 
 interface ErrorTypes {
-	type: 'current' | 'pwd1' | 'pwd2' | 'misc'
-	error: string
+	type: 'current' | 'pwd1' | 'pwd2' | 'misc' | 'av' | 'email'
+	text: string
 }
 
 
 export default function Settings() {
 	const { data: session, status } = useSession({ required: true });
 	const [errors, setErrors] = useState<ErrorTypes[]>([]);
+	const [email, setEmail] = useState('');
 	const [success, setSuccess] = useState('');
-	if (status == 'loading') return null;
+	const [passwords, setPasswords] = useState({
+		currentPassword: '',
+		newPassword: '',
+		repeatNewPassword: '',
+	});
 
 	const onFileUploadChange = async (e: BaseSyntheticEvent) => {
 		const fileInput = e.target;
@@ -26,167 +32,135 @@ export default function Settings() {
 			const formData = new FormData();
 			formData.append('media', fileInput.files[0] as File);
 
-			const t = await axios.post('/api/user/avatar', formData, {
+			const { data } = await axios.post('/api/session/change-avatar', formData, {
 				headers: { 'Content-Type': 'multipart/form-data' },
 			});
 
-			console.log('t', t);
+			if (data.success) setSuccess(data.success);
 		} catch (error) {
-			console.error(error);
-			alert('Sorry! something went wrong.');
+			setErrors([{ type: 'av', error: 'Failed to upload avatar' }]);
 		}
 	};
 
-	const handleEmailChange = async (event: BaseSyntheticEvent) => {
-		event.preventDefault();
-		const email = (document.getElementById('email') as HTMLInputElement).value;
-
-		const { data } = await axios.post('/api/user/change-email', {
-			email,
-		});
-
-		console.log(data);
+	const deleteAvatar = async () => {
+		try {
+			const { data } = await axios.delete('/api/session/reset-avatar');
+			if (data.success) setSuccess(data.success);
+		} catch (error) {
+			setErrors([{ type: 'av', error: 'Failed to delete avatar' }]);
+		}
 	};
 
-	const handlePasswordChange = async (event: BaseSyntheticEvent) => {
-		event.preventDefault();
-
-		// Get text fields
-		const currentPassword = (document.getElementById('currentPwd') as HTMLInputElement).value;
-		const password = (document.getElementById('password1') as HTMLInputElement).value;
-		const password2 = (document.getElementById('password2') as HTMLInputElement).value;
-
-		// Make sure currentpwd field is entered
-		if (currentPassword.length == 0) return setErrors([{ type: 'current', error: 'This field is missing' }]);
+	const onPasswordSubmit = async (e: BaseSyntheticEvent) => {
+		e.preventDefault();
+		const { currentPassword, newPassword, repeatNewPassword } = passwords;
+		if (currentPassword.length == 0) return setErrors([{ type: 'current', text: 'This field is missing' }]);
 
 		// Make sure both fields are not empty
-		if (password.length == 0 || password2.length == 0) {
+		if (newPassword.length == 0 || repeatNewPassword.length == 0) {
 			const errs = new Array<ErrorTypes>();
-			if (password.length == 0) errs.push({ type: 'pwd1', error: 'This field is missing' });
-			if (password2.length == 0) errs.push({ type: 'pwd2', error: 'This field is missing' });
+			if (newPassword.length == 0) errs.push({ type: 'pwd1', text: 'This field is missing' });
+			if (repeatNewPassword.length == 0) errs.push({ type: 'pwd2', text: 'This field is missing' });
 			return setErrors(errs);
 		}
 
-		if (password.length <= 8) return setErrors([{ type: 'pwd1', error: 'Your password must be more than 8 characters' }]);
+		if (newPassword.length <= 8) return setErrors([{ type: 'pwd1', text: 'Your password must be more than 8 characters' }]);
 
 		// Make sure the new password fields match
-		if (password !== password2) return setErrors([{ type: 'pwd1', error: 'The passwords do not match' }]);
+		if (newPassword !== repeatNewPassword) return setErrors([{ type: 'pwd1', text: 'The passwords do not match' }]);
 
-		// Send request to API
 		try {
-			const { data } = await axios.post<{
-          success?: string
-					type?: 'current' | 'pwd1' | 'pwd2' | 'misc'
-					error?: string
-
-      }>('/api/user/change-password', {
-      	password, password2, currentPassword,
-      });
+			const { data } = await axios.post('/api/session/change-password', {
+				currentPassword: currentPassword,
+				password: newPassword,
+				password2: repeatNewPassword,
+			});
 			if (data.success) setSuccess(data.success);
-			if (data.error) setErrors([data as ErrorTypes]);
-			console.log(errors);
-		} catch (err) {
-			console.log('error', err);
+		} catch {
+			setErrors([{ type: 'pwd1', text: 'asd' }]);
 		}
 	};
+
+	const onPersonalSubmit = async (e: BaseSyntheticEvent) => {
+		e.preventDefault();
+
+		if (email.length == 0) return setErrors([{ type: 'email', text: 'This field is missing.' }]);
+		try {
+			const { data } = await axios.post('/api/session/change-email', {
+				email,
+			});
+			if (data.success) setSuccess(data.success);
+		} catch (error) {
+			if (axios.isAxiosError(error)) {
+				setErrors([{ type: 'email', text: error.response?.data.error }]);
+			} else {
+				setErrors([{ type: 'av', text: 'Failed to edit personal information.' }]);
+			}
+		}
+	};
+
+	if (status == 'loading') return null;
 	return (
 		<>
 			<HomeNavbar />
-			<section className="vh-50" style={{ 'backgroundColor': '#eee' }}>
-				<div className="container h-100">
-					<div className="row d-flex justify-content-center align-items-center h-100">
-						<div className="col-lg-10 col-xl-9">
-							{errors.find(i => i.type == 'misc') && (
-								<ErrorPopup text={errors.find(i => i.type == 'misc')?.error as string} />
-							)}
-							{success.length > 0 && (
-								<SuccessPopup text={success}/>
-							)}
-							<div className="card text-black" style={{ 'borderRadius': '25px' }}>
-								<div className="card-body p-md-5">
-									<div className="row justify-content-center">
-										<div className="order-2 order-lg-1">
-											<div className="d-flex align-items-start">
-												<div className="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-													<button className="nav-link active" id="v-pills-home-tab" data-bs-toggle="pill" data-bs-target="#v-pills-home" type="button" role="tab" aria-controls="v-pills-home" aria-selected="true">Account</button>
-													<button className="nav-link" id="v-pills-profile-tab" data-bs-toggle="pill" data-bs-target="#v-pills-profile" type="button" role="tab" aria-controls="v-pills-profile" aria-selected="false">Billing</button>
-												</div>
-												<div className="tab-content" id="v-pills-tabContent">
-													<div className="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
-														<h1>Account</h1>
-														<div className="row">
-															<div className="col-lg-6">
-																<div className="media">
-																	<Image src={`/avatar/${session?.user.id}`} width={100} height={100} className="rounded-circle" alt="User avatar" />
-																	<div className="media-body">
-																		<h5 className="mt-0" style={{ paddingBottom:'20px' }}>Avatar</h5>
-																		<label className="dropdown-item" id="fileHover">
-																			File upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onFileUploadChange} />
-																		</label>
-																		<input type="hidden" value="test" name="path" />
-																		<form action="/user/avatar/delete" method="post" encType="multipart/form-data" id='uploadForm' >
-																			<button className="btn btn-md btn-danger" type="submit" name="button">Remove</button>
-																		</form>
-																	</div>
-																</div>
-															</div>
-															<div className="col-lg-6">
-																<form onSubmit={handlePasswordChange}>
-																	<div className="d-flex flex-row align-items-center mb-4">
-																		<div className="form-outline flex-fill mb-0">
-																			{errors.find(i => i.type == 'current') ?
-																				<label className="form-label text-danger" htmlFor="currentPwd">Current Password - {errors.find(i => i.type == 'current')?.error}</label>
-																				: <label className="form-label" htmlFor="currentPwd">Current Password</label>
-																			}
-																			<input type="password" id="currentPwd" className="form-control" name="currentPwd" />
-																		</div>
-																	</div>
-																	<div className="row">
-																		<div className="col-lg-6">
-																			<div className="d-flex flex-row align-items-center mb-4">
-																				<div className="form-outline flex-fill mb-0">
-																					{errors.find(i => i.type == 'pwd1') ?
-																						<label className="form-label text-danger" htmlFor="password1">New password - {errors.find(i => i.type == 'pwd1')?.error}</label>
-																						: <label className="form-label" htmlFor="password1">New password</label>
-																					}
-																					<input type="password" id="password1" className="form-control" name="password1" />
-																				</div>
-																			</div>
-																		</div>
-																		<div className="col-lg-6">
-																			<div className="d-flex flex-row align-items-center mb-4">
-																				<div className="form-outline flex-fill mb-0">
-																					{errors.find(i => i.type == 'pwd2') ?
-																						<label className="form-label text-danger" htmlFor="password2">Repeat password - {errors.find(i => i.type == 'pwd2')?.error}</label>
-																						: <label className="form-label" htmlFor="password2">Repeat password</label>
-																					}
-																					<input type="password" id="password2" className="form-control" name="password2" />
-																				</div>
-																			</div>
-																		</div>
-																	</div>
-																	<button type="submit" className="btn btn-primary">Submit</button>
-																</form>
-															</div>
-														</div>
-													</div>
-													<div className="tab-pane fade" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
-														<div className="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
-															<h1>Billing</h1>
-														</div>
-													</div>
-												</div>
-											</div>
+			<section style={{ 'backgroundColor': '#eee', minHeight: '75vh' }}>
+				<div className="container">
+					<div className="card p-1">
+						<div className="d-flex align-items-start">
+							<div className="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+								<button className="nav-link active" id="v-pills-home-tab" data-bs-toggle="pill" data-bs-target="#v-pills-home" type="button" role="tab" aria-controls="v-pills-home" aria-selected="true">Account</button>
+								<button className="nav-link" id="v-pills-profile-tab" data-bs-toggle="pill" data-bs-target="#v-pills-profile" type="button" role="tab" aria-controls="v-pills-profile" aria-selected="false">Billing</button>
+							</div>
+							<div className="tab-content" id="v-pills-tabContent" style={{ minWidth: '90%' }}>
+								{errors.find(c => c.type == 'av') !== undefined && <ErrorPopup text={`${errors.find(c => c.type == 'av')?.text}`} />}
+								{success.length != 0 && <SuccessPopup text={success} />}
+								<div className="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab" >
+									<h3 className="mb-4">Account Settings</h3>
+									<div className="d-flex flex-column align-items-center">
+										<Image src={`/avatar/${session?.user.id}`} width={100} height={100} className="rounded-circle " alt="User avatar" />
+										&nbsp;
+										<div className="d-flex justify-content-center gap-2">
+											<label className="btn btn-sm btn-primary">
+												File upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onFileUploadChange} accept="image/*" />
+											</label>
+											<button className="btn btn-sm btn-danger" onClick={() => deleteAvatar()}>Remove</button>
 										</div>
 									</div>
-									<form onSubmit={handleEmailChange}>
-										<div className="d-flex flex-row align-items-center mb-4">
-											<div className="form-outline flex-fill mb-0">
-												<label className="form-label" htmlFor="email">Change email</label>
-												<input type="email" id="email" className="form-control" name="email" placeholder="john@example.com"/>
-											</div>
+									<ul className="nav nav-tabs mt-4" id="account-tabs">
+										<li className="nav-item">
+											<a className="nav-link active" href="#personal-info" data-bs-toggle="tab">Personal Information</a>
+										</li>
+										<li className="nav-item">
+											<a className="nav-link" href="#password" data-bs-toggle="tab">Password</a>
+										</li>
+									</ul>
+									<div className="tab-content mt-3">
+										<div className="tab-pane fade show active" id="personal-info">
+											<form className='mt-4' onSubmit={onPersonalSubmit}>
+												<InputForm title='Update Name:' name='name' placeholder={session.user.name} />
+												<InputForm title='Update Email:' name="email" placeholder={session.user.email} errorMsg={errors.find(e => e.type == 'email')?.text} onChange={(e) => setEmail(e.target.value)} />
+												<button type="submit" className="btn btn-primary float-end">Save Changes</button>
+											</form>
 										</div>
-									</form>
+										<div className="tab-pane fade" id="password">
+											<form className="mt-4" onSubmit={onPasswordSubmit}>
+												<InputForm title="Current Password:" name="current-password" type='password' errorMsg={errors.find(e => e.type == 'current')?.text} onChange={(e) => setPasswords(p => ({ ...p, currentPassword: e.target.value }))} />
+												<div className="row">
+													<div className="col-md-6">
+														<InputForm title="New Password:" name="new-password" type='password' errorMsg={errors.find(e => e.type == 'pwd1')?.text} onChange={(e) => setPasswords(p => ({ ...p, newPassword: e.target.value }))} />
+													</div>
+													<div className="col-md-6">
+														<InputForm title="Repeat Password:" name="repeat-password" type='password' errorMsg={errors.find(e => e.type == 'pwd2')?.text} onChange={(e) => setPasswords(p => ({ ...p, repeatNewPassword: e.target.value }))} />
+													</div>
+												</div>
+												<button type="submit" className="btn btn-primary float-end">Save Changes</button>
+											</form>
+										</div>
+									</div>
+								</div>
+								<div className="tab-pane fade" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
+									<h3 className="mb-4">Billing Information</h3>
+									<p>Billing settings will be available here.</p>
 								</div>
 							</div>
 						</div>
