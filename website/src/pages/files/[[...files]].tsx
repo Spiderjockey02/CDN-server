@@ -1,12 +1,13 @@
-import { FileNavBar, Sidebar, Directory, PhotoAlbum, FileViewer, RecentNavbar, Toast } from '@/components';
-import type { fileItem, RecentlyViewed } from '../../types';
+import { FileNavBar, Sidebar, Directory, PhotoAlbum, FileViewer, RecentNavbar } from '@/components';
+import type { RecentlyViewed } from '../../types';
 import type { GetServerSidePropsContext } from 'next';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { getServerSession } from 'next-auth/next';
 import { AuthOption } from '../api/auth/[...nextauth]';
-import axios, { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import BreadcrumbNav from '@/components/navbars/BreadcrumbNav';
+import { useFile, useFileDispatch } from '@/components/fileManager';
 interface Props {
 	path: string
 	analysed?: {
@@ -22,74 +23,16 @@ type viewTypeTypes = 'List' | 'Tiles';
 
 export default function Files({ path = '/' }: Props) {
 	const { data: session, status } = useSession({ required: true });
-
-	const [file, setFile] = useState<fileItem>();
 	const [recents, setRecents] = useState<RecentlyViewed[]>([]);
-	const [progress, setProgress] = useState(0);
-	const [, setRemaining] = useState(0);
-	const [filename, setFilename] = useState('');
 	const [viewType, setviewType] = useState<viewTypeTypes>('List');
 
-	const onFileUploadChange = async (e: ChangeEvent<HTMLInputElement>) => {
-		const fileInput = e.target;
-		if (!fileInput.files) return alert('No file was chosen');
-		if (!fileInput.files || fileInput.files.length === 0) return alert('Files list is empty');
-
-
-		const validFiles: File[] = [];
-		for (let i = 0; i < fileInput.files.length; i++) {
-			const file = fileInput.files[i];
-			validFiles.push(file);
-		}
-
-		/** Reset file input */
-		e.currentTarget.type = 'text';
-		e.currentTarget.type = 'file';
-
-		try {
-			const startAt = Date.now();
-			const formData = new FormData();
-
-			// add files to request
-			for (const file of validFiles) {
-				formData.append('media', file);
-				setFilename(file.name);
-			}
-
-			const options: AxiosRequestConfig = {
-				headers: { 'Content-Type': 'multipart/form-data' },
-				onUploadProgress: (progressEvent) => {
-					const { loaded, total } = progressEvent;
-
-					// Calculate the progress percentage
-					const percentage = (loaded * 100) / (total ?? 0);
-					setProgress(+percentage.toFixed(2));
-
-					// Calculate the progress duration
-					const timeElapsed = Date.now() - startAt;
-					const uploadSpeed = loaded / timeElapsed;
-					const duration = ((total ?? 0) - loaded) / uploadSpeed;
-					setRemaining(duration);
-				},
-			};
-
-			await axios.post('/api/files/upload', formData, options);
-			await fetchFiles();
-			setProgress(0);
-			setRemaining(0);
-		} catch (error) {
-			console.error(error);
-			alert('Sorry! something went wrong.');
-			setProgress(0);
-			setRemaining(0);
-		}
-	};
+	const file = useFile();
+	const dispatch = useFileDispatch();
 
 	async function fetchFiles() {
 		try {
 			const { data } = await axios.get(`/api/files/${path}`);
-			console.log(data.file);
-			setFile(data.file);
+			dispatch({ type: 'SET_FILE', payload: data.file });
 		} catch (err) {
 			console.log(err);
 		}
@@ -104,7 +47,6 @@ export default function Files({ path = '/' }: Props) {
 		}
 	}
 
-
 	useEffect(() => {
 		fetchFiles();
 		if (path.length == 0) fetchRecentlyViewedFiles();
@@ -113,17 +55,17 @@ export default function Files({ path = '/' }: Props) {
 	if (status == 'loading') return null;
 	return (
 		<>
-			<Toast percentage={progress} filename={filename} show={progress > 0}/>
+
 			<div className="wrapper" style={{ height:'100vh' }}>
 				<Sidebar user={session.user}/>
 				<div className="container-fluid" style={{ overflowY: 'scroll' }}>
 					<FileNavBar user={session.user} />
 					<div className="container-fluid">
-						<BreadcrumbNav path={path} isFile={file?.path == path} setviewType={setviewType} onUpload={onFileUploadChange} fetchFiles={fetchFiles} />
+						<BreadcrumbNav path={path} isFile={file?.path == path} setviewType={setviewType} />
 						{(path.length == 0 && recents.length > 0) &&
 							<RecentNavbar files={recents} />
 						}
-						{file == undefined ?
+						{file == null ?
 							null :
 							file.type == 'FILE' ?
 						 <FileViewer file={file} userId={session.user.id} /> :

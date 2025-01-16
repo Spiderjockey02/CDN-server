@@ -1,20 +1,24 @@
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import Link from 'next/link';
 import { BaseSyntheticEvent, ChangeEvent, useState } from 'react';
+import Toast from '../menus/Toast';
+import { useFileDispatch } from '../fileManager';
 
 interface Props {
   path: string
   isFile: boolean
 	setviewType: (viewType: 'List' | 'Tiles') => void
-	onUpload: (e: ChangeEvent<HTMLInputElement>) => Promise<void>
-	fetchFiles: () => Promise<void>
 }
 
-export default function BreadcrumbNav({ path, isFile, setviewType, onUpload, fetchFiles }: Props) {
+export default function BreadcrumbNav({ path, isFile, setviewType }: Props) {
 	const splitPath = path.split('/');
 	const [folderName, setFolderName] = useState('');
+	const [progress, setProgress] = useState(0);
+	const [, setRemaining] = useState(0);
+	const [filename, setFilename] = useState('');
+	const dispatch = useFileDispatch();
 
 	function closeModal(id: string) {
 		document.getElementById(id)?.classList.remove('show');
@@ -30,7 +34,8 @@ export default function BreadcrumbNav({ path, isFile, setviewType, onUpload, fet
 				folderName: folderName,
 			});
 			if (data.success) {
-				await fetchFiles();
+				const { data: { file } } = await axios.get(`/api/files/${path}`);
+				dispatch({ type: 'SET_FILE', payload: file });
 				closeModal('createFolderModal');
 			}
 		} catch (error) {
@@ -38,6 +43,47 @@ export default function BreadcrumbNav({ path, isFile, setviewType, onUpload, fet
 		}
 	}
 
+	const onFileUploadChange = async (e: ChangeEvent<HTMLInputElement>) => {
+		const fileInput = e.target;
+		if (!fileInput.files || fileInput.files.length === 0) return alert('Files list is empty');
+
+		/** Reset file input */
+		e.currentTarget.type = 'text';
+		e.currentTarget.type = 'file';
+		try {
+			const startAt = Date.now();
+			const formData = new FormData();
+
+			// Append files and set filename
+			Array.from(fileInput.files).forEach((f) => {
+				formData.append('media', f);
+				setFilename(f.name);
+			});
+
+			const options: AxiosRequestConfig = {
+				headers: { 'Content-Type': 'multipart/form-data' },
+				onUploadProgress: ({ loaded, total }) => {
+					const percentage = (loaded * 100) / (total ?? 1);
+					setProgress(+percentage.toFixed(2));
+
+					const timeElapsed = Date.now() - startAt;
+					const uploadSpeed = loaded / timeElapsed;
+					const duration = ((total ?? 0) - loaded) / uploadSpeed;
+					setRemaining(duration);
+				},
+			};
+
+			await axios.post('/api/files/upload', formData, options);
+			const { data: { file } } = await axios.get(`/api/files/${path}`);
+			dispatch({ type: 'SET_FILE', payload: file });
+		} catch (error) {
+			console.error(error);
+			alert('Sorry! Something went wrong.');
+		} finally {
+			setProgress(0);
+			setRemaining(0);
+		}
+	};
 
 	return (
 		<div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -72,11 +118,11 @@ export default function BreadcrumbNav({ path, isFile, setviewType, onUpload, fet
           	</button>
           	<div className="dropdown-menu dropdown-menu-right">
           		<label className="dropdown-item btn" id="fileHover">
-								File upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onUpload} multiple />
+								File upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onFileUploadChange} multiple />
           		</label>
           		<input type="hidden" value="test" name="path" />
           		<label className="dropdown-item btn" id="fileHover">
-								Folder upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onUpload} ref={input => {
+								Folder upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onFileUploadChange} ref={input => {
           				if (input) {
           					input.setAttribute('webkitdirectory', '');
           					input.setAttribute('mozdirectory', '');
@@ -119,6 +165,7 @@ export default function BreadcrumbNav({ path, isFile, setviewType, onUpload, fet
 		    	</div>
 		  	</div>
 			</div>
+			<Toast percentage={progress} filename={filename} show={progress > 0}/>
 		</div>
 	);
 }

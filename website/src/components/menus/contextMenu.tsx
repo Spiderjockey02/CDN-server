@@ -6,6 +6,7 @@ import axios from 'axios';
 import { fileItem } from '@/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCopy, faDownload, faEllipsisV, faFileSignature, faShareAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
+import RenameModal from '../Modals/renameFile';
 interface Props {
 	x: number
 	y: number
@@ -15,10 +16,6 @@ interface Props {
 
 export default function ContextMenu({ x, y, closeContextMenu, selected }: Props) {
 	const contextMenuRef = useRef<HTMLDivElement>(null);
-	const [rename, setRename] = useState(selected.name);
-	const [dirs, setDirs] = useState<fileItem[]>([]);
-	const [action, setAction] = useState<'copy' | 'move' | ''>('');
-	const [selectedDestination, setSelectedDestination] = useState('');
 
 	useOnClickOutside(contextMenuRef as RefObject<HTMLDivElement>, closeContextMenu);
 	function closeModal(id: string) {
@@ -28,19 +25,6 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 		document.body.removeChild(document.getElementsByClassName('modal-backdrop')[0] as Node);
 		closeContextMenu();
 	}
-
-	const handleRenameSubmit = async (e: BaseSyntheticEvent) => {
-		const oldName = selected.name;
-		e.preventDefault();
-
-		try {
-			await axios.post('/api/files/rename', { oldName, newName: selected.type == 'FILE' ? `${rename}${selected.extension}` : rename });
-		} catch (err) {
-			console.log(err);
-		}
-
-		closeModal('renameModel');
-	};
 
 	const handleDeleteSubmit = async (e: BaseSyntheticEvent) => {
 		e.preventDefault();
@@ -95,26 +79,6 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 		}
 	};
 
-	const handleActionSubmit = async (e: BaseSyntheticEvent) => {
-		e.preventDefault();
-
-		try {
-			await axios.post(`/api/files/${action}`, {
-				newPath: selectedDestination,
-				fileName: selected.name,
-			});
-		} catch (error) {
-
-		}
-
-		closeModal('changeModel');
-	};
-
-	const loadDirectories = async () => {
-		const { data } = await axios.get('/api/files/directories');
-		setDirs(data.dirs);
-	};
-
 	return (
 		<>
 			<div className="ctxmenu" ref={contextMenuRef} style={{ top: `${y}px`, left: `${x}px`, zIndex: 20, position: 'absolute' }}>
@@ -130,10 +94,10 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 				<button type="button" className="btn btn-ctx-menu" data-bs-toggle="modal" data-bs-target="#deleteModel">
 					<FontAwesomeIcon icon={faTrash} /> Delete
 				</button>
-				<button className="btn btn-ctx-menu" data-bs-toggle="modal" data-bs-target="#changeModel" onClick={loadDirectories}>
+				<button className="btn btn-ctx-menu" data-bs-toggle="modal" data-bs-target={`#change_${selected.id}`}>
 					<FontAwesomeIcon icon={faCopy} /> Move / Copy to
 				</button>
-				<button className="btn btn-ctx-menu" type="button" data-bs-toggle="modal" data-bs-target="#renameModel">
+				<button className="btn btn-ctx-menu" type="button" data-bs-toggle="modal" data-bs-target={`#rename_${selected.id}`}>
 					<FontAwesomeIcon icon={faFileSignature} /> Rename
 				</button>
 				<button className="btn btn-ctx-menu">
@@ -147,60 +111,7 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 				description="Are you sure you want to send this item to the recycle bin?" onSubmit={handleDeleteSubmit}
 			/>
 
-			<div className="modal fade" id="renameModel" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-		    <div className="modal-dialog modal-dialog-centered" role="document">
-		      <div className="modal-content">
-		        <div className="modal-header">
-		          <h5 className="modal-title" id="exampleModalLongTitle">Rename {selected.name}</h5>
-		          <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-		        </div>
-		        <form onSubmit={handleRenameSubmit} method="post">
-							<div className="modal-body">
-								<input type="hidden" id="oldPath" name="oldPath" value={selected.name} />
-								<div className="input-group mb-3">
-		              <input className="form-control" id="renameInput" type="text" name="newPath" defaultValue={selected.name.replace(`.${selected.name.split('.').at(-1)}`, '')} onChange={(e) => setRename(e.target.value)} />
-		              {selected.type == 'FILE' && <span className="input-group-text" id="renameSuffix">{selected.name.split('.').at(-1)}</span>}
-		            </div>
-							</div>
-							<div className="modal-footer">
-		            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-		            <button type="submit" className="btn btn-primary">Save</button>
-		          </div>
-		        </form>
-		    	</div>
-		  	</div>
-			</div>
-
-			<div className="modal fade" id="changeModel" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-				<div className="modal-dialog modal-dialog-centered" role="document">
-					<div className="modal-content">
-						<div className="modal-header">
-							<h5 className="modal-title" id="exampleModalLongTitle">Move or Copy {selected.name}</h5>
-							<button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-						</div>
-						<form method='post' onSubmit={handleActionSubmit}>
-							<div className="modal-body w-100">
-								<p>Select a destination folder.</p>
-								{dirs.map(dir => (
-									<div className="form-check" key={dir.id}>
-										<input className="form-check-input" type="radio" name='destination' id={dir.id} defaultChecked={selectedDestination === dir.path}
-											onChange={() => setSelectedDestination(dir.name)} />
-										<label className="form-check-label" htmlFor={dir.id}>
-											{dir.path}
-										</label>
-									</div>
-								))}
-								<input type="hidden" value={action} name="action" />
-							</div>
-							<div className="modal-footer">
-								<button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-								<button type="submit" className="btn btn-primary" onClick={() => setAction('move')}>Move</button>
-								<button type="submit" className="btn btn-primary" onClick={() => setAction('copy')}>Copy</button>
-							</div>
-						</form>
-					</div>
-				</div>
-			</div>
+			<RenameModal file={selected} closeContextMenu={closeContextMenu} />
 		</>
 	);
 }

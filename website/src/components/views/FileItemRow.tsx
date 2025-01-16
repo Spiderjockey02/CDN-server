@@ -71,10 +71,10 @@ export default function FileItemRow({ dir, userId, file, isChecked, openContextM
 						<button className='btn'>
 							<FontAwesomeIcon icon={faTrash} />
 						</button>
-						<button className='btn'>
+						<button className='btn' data-bs-toggle="modal" data-bs-target={`#change_${file.id}`}>
 							<FontAwesomeIcon icon={faCopy} />
 						</button>
-						<button className='btn'>
+						<button className="btn" type="button" data-bs-toggle="modal" data-bs-target={`#rename_${file.id}`}>
 							<FontAwesomeIcon icon={faFileSignature} />
 						</button>
 					</div>

@@ -1,0 +1,63 @@
+import { fileItem } from '@/types';
+import axios from 'axios';
+import { BaseSyntheticEvent, useState } from 'react';
+import { useFileDispatch } from '../fileManager';
+
+interface Props {
+  file: fileItem
+  closeContextMenu?: () => void
+}
+
+export default function RenameModal({ file, closeContextMenu }: Props) {
+	const [rename, setRename] = useState(file.name);
+	const dispatch = useFileDispatch();
+
+	function closeModal(id: string) {
+		document.getElementById(id)?.classList.remove('show');
+		document.getElementById(id)?.setAttribute('aria-hidden', 'true');
+		document.getElementById(id)?.setAttribute('style', 'display: none');
+		document.body.removeChild(document.getElementsByClassName('modal-backdrop')[0] as Node);
+		if (closeContextMenu) closeContextMenu();
+	}
+
+	const handleRenameSubmit = async (e: BaseSyntheticEvent) => {
+		const oldName = file.name;
+		e.preventDefault();
+
+		try {
+			await axios.post('/api/files/rename', { oldName, newName: file.type == 'FILE' ? `${rename}.${file.name.split('.').at(-1)}` : rename });
+			const { data } = await axios.get(`/api/files/${window.location.pathname.replace('/files', '/')}`);
+			dispatch({ type: 'SET_FILE', payload: data.file });
+		} catch (err) {
+			console.log(err);
+		}
+
+		closeModal('renameModel');
+	};
+
+	return (
+		<div className="modal fade" id={`rename_${file.id}`} role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+			<div className="modal-dialog modal-dialog-centered" role="document">
+				<div className="modal-content">
+					<div className="modal-header">
+						<h5 className="modal-title" id="exampleModalLongTitle">Rename {file.name}</h5>
+						<button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<form onSubmit={handleRenameSubmit} method="post">
+						<div className="modal-body">
+							<input type="hidden" id="oldPath" name="oldPath" value={file.name} />
+							<div className="input-group mb-3">
+								<input className="form-control" id="renameInput" type="text" name="newPath" defaultValue={file.name.replace(`.${file.name.split('.').at(-1)}`, '')} onChange={(e) => setRename(e.target.value)} />
+								{file.type == 'FILE' && <span className="input-group-text" id="renameSuffix">.{file.name.split('.').at(-1)}</span>}
+							</div>
+						</div>
+						<div className="modal-footer">
+							<button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+							<button type="submit" className="btn btn-primary">Save</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	);
+}

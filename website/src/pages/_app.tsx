@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import { useEffect } from 'react';
 import Header from '../components/header';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { FileProvider } from '@/components/fileManager';
 
 export default function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
 	useEffect(() => {
@@ -14,7 +15,9 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
 	return (
 		<SessionProvider session={session}>
 			<Header />
-			<Component {...pageProps} />
+			<FileProvider>
+				<Component {...pageProps} />
+			</FileProvider>
 		</SessionProvider>
 	);
 }

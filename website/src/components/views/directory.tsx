@@ -3,6 +3,8 @@ import { useState } from 'react';
 import ContextMenu from '../menus/contextMenu';
 import type { MouseEvent } from 'react';
 import FileItemRow from './FileItemRow';
+import RenameModal from '../Modals/renameFile';
+import ChangeModal from '../Modals/changeFile';
 type sortKeyTypes = 'Name' | 'Size' | 'Date_Mod';
 type SortOrder = 'ascn' | 'dscn';
 interface Props {
@@ -99,6 +101,8 @@ export default function Directory({ files, dir, userId }: Props) {
 	return (
 		<div>
 			{contextMenu.show &&	<ContextMenu x={contextMenu.x} y={contextMenu.y} closeContextMenu={closeContextMenu} selected={contextMenu.selected} />}
+			{files.children.map((_) => <RenameModal key={_.id} file={_} />)}
+			{files.children.map((_) => <ChangeModal key={_.id} file={_} />)}
 			<table className="table" id="myTable">
 				<thead>
 					<tr>
