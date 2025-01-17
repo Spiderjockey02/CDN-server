@@ -17,22 +17,20 @@ export default function PhotoAlbum({ files, dir, user }: Props) {
 	const myLoader = ({ src }: ImageLoaderProps) => `/thumbnail/${user.id}/${dir}/${src}`;
 	return (
 		<>
-			<div className="row justify-content-between">
+			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: '5px 5px' }}>
 				{files.children.sort((a, b) => a.type.localeCompare(b.type)).slice(page * pageCount, (page + 1) * pageCount).map(_ => (
-					<div className="card col-sm-2 m-1 text-center" key={_.name} style={{ margin:'0px', padding: '0px' }}>
-						<Link href={`/files${dir == '/' ? '/' : `/${dir}/`}${_.name}`} style={{ textDecoration: 'none' }}>
+					<div className="text-center" key={_.name} style={{ border: '1px solid black', borderRadius: '8px' }}>
+						<Link href={`/files${_.path}`} style={{ textDecoration: 'none' }}>
 							<Image className="center" loader={myLoader} src={_.name}
-								style={{ width:'auto', maxWidth:'200px', height:'auto', maxHeight:'275px', minWidth:200 }}
+								style={{ width: '200px', height: _.type == 'DIRECTORY' ? '236px' : '260px', borderRadius: '8px' }}
 								alt={_.name} width="200" height="275"
 							/>
-							<div className="card-body">
-								<h5 className="card-title text-truncate">{_.name}</h5>
-								<p>{new Date(_.createdAt).toDateString()}</p>
-							</div>
 						</Link>
+						{_.type == 'DIRECTORY' && <p className='m-0 text-truncate' style={{ maxWidth: '200px' }}>{_.name}</p>}
 					</div>
 				))}
 			</div>
+			&nbsp;
 			<div className="d-flex justify-content-center">
 				<nav aria-label="Page navigation example">
 					<ul className="pagination">
