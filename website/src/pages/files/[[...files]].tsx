@@ -70,8 +70,8 @@ export default function Files({ path = '/' }: Props) {
 							file.type == 'FILE' ?
 						 <FileViewer file={file} userId={session.user.id} /> :
 								viewType == 'Tiles' ?
-									<PhotoAlbum files={file} dir={path} user={session.user} /> :
-									<Directory files={file} dir={path} userId={session.user.id} />
+									<PhotoAlbum folder={file} /> :
+									<Directory folder={file} />
 						}
 					</div>
 				</div>

@@ -5,12 +5,12 @@ import type { MouseEvent } from 'react';
 import FileItemRow from './FileItemRow';
 import RenameModal from '../Modals/renameFile';
 import ChangeModal from '../Modals/changeFile';
+import DeleteFileModal from '../Modals/deleteFile';
+import FilePanelPopup from './FilePanelPopup';
 type sortKeyTypes = 'Name' | 'Size' | 'Date_Mod';
 type SortOrder = 'ascn' | 'dscn';
 interface Props {
-  files: fileItem
-  dir: string
-	userId: string
+  folder: fileItem
 }
 
 const initalContextMenu = {
@@ -20,12 +20,13 @@ const initalContextMenu = {
 	selected: { name: '', type: '', size: 0, modified: '' } as unknown as fileItem,
 };
 
-export default function Directory({ files, dir, userId }: Props) {
+export default function Directory({ folder }: Props) {
 	const [, setSortKey] = useState<sortKeyTypes>('Name');
 	const [sortOrder, setSortOrder] = useState<SortOrder>('ascn');
 	const [contextMenu, setContextMenu] = useState(initalContextMenu);
 	const [filesSelected, setFilesSelected] = useState<string[]>([]);
 	const [allSelected, setAllSelected] = useState(false);
+	const [filePanelToShow, setFilePanelToShow] = useState('');
 
 
 	function updateSortKey(sort: sortKeyTypes) {
@@ -33,9 +34,9 @@ export default function Directory({ files, dir, userId }: Props) {
 			case 'Name': {
 				setSortOrder(sortOrder == 'ascn' ? 'dscn' : 'ascn');
 				if (sortOrder == 'ascn') {
-					files.children = files.children.sort((a, b) => a.name > b.name ? 1 : -1);
+					folder.children = folder.children.sort((a, b) => a.name > b.name ? 1 : -1);
 				} else {
-					files.children = files.children.sort((a, b) => a.name < b.name ? 1 : -1);
+					folder.children = folder.children.sort((a, b) => a.name < b.name ? 1 : -1);
 				}
 				setSortKey(sort);
 				break;
@@ -43,9 +44,9 @@ export default function Directory({ files, dir, userId }: Props) {
 			case 'Size': {
 				setSortOrder(sortOrder == 'ascn' ? 'dscn' : 'ascn');
 				if (sortOrder == 'ascn') {
-					files.children = files.children.sort((a, b) => a.size > b.size ? 1 : -1);
+					folder.children = folder.children.sort((a, b) => a.size > b.size ? 1 : -1);
 				} else {
-					files.children = files.children.sort((a, b) => a.size < b.size ? 1 : -1);
+					folder.children = folder.children.sort((a, b) => a.size < b.size ? 1 : -1);
 				}
 				setSortKey(sort);
 				break;
@@ -53,9 +54,9 @@ export default function Directory({ files, dir, userId }: Props) {
 			case 'Date_Mod': {
 				setSortOrder(sortOrder == 'ascn' ? 'dscn' : 'ascn');
 				if (sortOrder == 'ascn') {
-					files.children = files.children.sort((a, b) => a.createdAt > b.createdAt ? 1 : -1);
+					folder.children = folder.children.sort((a, b) => a.createdAt > b.createdAt ? 1 : -1);
 				} else {
-					files.children = files.children.sort((a, b) => a.createdAt < b.createdAt ? 1 : -1);
+					folder.children = folder.children.sort((a, b) => a.createdAt < b.createdAt ? 1 : -1);
 				}
 				setSortKey(sort);
 				break;
@@ -92,7 +93,7 @@ export default function Directory({ files, dir, userId }: Props) {
 			setFilesSelected([]);
 		} else {
 			// Select all files
-			const allFileNames = files.children.map((file) => file.name);
+			const allFileNames = folder.children.map((file) => file.name);
 			setFilesSelected(allFileNames);
 		}
 		setAllSelected(!allSelected);
@@ -101,8 +102,10 @@ export default function Directory({ files, dir, userId }: Props) {
 	return (
 		<div>
 			{contextMenu.show &&	<ContextMenu x={contextMenu.x} y={contextMenu.y} closeContextMenu={closeContextMenu} selected={contextMenu.selected} />}
-			{files.children.map((_) => <RenameModal key={_.id} file={_} />)}
-			{files.children.map((_) => <ChangeModal key={_.id} file={_} />)}
+			{folder.children.map((_) => <RenameModal key={_.id} file={_} />)}
+			{folder.children.map((_) => <ChangeModal key={_.id} file={_} />)}
+			{folder.children.map((_) => <DeleteFileModal key={_.id} file={_} />)}
+			{folder.children.map((_) => <FilePanelPopup key={_.id} file={_} show={filePanelToShow == _.id} setShow={(s) => setFilePanelToShow(s)} />)}
 			<table className="table" id="myTable">
 				<thead>
 					<tr>
@@ -126,20 +129,18 @@ export default function Directory({ files, dir, userId }: Props) {
 					</tr>
 				</thead>
 				<tbody>
-					{files.children.filter(f => f.type == 'DIRECTORY').map(_ => (
+					{folder.children.filter(f => f.type == 'DIRECTORY').map(_ => (
 						<FileItemRow key={_.name}
-							dir={dir} file={_}
-							userId={userId}
+							file={_}
 							isChecked={filesSelected.includes(_.name)} openContextMenu={openContextMenu}
-							handleCheckboxToggle={handleCheckboxToggle}
+							handleCheckboxToggle={handleCheckboxToggle} setShow={(fileId) => setFilePanelToShow(fileId)}
 						/>
 					))}
-					{files.children.filter(f => f.type == 'FILE').map(_ => (
+					{folder.children.filter(f => f.type == 'FILE').map(_ => (
 						<FileItemRow key={_.name}
-							dir={dir} file={_}
-							userId={userId}
+							file={_}
 							isChecked={filesSelected.includes(_.name)} openContextMenu={openContextMenu}
-							handleCheckboxToggle={handleCheckboxToggle}
+							handleCheckboxToggle={handleCheckboxToggle} setShow={(fileId) => setFilePanelToShow(fileId)}
 						/>
 					))}
 				</tbody>

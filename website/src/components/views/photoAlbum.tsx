@@ -2,26 +2,23 @@ import type { fileItem } from '../../types';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { ImageLoaderProps } from 'next/image';
-import type { User } from '@/types/';
 import { useState } from 'react';
 interface Props {
-  files: fileItem
-  dir: string
-  user: User
+  folder: fileItem
 }
 
-export default function PhotoAlbum({ files, dir, user }: Props) {
+export default function PhotoAlbum({ folder }: Props) {
 	const [page, setPage] = useState(0);
 	const pageCount = 10;
 
-	const myLoader = ({ src }: ImageLoaderProps) => `/thumbnail/${user.id}/${dir}/${src}`;
+	const myLoader = ({ src }: ImageLoaderProps) => `/thumbnail/${folder.userId}${src}`;
 	return (
 		<>
 			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: '5px 5px' }}>
-				{files.children.sort((a, b) => a.type.localeCompare(b.type)).slice(page * pageCount, (page + 1) * pageCount).map(_ => (
+				{folder.children.sort((a, b) => a.type.localeCompare(b.type)).slice(page * pageCount, (page + 1) * pageCount).map(_ => (
 					<div className="text-center" key={_.name} style={{ border: '1px solid black', borderRadius: '8px' }}>
 						<Link href={`/files${_.path}`} style={{ textDecoration: 'none' }}>
-							<Image className="center" loader={myLoader} src={_.name}
+							<Image className="center" loader={myLoader} src={_.path}
 								style={{ width: '200px', height: _.type == 'DIRECTORY' ? '236px' : '260px', borderRadius: '8px' }}
 								alt={_.name} width="200" height="275"
 							/>
@@ -45,10 +42,10 @@ export default function PhotoAlbum({ files, dir, user }: Props) {
 						</li>
 						<li className="page-item"><p className="page-link">{page + 1}</p></li>
 						<li className="page-item">
-							<a className="page-link" href="#" onClick={() => setPage(Math.floor(files.children.length / pageCount))} >{Math.floor(files.children.length / 10) + 1}</a>
+							<a className="page-link" href="#" onClick={() => setPage(Math.floor(folder.children.length / pageCount))} >{Math.floor(folder.children.length / 10) + 1}</a>
 						</li>
 						<li className="page-item">
-							<a className="page-link" href="#" aria-label="Next" onClick={() => setPage(page + 1 > Math.floor(files.children.length / pageCount) ? Math.floor(files.children.length / pageCount) : page + 1)}>
+							<a className="page-link" href="#" aria-label="Next" onClick={() => setPage(page + 1 > Math.floor(folder.children.length / pageCount) ? Math.floor(folder.children.length / pageCount) : page + 1)}>
 								<span aria-hidden="true">&raquo;</span>
 								<span className="sr-only">Next</span>
 							</a>

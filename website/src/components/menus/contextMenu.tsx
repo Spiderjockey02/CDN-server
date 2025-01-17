@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import { useOnClickOutside } from '@/utils/useOnClickOutisde';
-import type { BaseSyntheticEvent, RefObject } from 'react';
-import Modal from '../UI/Modal';
+import type { RefObject } from 'react';
 import axios from 'axios';
 import { fileItem } from '@/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -18,30 +17,9 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 	const contextMenuRef = useRef<HTMLDivElement>(null);
 
 	useOnClickOutside(contextMenuRef as RefObject<HTMLDivElement>, closeContextMenu);
-	function closeModal(id: string) {
-		document.getElementById(id)?.classList.remove('show');
-		document.getElementById(id)?.setAttribute('aria-hidden', 'true');
-		document.getElementById(id)?.setAttribute('style', 'display: none');
-		document.body.removeChild(document.getElementsByClassName('modal-backdrop')[0] as Node);
-		closeContextMenu();
-	}
-
-	const handleDeleteSubmit = async (e: BaseSyntheticEvent) => {
-		e.preventDefault();
-
-		try {
-			await axios.delete('/api/files/delete', {
-				data: { fileName: selected.name },
-			});
-		} catch (err) {
-			console.log(err);
-		}
-		closeModal('deleteModel');
-	};
-
 	const handleDownload = async () => {
 		try {
-			const { data: blob } = await axios.get(`/api/files/download?path=${selected.name}`, {
+			const { data: blob } = await axios.get(`/api/files/download?path=${selected.path}`, {
 				headers: {
 					'Accept': 'application/zip',
 				},
@@ -81,7 +59,8 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 				document.execCommand('copy');
 			} catch(err) {
 				console.error('Unable to copy to clipboard', err);
-			}document.body.removeChild(textArea);
+			}
+			document.body.removeChild(textArea);
 		};
 		if (window.isSecureContext && navigator.clipboard) {
 			navigator.clipboard.writeText(url);
@@ -102,7 +81,7 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 				<button className="btn btn-ctx-menu" onClick={handleDownload}>
 					<FontAwesomeIcon icon={faDownload} /> Download
 				</button>
-				<button type="button" className="btn btn-ctx-menu" data-bs-toggle="modal" data-bs-target="#deleteModel">
+				<button type="button" className="btn btn-ctx-menu" data-bs-toggle="modal" data-bs-target={`#delete_${selected.id}`}>
 					<FontAwesomeIcon icon={faTrash} /> Delete
 				</button>
 				<button className="btn btn-ctx-menu" data-bs-toggle="modal" data-bs-target={`#change_${selected.id}`}>
@@ -115,12 +94,6 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 					<FontAwesomeIcon icon={faEllipsisV} /> Properties
 				</button>
 			</div>
-
-			<Modal
-				id="deleteModel"
-				title={`Delete ${selected.name}?`}
-				description="Are you sure you want to send this item to the recycle bin?" onSubmit={handleDeleteSubmit}
-			/>
 
 			<RenameModal file={selected} closeContextMenu={closeContextMenu} />
 		</>
