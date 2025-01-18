@@ -1,10 +1,10 @@
 import client from './prisma';
 import { GetUsers, fetchUserbyParam, createUser, updateUser, UserToGroupProps } from '../types/database/User';
 import { LRUCache } from 'lru-cache';
-import { UserWithGroup } from 'src/types/database/User';
+import { FullUser } from 'src/types/database/User';
 
 export default class UserManager {
-	cache: LRUCache<string, UserWithGroup>;
+	cache: LRUCache<string, FullUser>;
 
 	constructor() {
 		this.cache = new LRUCache({
@@ -18,7 +18,7 @@ export default class UserManager {
 	  * @param {createUser} data The user data.
 		* @returns {UserWithGroup} The created user.
 	*/
-	async create(data: createUser): Promise<UserWithGroup> {
+	async create(data: createUser): Promise<FullUser> {
 		const user = await client.user.create({
 			data: {
 				email: data.email,
@@ -44,7 +44,7 @@ export default class UserManager {
 	  * @param {updateUser} data The user data.
 		* @returns {UserWithGroup} The updated user.
 	*/
-	async update(data: updateUser): Promise<UserWithGroup> {
+	async update(data: updateUser): Promise<FullUser> {
 		const user = await client.user.update({
 			where: {
 				id: data.id,
@@ -68,7 +68,7 @@ export default class UserManager {
 	  * @param {GetUsers} data The user data.
 		* @returns {UserWithGroup[]} The users.
 	*/
-	async fetchAll(data: GetUsers = {}): Promise<UserWithGroup[]> {
+	async fetchAll(data: GetUsers = {}): Promise<FullUser[]> {
 		return client.user.findMany({
 			include: {
 				group: data.group,
@@ -82,7 +82,7 @@ export default class UserManager {
 	  * @param {UserToGroupProps} data The user data.
 		* @returns {UserWithGroup} The updated user.
 	*/
-	async addUserToGroup(data: UserToGroupProps): Promise<UserWithGroup> {
+	async addUserToGroup(data: UserToGroupProps): Promise<FullUser> {
 		return client.user.update({
 			where: {
 				id: data.userId,
@@ -106,7 +106,7 @@ export default class UserManager {
 	  * @param {fetchUserbyParam} data The user data.
 		* @returns {UserWithGroup | null} The updated user.
 	*/
-	async fetchbyParam(data: fetchUserbyParam): Promise<UserWithGroup | null> {
+	async fetchbyParam(data: fetchUserbyParam): Promise<FullUser | null> {
 		let user = this.cache.find(u => u.id === data.id || u.email === data.email) ?? null;
 		if (user == null) {
 			user = await client.user.findUnique({

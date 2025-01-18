@@ -30,7 +30,7 @@ export interface UserToGroupProps {
 	groupId: string
 }
 
-export type UserWithGroup = Prisma.UserGetPayload<{
+export type FullUser = Prisma.UserGetPayload<{
   include: {
     group: true
 		notifications: true

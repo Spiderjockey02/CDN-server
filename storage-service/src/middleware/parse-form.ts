@@ -5,7 +5,7 @@ import fs from 'fs';
 import type { Request } from 'express';
 import { PATHS } from '../utils';
 import config from '../config';
-import type { UserWithGroup } from '../types/database/User';
+import type { FullUser } from '../types/database/User';
 import { Client } from 'src/helpers';
 
 const parseForm = async (client: Client, req: Request, userId: string): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
@@ -20,7 +20,7 @@ const parseForm = async (client: Client, req: Request, userId: string): Promise<
 		const uploadDir = join(PATHS.CONTENT, userId, path);
 		if (!client.FileManager._verifyTraversal(userId, uploadDir)) throw 'Invalid path';
 
-		let user: UserWithGroup | null;
+		let user: FullUser | null;
 		try {
 			user = await client.userManager.fetchbyParam({ id: userId });
 			if (!user) throw 'Missing user';
