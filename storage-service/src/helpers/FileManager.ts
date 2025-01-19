@@ -1,6 +1,7 @@
 import { Error as ErrorCL, PATHS, sanitiseObject } from '../utils';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import util from 'node:util';
 import { exec } from 'node:child_process';
 import type { Response } from 'express';
@@ -160,6 +161,10 @@ export default class FileManager extends FileAccessor {
 		} catch (error) {
 			ErrorCL.GenericError(res, 'Failed to create archive');
 		}
+	}
+
+	async deleteAvatar(userId: string) {
+		if (existsSync(`${PATHS.AVATAR}/${userId}.webp`)) return fs.rm(`${PATHS.AVATAR}/${userId}.webp`);
 	}
 
 	/**

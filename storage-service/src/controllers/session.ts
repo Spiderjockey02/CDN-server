@@ -108,7 +108,7 @@ export const deleteResetAvatar = (client: Client) => {
 			const session = await getSession(req);
 			if (!session?.user) return Error.InvalidSession(res);
 
-			if (fs.existsSync(`${PATHS.AVATAR}/${session.user.id}.webp`)) fs.rmSync(`${PATHS.AVATAR}/${session.user.id}.webp`);
+			await client.FileManager.deleteAvatar(session.user.id);
 			res.json({ success: 'Successfully deleted avatar' });
 		} catch (err) {
 			client.logger.error(err);
