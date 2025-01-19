@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { ipRegex } from '../utils/CONSTANTS';
+import { ipRegex, Error } from '../utils';
 import config from '../config';
 import avatarForm from './avatar-form';
 import parseForm from './parse-form';
@@ -69,11 +69,10 @@ export async function getSession(req: Request): Promise<JWT | null> {
 
 export async function checkAdmin(req: Request, res: Response, next: NextFunction) {
 	const session = await getSession(req);
-	if (session == null) return res.status(401).json({ error: 'You are not authorised to access this endpoint' });
+	if (session == null) return Error.InvalidSession(res);
 
-	console.log(session.user);
-	if(session.user?.group?.name == 'Admin') return next();
-	res.status(401).json({ error: 'You are not authorised to access this endpoint' });
+	if (session.user?.group?.name == 'Admin') return next();
+	return Error.InvalidSession(res);
 }
 
 export { avatarForm, parseForm };

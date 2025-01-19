@@ -5,11 +5,6 @@ import { getSession } from '../middleware';
 import emailValidate from 'deep-email-validator';
 import { Client } from 'src/helpers';
 
-type ErrorTypes = {
- type: 'username' | 'email' | 'password' | 'age' | 'misc'
- text: string
-}
-
 // Endpoint: POST /api/auth/login
 export const postLogin = (client: Client) => {
 	return async (req: Request, res: Response) => {
@@ -17,13 +12,13 @@ export const postLogin = (client: Client) => {
 
 		try {
 			const user = await client.userManager.fetchbyParam({ email });
-			if (!user) return Error.MissingAccess(res);
+			if (!user) return Error.InvalidLogin(res);
+
+			// Check to ensure passwords match
 			const isMatch = await bcrypt.compare(password, user.password);
-			if (isMatch) {
-				res.json({ success: 'User successfully logged in', user: sanitiseObject(user) });
-			} else {
-				Error.MissingAccess(res, 'Password is incorrect');
-			}
+			if (!isMatch) return Error.InvalidLogin(res);
+
+			res.json({ success: 'User successfully logged in', user: sanitiseObject(user) });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to fetch user information.');
@@ -35,30 +30,26 @@ export const postLogin = (client: Client) => {
 export const postRegister = (client: Client) => {
 	return async (req: Request, res: Response) => {
 	// Only post request
-		let error = {} as ErrorTypes;
 		const { username, email, password, password2 } = req.body.data;
 
 		// Check all fields were filled in
-		if (!username) error = { type: 'username', text: 'Missing field' };
-		if (!email) error = { type: 'email', text: 'Missing field' };
-		if (!password) error = { type: 'password', text: 'Missing field' };
-		if (!password2) error = { type: 'password', text: 'Missing field' };
+		if (!username) return Error.IncorrectQuery(res, { type: 'username', text: 'Missing field' });
+		if (!email) return Error.IncorrectQuery(res, { type: 'email', text: 'Missing field' });
+		if (!password) return Error.IncorrectQuery(res, { type: 'password', text: 'Missing field' });
+		if (!password2) return Error.IncorrectQuery(res, { type: 'password', text: 'Missing field' });
 
 		// check if passwords match
-		if (password !== password2) error = { type: 'password', text: 'Passwords dont match!' };
+		if (password !== password2) return Error.IncorrectQuery(res, { type: 'password', text: 'Passwords dont match!' });
 
 		// check if password is more than 6 characters
-		if (password.length <= 8) error = { type: 'password', text: 'Password must be atleast 8 characters long!' };
+		if (password.length <= 8) return Error.IncorrectQuery(res, { type: 'password', text: 'Password must be atleast 8 characters long!' });
 
 		// Check if email already is being used
 		const isEmailAlreadyBeingUsed = await client.userManager.fetchbyParam({ email });
-		if (isEmailAlreadyBeingUsed !== null) error = { type: 'email', text: 'Email already being used.' };
+		if (isEmailAlreadyBeingUsed !== null) return Error.IncorrectQuery(res, { type: 'email', text: 'Email already being used.' });
 
 		const isEmailValid = await emailValidate(email);
-		if (!isEmailValid.valid) error = { type: 'email', text: 'Email is invalid.' };
-
-		// If an error was found notify user
-		if (error == null) return res.status(400).json({ error });
+		if (!isEmailValid.valid) return Error.IncorrectQuery(res, { type: 'email', text: 'Email is invalid.' });
 
 		// Encrypt password (Dont save raw password to database)
 		let Hashpassword;
@@ -67,7 +58,7 @@ export const postRegister = (client: Client) => {
 			Hashpassword = await bcrypt.hash(password, salt);
 		} catch (err) {
 			client.logger.error(err);
-			return res.json({ error: { type: 'misc', text: 'Failed to encrypt password' } });
+			return Error.GenericError(res, 'Failed to register new user.');
 		}
 
 		// Save the new user to database + make sure to create folder
@@ -77,7 +68,7 @@ export const postRegister = (client: Client) => {
 			res.json({ success: 'User successfully created' });
 		} catch (err) {
 			client.logger.error(err);
-			return res.json({ error: { type: 'misc', text: 'Failed to saved user to database' } });
+			Error.GenericError(res, 'Failed to register new user.');
 		}
 	};
 };
@@ -87,7 +78,7 @@ export const getSessionUserId = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const session = await getSession(req);
-			if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+			if (!session?.user) return Error.InvalidSession(res);
 			const userId = req.params.userId;
 
 			const user = await client.userManager.fetchbyParam({ id: userId });

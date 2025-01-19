@@ -7,7 +7,7 @@ export const getTrash = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const session = await getSession(req);
-			if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+			if (!session?.user) return Error.InvalidSession(res);
 
 			const files = await client.FileManager.TrashHandler.getAllDeletedFiles(session.user.id);
 			res.json({ files: sanitiseObject(files) });

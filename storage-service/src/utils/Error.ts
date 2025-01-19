@@ -2,28 +2,6 @@ import type { Response } from 'express';
 
 export default class Error {
 	/**
-		* Tell the requestee their query is invalid
-		* @param {Response} res The response to the requestee
-		* @param {string} errMsg The error message
-	*/
-	public static IncorrectQuery(res: Response, errMsg: string) {
-		return res
-			.status(412)
-			.json({ error: errMsg });
-	}
-
-	/**
-		* Tell the requestee their query is invalid
-		* @param {Response} res The response to the requestee
-		* @param {string} errMsg The error message
-	*/
-	public static IncorrectBodyValue(res: Response, errMsg: string) {
-		return res
-			.status(412)
-			.json({ error: `${errMsg} inside the request body.` });
-	}
-
-	/**
 		* Tell the requestee an error occured.
 		* @param {Response} res The response to the requestee
 		* @param {string} errMsg The error message
@@ -35,14 +13,23 @@ export default class Error {
 	}
 
 	/**
-		* Tell the requestee the path is invalid.
+		* Tell the requestee they do not have permission to access the endpoint.
 		* @param {Response} res The response to the requestee
-		* @param {string} endpoint The endpoint that doesn't exist
 	*/
-	public static MissingEndpoint(res: Response, endpoint: string) {
+	public static InvalidSession(res: Response) {
 		return res
-			.status(404)
-			.json({ error: `${endpoint} is not a valid endpoint.` });
+			.status(403)
+			.json({ error: 'Session is invalid, please try logout and sign in again.' });
+	}
+
+	/**
+		* Tell the requestee the login was invalid (password wrong etc)
+		* @param {Response} res The response to the requestee
+	*/
+	public static InvalidLogin(res: Response) {
+		return res
+			.status(401)
+			.json({ error: 'Invalid username or password.' });
 	}
 
 	/**
@@ -57,34 +44,14 @@ export default class Error {
 	}
 
 	/**
-		* Tell the requestee the file type is unsupported
+		* Tell the requestee their query is invalid
 		* @param {Response} res The response to the requestee
-		* @param {Array<string>} fileTypes The array of filetypes that are supported
+		* @param {string} errMsg The error message
 	*/
-	public static UnsupportedFileType(res: Response, fileTypes: Array<string>) {
+	public static IncorrectQuery(res: Response, errMsg: any) {
 		return res
-			.status(415)
-			.json({ error: `File must be MIME type(s): ${fileTypes.join(', ')}. ` });
-	}
-
-	/**
-		* Tell the requestee the video's dimensions are too large (3840x2160)
-		* @param {Response} res The response to the requestee
-	*/
-	public static FileTooLarge(res: Response) {
-		return res
-			.status(413)
-			.json({ error: 'File is too large.' });
-	}
-
-	/**
-		* Tell the requestee they do not have permission to access the endpoint.
-		* @param {Response} res The response to the requestee
-	*/
-	public static MissingAccess(res: Response, error?: string) {
-		return res
-			.status(403)
-			.json({ error: error ?? 'You are not authorised to use this endpoint' });
+			.status(412)
+			.json({ error: errMsg });
 	}
 
 }

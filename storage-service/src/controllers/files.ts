@@ -11,7 +11,7 @@ export const getFiles = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const session = await getSession(req);
-			if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+			if (!session?.user) return Error.InvalidSession(res);
 
 			// Fetch from cache
 			const filePath = req.params.path;
@@ -29,7 +29,7 @@ export const getFiles = (client: Client) => {
 export const postFileUpload = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
-		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+		if (!session?.user) return Error.InvalidSession(res);
 
 		try {
 			// Parse and save file(s)
@@ -49,7 +49,7 @@ export const postFileUpload = (client: Client) => {
 export const deleteFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
-		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+		if (!session?.user) return Error.InvalidSession(res);
 
 		const { fileName } = req.body;
 		const userPath = (req.headers.referer)?.split('/files')[1] ?? '';
@@ -69,7 +69,7 @@ export const deleteFile = (client: Client) => {
 export const postMoveFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
-		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+		if (!session?.user) return Error.InvalidSession(res);
 		const { newPath, fileName } = req.body;
 		const oldPath = (req.headers.referer)?.split('/files')[1] ?? '/';
 
@@ -87,7 +87,7 @@ export const postMoveFile = (client: Client) => {
 export const postCopyFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
-		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+		if (!session?.user) return Error.InvalidSession(res);
 		const { newPath, fileName } = req.body;
 		const oldPath = (req.headers.referer)?.split('/files')[1] ?? '';
 
@@ -105,7 +105,7 @@ export const postCopyFile = (client: Client) => {
 export const getDownloadFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
-		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+		if (!session?.user) return Error.InvalidSession(res);
 		const { path: filePath } = req.query;
 
 		// Fetch file from database
@@ -128,7 +128,7 @@ export const getDownloadFile = (client: Client) => {
 export const postRenameFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
-		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+		if (!session?.user) return Error.InvalidSession(res);
 		const { oldName, newName } = req.body;
 		const userPath = (req.headers.referer as string).split('/files')[1];
 		const originalPath = decodeURI(userPath.startsWith('/') ? `${userPath}/` : '/');
@@ -147,19 +147,19 @@ export const postRenameFile = (client: Client) => {
 export const postCreateFolder = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
-		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+		if (!session?.user) return Error.InvalidSession(res);
 
 		try {
 			const { folderName } = req.body;
-			if (typeof folderName !== 'string' || !folderName.trim()) return Error.IncorrectBodyValue(res, 'folderName is not a string');
+			if (typeof folderName !== 'string' || !folderName.trim()) return Error.IncorrectQuery(res, 'folderName is not a string');
 
 			// Validate and sanitise the folder name
 			const validFolderName = /^[a-zA-Z0-9 _-]+$/;
 			const santisedFolderName = path.normalize(folderName).replace(/^[/\\]+/, '');
-			if (!validFolderName.test(santisedFolderName)) return Error.IncorrectBodyValue(res, 'folderName contains invalid characters');
+			if (!validFolderName.test(santisedFolderName)) return Error.IncorrectQuery(res, 'folderName contains invalid characters');
 
 			// Decode & santise the referer path to ensure the folder is added to the correct path
-			const userPath = decodeURI(req.headers['referer']?.split('/files')[1] || '');
+			const userPath = decodeURI(req.headers['referer']?.split('/files')[1] || '/');
 			if (userPath.length == 0) return Error.GenericError(res, 'Invalid path detected.');
 			await client.FileManager.createDirectory(session.user.id, userPath.startsWith('/') ? userPath : `/${userPath}`, santisedFolderName);
 			res.json({ success: 'Successfully created folder.' });

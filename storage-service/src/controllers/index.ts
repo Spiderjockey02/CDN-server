@@ -15,7 +15,7 @@ export const getAvatar = () => {
 			userId = req.params.userId;
 		} else {
 			const session = await getSession(req);
-			if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+			if (!session?.user) return Error.InvalidSession(res);
 			userId = session.user.id;
 		}
 
@@ -81,17 +81,14 @@ export const getThumbnail = (client: Client) => {
 export const getContent = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		const session = await getSession(req);
-		if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+		if (!session?.user) return Error.InvalidSession(res);
 
 		const userId = req.params.userid as string;
 		const path = req.params.path as string;
 
 		// Fetch file from database
 		const file = await client.FileManager.getByFilePath(userId, path);
-		if (!file) return Error.MissingResource(res, 'File not found');
-
-		// Make sure the file is being accessed by the owner
-		if (file.userId !== session.user.id) return Error.MissingAccess(res);
+		if (!file || file.userId !== session.user.id) return Error.MissingResource(res, 'File not found');
 
 		// Update the user's recently viewed file history
 		try {

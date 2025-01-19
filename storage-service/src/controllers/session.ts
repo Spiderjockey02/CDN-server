@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { avatarForm, getSession } from '../middleware';
-import { Error, PATHS, sanitiseObject } from '../utils';
+import { Error, sanitiseObject } from '../utils';
 import emailValidate from 'deep-email-validator';
 import { Client } from 'src/helpers';
-import fs from 'node:fs';
 import { Prisma } from '@prisma/client';
 
 // Endpoint: POST /api/session/change-password
@@ -12,7 +11,7 @@ export const postChangePassword = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const session = await getSession(req);
-			if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+			if (!session?.user) return Error.InvalidSession(res);
 
 			const { currentPassword, password, password2 } = req.body;
 
@@ -48,7 +47,7 @@ export const postChangeAvatar = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const session = await getSession(req);
-			if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+			if (!session?.user) return Error.InvalidSession(res);
 
 			// Parse and save file(s)
 			await avatarForm(req, session.user.id);
@@ -66,7 +65,7 @@ export const postChangeEmail = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const session = await getSession(req);
-			if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+			if (!session?.user) return Error.InvalidSession(res);
 			const { email } = req.body;
 
 			const isEmailValid = await emailValidate(email);
@@ -91,7 +90,7 @@ export const getRecentlyViewed = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const session = await getSession(req);
-			if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+			if (!session?.user) return Error.InvalidSession(res);
 
 			const files = await client.recentlyViewedFileManager.fetchUsers(session.user.id);
 			res.json({ files: sanitiseObject(files) });
@@ -107,7 +106,7 @@ export const deleteResetAvatar = (client: Client) => {
 	return async (req: Request, res: Response) => {
 		try {
 			const session = await getSession(req);
-			if (!session?.user) return Error.MissingAccess(res, 'Session is invalid, please try logout and sign in again.');
+			if (!session?.user) return Error.InvalidSession(res);
 
 			if (fs.existsSync(`${PATHS.AVATAR}/${session.user.id}.webp`)) fs.rmSync(`${PATHS.AVATAR}/${session.user.id}.webp`);
 			res.json({ success: 'Successfully deleted avatar' });
