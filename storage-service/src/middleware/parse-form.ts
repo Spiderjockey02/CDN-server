@@ -7,8 +7,9 @@ import { PATHS } from '../utils';
 import config from '../config';
 import type { FullUser } from '../types/database/User';
 import { Client } from 'src/helpers';
+import type { File } from '@prisma/client';
 
-const parseForm = async (client: Client, req: Request, userId: string): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
+export default async (client: Client, req: Request, userId: string): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
 	// eslint-disable-next-line no-async-promise-executor
 	return await new Promise(async (resolve, reject) => {
 
@@ -27,13 +28,12 @@ const parseForm = async (client: Client, req: Request, userId: string): Promise<
 
 			// Make sure they haven't already uploaded max storage
 			if (user.totalStorageSize >= Number(user.group?.maxStorageSize ?? 0)) throw 'Max storage reached';
-		} catch (e: any) {
+
+			// Just make sure the folder exists
+			await mkdir(uploadDir, { recursive: true });
+		} catch (e) {
 			console.log('error', e);
-			if (e?.code === 'ENOENT') {
-				await mkdir(uploadDir, { recursive: true });
-			} else {
-				return reject(e);
-			}
+			return reject(e);
 		}
 
 		const form = formidable({
@@ -44,6 +44,9 @@ const parseForm = async (client: Client, req: Request, userId: string): Promise<
 				const baseName = part.originalFilename?.replace(/\.[^/.]+$/, '') || 'file';
 				const extension = part.originalFilename?.split('.').pop() || '';
 				let finalName = `${baseName}.${extension}`;
+
+				// Check if a folder of files is being uploaded
+				if (finalName.includes('/')) mkdir(`${uploadDir}/${finalName.split('/').slice(0, -1).join('/')}`, { recursive: true });
 
 				let counter = 1;
 				const MAX_ATTEMPTS = 10;
@@ -63,34 +66,86 @@ const parseForm = async (client: Client, req: Request, userId: string): Promise<
 		});
 
 		form.parse(req, async function(err, fields, files) {
-			// Update user's total storage size
-			const size: number = files.media?.reduce((a, b) => a + b.size, 0) ?? 0;
-			await client.userManager.update({ id: userId, totalStorageSize: (user?.totalStorageSize ?? 0n) + BigInt(size) });
+			if (err) return reject(err);
 
-			// Update the database
-			for (const file of files.media ?? []) {
-				// Fetch the parent directory (folder that file is being uploaded to)
-				const dir = await client.FileManager.getByFilePath(userId, path);
-				if (dir == null) return reject('Missing parent directory');
+			try {
+				// Update user's total storage size
+				const size: number = files.media?.reduce((a, b) => a + b.size, 0) ?? 0;
+				await client.userManager.update({ id: userId, totalStorageSize: (user?.totalStorageSize ?? 0n) + BigInt(size) });
+				for (const file of files.media ?? []) {
+					const filePath = file.newFilename;
+					const lastSlashIndex = filePath.lastIndexOf('/');
 
-				// Add the new file to the parent's directory
-				await client.FileManager.update({ id: dir.id,
-					children: {
-						userId,
-						name: `${file.newFilename}`,
-						path: `${path}${file.newFilename}`,
-						size: BigInt(file.size),
-					},
-				});
-			}
+					// Check if a folder was uploaded or not (etc/text.txt vs text.tst)
+					if (lastSlashIndex > -1) {
+						const folderPath = `/${filePath.substring(0, lastSlashIndex)}`;
+						const fileName = filePath.substring(lastSlashIndex + 1);
+						await ensureFolderExists(client, userId, folderPath);
 
-			if (err) {
-				reject(err);
-			} else {
+						// Add the file to the folder
+						const dir = await client.FileManager.getByFilePath(userId, folderPath);
+						if (!dir) return reject('Missing parent directory');
+
+						await client.FileManager.update({
+							id: dir.id,
+							children: {
+								userId,
+								name: fileName,
+								path: `${folderPath}/${fileName}`,
+								size: BigInt(file.size),
+							},
+						});
+					} else {
+						// File is uploaded to the root directory
+						const dir = await client.FileManager.getByFilePath(userId, path);
+						if (!dir) return reject('Missing parent directory');
+
+						await client.FileManager.update({
+							id: dir.id,
+							children: {
+								userId,
+								name: filePath,
+								path: `${path}${filePath}`,
+								size: BigInt(file.size),
+							},
+						});
+					}
+				}
+
 				resolve({ fields, files });
+			} catch (error) {
+				console.log(error);
+				reject(error);
 			}
 		});
 	});
 };
 
-export default parseForm;
+// Helper function to create folders recursively
+async function ensureFolderExists(client: Client, userId: string, fullPath: string) {
+	const pathParts = fullPath.split('/');
+	let parentDir = (await client.FileManager.getByFilePath(userId, '/') as File);
+	let currentPath = parentDir.path;
+
+	for (const part of pathParts) {
+		currentPath = `${parentDir.path}${part}`;
+
+		// Check if the directory already exists
+		let dir = await client.FileManager.getByFilePath(userId, currentPath);
+		if (!dir) {
+			// If it doesn't exist, create it
+			dir = await client.FileManager.update({
+				id: parentDir.id,
+				children: {
+					userId,
+					name: part,
+					path: currentPath,
+					size: 0n,
+					type: 'DIRECTORY',
+				},
+			});
+		}
+
+		parentDir = dir;
+	}
+}

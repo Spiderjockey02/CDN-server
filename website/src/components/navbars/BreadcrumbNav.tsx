@@ -45,15 +45,10 @@ export default function BreadcrumbNav({ path, isFile, setviewType }: Props) {
 
 	const onFileUploadChange = async (e: ChangeEvent<HTMLInputElement>) => {
 		const fileInput = e.target;
-		if (!fileInput.files || fileInput.files.length === 0) return alert('Files list is empty');
-
-		/** Reset file input */
-		e.currentTarget.type = 'text';
-		e.currentTarget.type = 'file';
+		if (!fileInput.files || fileInput.files.length == 0) return alert('Files list is empty');
 		try {
 			const startAt = Date.now();
 			const formData = new FormData();
-
 			// Append files and set filename
 			Array.from(fileInput.files).forEach((f) => {
 				formData.append('media', f);
