@@ -128,7 +128,7 @@ async function ensureFolderExists(client: Client, userId: string, fullPath: stri
 	let currentPath = parentDir.path;
 
 	for (const part of pathParts) {
-		currentPath = `${parentDir.path}${part}`;
+		currentPath = `${parentDir.path.endsWith('/') ? parentDir.path : `${parentDir.path}/`}${part}`;
 
 		// Check if the directory already exists
 		let dir = await client.FileManager.getByFilePath(userId, currentPath);
