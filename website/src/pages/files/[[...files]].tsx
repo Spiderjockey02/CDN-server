@@ -65,6 +65,7 @@ export default function Files({ path = '/' }: Props) {
 						{(path.length == 0 && recents.length > 0) &&
 							<RecentNavbar files={recents} />
 						}
+						&nbsp;
 						{file == null ?
 							null :
 							file.type == 'FILE' ?

@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
-import fs from 'fs';
 import { lookup } from 'mime-types';
-import { spawn } from 'child_process';
-import { createThumbnail } from '../utils/functions';
+import fs from 'node:fs';
 import { PATHS, Error } from '../utils';
 import { getSession } from '../middleware';
 import { Client } from 'src/helpers';
@@ -31,49 +29,7 @@ export const getThumbnail = (client: Client) => {
 		const userId = req.params.userid as string;
 		const path = req.params.path as string;
 
-		const fileType = lookup(path);
-		const fileName = path.substring(0, path.lastIndexOf('.')) || path;
-		if (fileType !== false) {
-			// Create folder (if needed to)
-			const folder = path.split('/').slice(0, -1).join('/');
-			if (!fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${folder}`)) fs.mkdirSync(`${PATHS.THUMBNAIL}/${userId}/${folder}`, { recursive: true });
-
-			// Create thumbnail from video, photo
-			switch (fileType.split('/')[0]) {
-				case 'image': {
-					// Create thumbnail if not already created
-					try {
-						if (!fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${decodeURI(fileName)}.jpg`)) await createThumbnail(userId, path);
-						return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${decodeURI(fileName)}.jpg`);
-					} catch (err) {
-						client.logger.error(err);
-						return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
-					}
-				}
-				case 'video': {
-					if (!fs.existsSync(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`)) {
-						try {
-							const child = spawn('ffmpeg',
-								['-i', `${PATHS.CONTENT}/${userId}/${path}`,
-									'-ss', '00:00:01.000', '-vframes', '1',
-									`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`,
-								]);
-
-							await new Promise((resolve, reject) => {
-								child.on('close', resolve);
-								child.on('error', reject);
-							});
-						} catch (err) {
-							client.logger.error(err);
-							return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
-						}
-					}
-					return res.sendFile(`${PATHS.THUMBNAIL}/${userId}/${fileName}.jpg`);
-				}
-			}
-		}
-
-		return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
+		return client.FileManager.getThumbnail(res, userId, path);
 	};
 };
 

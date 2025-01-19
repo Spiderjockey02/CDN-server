@@ -1,13 +1,14 @@
-import { Error as ErrorCL, PATHS, sanitiseObject } from '../utils';
+import { createThumbnail, Error as ErrorCL, PATHS, sanitiseObject } from '../utils';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import util from 'node:util';
-import { exec } from 'node:child_process';
+import { exec, spawn } from 'node:child_process';
 import type { Response } from 'express';
 import FileAccessor from '../accessors/File';
 import archiver from 'archiver';
 import TrashHandler from './TrashHandler';
+import { lookup } from 'mime-types';
 const cmd = util.promisify(exec);
 
 interface diskStorage {
@@ -165,6 +166,56 @@ export default class FileManager extends FileAccessor {
 
 	async deleteAvatar(userId: string) {
 		if (existsSync(`${PATHS.AVATAR}/${userId}.webp`)) return fs.rm(`${PATHS.AVATAR}/${userId}.webp`);
+	}
+
+	async getThumbnail(res: Response, userId: string, filePath: string) {
+		const file = await this.getByFilePath(userId, filePath);
+		if (file == null) return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
+
+		// Get the mimeType of the file
+		const fileType = lookup(file.path);
+		const fileName = file.name.slice(0, file.name.lastIndexOf('.'));
+		if (fileType == false) return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
+
+		// Create folder (if needed to)
+		const folder = file.path.split('/').slice(0, -1).join('/');
+		if (!existsSync(`${PATHS.THUMBNAIL}/${userId}/${folder}`)) await fs.mkdir(`${PATHS.THUMBNAIL}/${userId}/${folder}`, { recursive: true });
+
+		// Create thumbnail from video, photo
+		switch (fileType.split('/')[0]) {
+			case 'image': {
+				// Create thumbnail if not already created
+				try {
+					if (!existsSync(`${PATHS.THUMBNAIL}/${userId}${folder}/${decodeURI(fileName)}.jpg`)) await createThumbnail(userId, file.path);
+					return res.sendFile(`${PATHS.THUMBNAIL}/${userId}${folder}/${decodeURI(fileName)}.jpg`);
+				} catch (err) {
+					return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
+				}
+			}
+			case 'video': {
+				if (!existsSync(`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`)) {
+					try {
+						const child = spawn('ffmpeg',
+							['-i', `${PATHS.CONTENT}/${userId}${file.path}`,
+								'-ss', '00:00:00.750', '-vframes', '1',
+								`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`,
+							]);
+
+						child.on('message', console.log);
+
+						await new Promise((resolve, reject) => {
+							child.on('error', (err) => console.log(err));
+							child.on('close', resolve);
+							child.on('error', reject);
+						});
+					} catch (err) {
+						console.log(err);
+						return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
+					}
+				}
+				return res.sendFile(`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`);
+			}
+		}
 	}
 
 	/**

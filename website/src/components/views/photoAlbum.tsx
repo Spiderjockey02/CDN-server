@@ -9,7 +9,7 @@ interface Props {
 
 export default function PhotoAlbum({ folder }: Props) {
 	const [page, setPage] = useState(0);
-	const pageCount = 10;
+	const pageCount = 40;
 
 	const myLoader = ({ src }: ImageLoaderProps) => `/thumbnail/${folder.userId}${src}`;
 	return (
@@ -28,31 +28,33 @@ export default function PhotoAlbum({ folder }: Props) {
 				))}
 			</div>
 			&nbsp;
-			<div className="d-flex justify-content-center">
-				<nav aria-label="Page navigation example">
-					<ul className="pagination">
-						<li className="page-item">
-							<a className="page-link" href="#" aria-label="Previous" onClick={() => setPage(page - 1 < 0 ? 0 : page - 1)}>
-								<span aria-hidden="true">&laquo;</span>
-								<span className="sr-only">Previous</span>
-							</a>
-						</li>
-						<li className="page-item">
-							<a className="page-link" href="#"onClick={() => setPage(1)}>1</a>
-						</li>
-						<li className="page-item"><p className="page-link">{page + 1}</p></li>
-						<li className="page-item">
-							<a className="page-link" href="#" onClick={() => setPage(Math.floor(folder.children.length / pageCount))} >{Math.floor(folder.children.length / 10) + 1}</a>
-						</li>
-						<li className="page-item">
-							<a className="page-link" href="#" aria-label="Next" onClick={() => setPage(page + 1 > Math.floor(folder.children.length / pageCount) ? Math.floor(folder.children.length / pageCount) : page + 1)}>
-								<span aria-hidden="true">&raquo;</span>
-								<span className="sr-only">Next</span>
-							</a>
-						</li>
-					</ul>
-				</nav>
-			</div>
+			{folder.children.length > pageCount && (
+				<div className="d-flex justify-content-center">
+					<nav aria-label="Page navigation example">
+						<ul className="pagination">
+							<li className="page-item">
+								<a className="page-link" href="#" aria-label="Previous" onClick={() => setPage(page - 1 < 0 ? 0 : page - 1)}>
+									<span aria-hidden="true">&laquo;</span>
+									<span className="sr-only">Previous</span>
+								</a>
+							</li>
+							<li className="page-item">
+								<a className="page-link" href="#"onClick={() => setPage(1)}>1</a>
+							</li>
+							<li className="page-item"><p className="page-link">{page + 1}</p></li>
+							<li className="page-item">
+								<a className="page-link" href="#" onClick={() => setPage(Math.floor(folder.children.length / pageCount))} >{Math.floor(folder.children.length / pageCount) + 1}</a>
+							</li>
+							<li className="page-item">
+								<a className="page-link" href="#" aria-label="Next" onClick={() => setPage(page + 1 > Math.floor(folder.children.length / pageCount) ? Math.floor(folder.children.length / pageCount) : page + 1)}>
+									<span aria-hidden="true">&raquo;</span>
+									<span className="sr-only">Next</span>
+								</a>
+							</li>
+						</ul>
+					</nav>
+				</div>
+			)}
 		</>
 	);
 }
