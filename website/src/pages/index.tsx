@@ -1,10 +1,10 @@
 import '@/styles/Home.module.css';
-import { HomeNavbar, Footer } from '@/components';
 import Link from 'next/link';
 import config from '../config';
 import Script from 'next/script';
 import axios from 'axios';
 import { formatBytes } from '@/utils/functions';
+import MainLayout from '@/layouts/main';
 
 interface Props {
 	totalUserCount: number
@@ -15,10 +15,9 @@ interface Props {
 export default function Home({ totalUserCount, storageUsed, totalFileCount }: Props) {
 
 	return (
-		<>
+		<MainLayout>
 			<Script src="https://cdn.jsdelivr.net/npm/@srexi/purecounterjs/dist/purecounter_vanilla.js" strategy="worker" />
-			<HomeNavbar />
-			<section id="hero" className="d-flex align-items-center">
+			<section id="hero" className="d-flex align-items-center large-padding">
 				<div className="container">
 					<h1>Welcome to <span>{config.company.name}</span></h1>
 					<h2>{config.company.slogan}</h2>
@@ -30,7 +29,7 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Pr
 				</div>
 			</section>
 			<main id="main">
-				<section id="featured-services" className="featured-services">
+				<section id="featured-services" className="featured-services large-padding">
 					<div className="container" data-aos="fade-up">
 						<div className="row">
 							<div className="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0">
@@ -65,7 +64,7 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Pr
 					</div>
 				</section>
 
-				<section id="counts" className="counts">
+				<section id="counts" className="counts large-padding">
 					<div className="container" data-aos="fade-up">
 						<div className="row">
 							<div className="col-lg-3 col-md-6">
@@ -100,7 +99,7 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Pr
 					</div>
 				</section>
 
-				<section id="pricing" className="pricing">
+				<section id="pricing" className="pricing large-padding">
 					<div className="container" data-aos="fade-up">
 						<div className="section-title">
 							<h3>Check our <span>Pricing</span></h3>
@@ -181,7 +180,7 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Pr
 					</div>
 				</section>
 
-				<section id="faq" className="faq section-bg">
+				<section id="faq" className="faq section-bg large-padding">
 					<div className="container" data-aos="fade-up">
 						<div className="section-title">
 							<h3>Frequently Asked <span>Questions</span></h3>
@@ -245,8 +244,7 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Pr
 					</div>
 				</section>
 			</main>
-			<Footer />
-		</>
+		</MainLayout>
 	);
 }
 
