@@ -9,7 +9,9 @@ export default function MainLayout({ children }: Props) {
 	return (
 		<>
 			<HomeNavbar />
-			{children}
+			<div style={{ paddingTop: '60px' }}>
+				{children}
+			</div>
 			<Footer />
 		</>
 	);

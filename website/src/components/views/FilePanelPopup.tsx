@@ -84,7 +84,7 @@ export default function FilePanelPopup({ file, setShow, show }: Props) {
 						<h4>{file.name}</h4>
 					</span>
 					<p>Created on: {new Date(file.createdAt).toLocaleString('en-US')}</p>
-					<p>{file.type == 'FILE' ? `Size: ${formatBytes(file.size)}` : file.children?.length ?? 0} file{file.children?.length !== 1 ? 's' : ''}</p>
+					<p>{file.type == 'FILE' ? formatBytes(file.size) : `${file._count?.children ?? 0} files`}</p>
 				</div>
 				<div className='d-flex justify-content-evenly'>
 					<button className='btn'>

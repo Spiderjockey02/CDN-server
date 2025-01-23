@@ -14,13 +14,13 @@ export default function PhotoAlbum({ folder }: Props) {
 	const myLoader = ({ src }: ImageLoaderProps) => `/thumbnail/${folder.userId}${src}`;
 	return (
 		<>
-			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: '5px 5px' }}>
+			<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(0, 180px))', gap: '5px', justifyContent: 'flex-start' }}>
 				{folder.children.sort((a, b) => a.type.localeCompare(b.type)).slice(page * pageCount, (page + 1) * pageCount).map(_ => (
 					<div className="text-center" key={_.name} style={{ border: '1px solid black', borderRadius: '8px' }}>
 						<Link href={`/files${_.path}`} style={{ textDecoration: 'none' }}>
 							<Image className="center" loader={myLoader} src={_.path}
-								style={{ width: '200px', height: _.type == 'DIRECTORY' ? '236px' : '260px', borderRadius: '8px' }}
-								alt={_.name} width="200" height="275"
+								style={{ width: '100%', maxHeight: _.type == 'DIRECTORY' ? '236px' : '260px', borderRadius: '8px' }}
+								alt={_.name} width={200} height={275}
 							/>
 						</Link>
 						{_.type == 'DIRECTORY' && <p className='m-0 text-truncate' style={{ maxWidth: '200px' }}>{_.name}</p>}
