@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { deleteResetAvatar, getRecentlyViewed, postChangeAvatar, postChangeEmail, postChangePassword } from '../../controllers/session';
+import { deleteNotification, deleteResetAvatar, getRecentlyViewed, postChangeAvatar, postChangeEmail, postChangePassword } from '../../controllers/session';
 import { Client } from 'src/helpers';
 const router = Router();
 
@@ -13,6 +13,8 @@ export default function(client: Client) {
 	router.post('/change-email', postChangeEmail(client));
 
 	router.get('/recently-viewed', getRecentlyViewed(client));
+
+	router.delete('/notifications/:id', deleteNotification(client));
 
 	return router;
 }

@@ -2,6 +2,8 @@ export interface Notification {
   id: string
   text: string
   createdAt: Date
+  title: string
+  url?: string
 }
 
 export interface RecentlyViewed {

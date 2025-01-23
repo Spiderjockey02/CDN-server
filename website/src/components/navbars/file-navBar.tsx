@@ -4,9 +4,10 @@ import { signOut } from 'next-auth/react';
 import type { User } from '@/types';
 import axios from 'axios';
 import { useState } from 'react';
-import type { ChangeEvent, MouseEvent } from 'react';
+import type { ChangeEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faSearch, faSlidersH } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faSlidersH } from '@fortawesome/free-solid-svg-icons';
+import NotificationBell from '../UI/Notification';
 interface Props {
 	user: User
 }
@@ -29,11 +30,6 @@ export default function FileNavBar({ user }: Props) {
 		} else {
 			setSrchRes([]);
 		}
-	}
-
-	function deleteNotification(e: MouseEvent<HTMLButtonElement>, id:string) {
-		e.preventDefault();
-		alert(user.notifications.find(i => i.id == id)?.text);
 	}
 
 	return (
@@ -92,28 +88,8 @@ export default function FileNavBar({ user }: Props) {
 					</li>
 				</ul>
 				<ul className="navbar-nav ml-auto">
-					<li className="nav-item">
-						<div className="dropdown" id="notifications">
-							<button className="btn btn-outline-secondary nav-link position-relative" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-								<FontAwesomeIcon icon={faBell} id="notifIcons" />
-								{user.notifications?.length > 0 && (
-									<span className="position-absolute top-0 start-100 translate-middle badge border border-light rounded-circle bg-danger p-2"><span className="visually-hidden">unread messages</span></span>
-								)}
-							</button>
-							<div className="dropdown-menu dropdown-menu-end p-1 text-muted" style={{ width: '300px', overflowY: 'scroll', maxHeight: '300px' }}>
-								<h3 className="dropdown-header" style={{ fontSize: '18px' }}>Notifications - {user.notifications?.length}</h3>
-								{user.notifications?.map(_ => (
-									<div className="alert alert-primary alert-dismissible fade show" role="alert" key={_.id} style={{ padding: '13px' }}>
-										<span style={{ fontSize: '15px' }}>{_.text} <a href="/resend">[Resend Email]</a></span>
-										<button type="button" className="btn-close" aria-label="Close" onClick={(e)=> deleteNotification(e, _.id)}></button>
-									</div>
-								))}
-								{user.notifications?.length == 0 && (
-									<p className="mb-0">You currently have no notifications.</p>
-								)}
-							</div>
-						</div>
-					</li>
+					<NotificationBell notifications={user.notifications} />
+					&nbsp;
 					<li className="nav-item">
 						<a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							<Image src="/avatar" width={25} height={25} className="rounded-circle" alt="User avatar" />{user.name}

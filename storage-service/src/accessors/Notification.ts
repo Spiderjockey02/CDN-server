@@ -22,6 +22,8 @@ export default class NotificationManager {
 		const notification = await client.notification.create({
 			data: {
 				text: data.text,
+				title: data.title,
+				url: data.url,
 				user: {
 					connect: {
 						id: data.userId,
@@ -31,5 +33,21 @@ export default class NotificationManager {
 		});
 		this.cache.set(notification.id, notification);
 		return notification;
+	}
+
+	async getById(id: string) {
+		if (this.cache.has(id)) return this.cache.get(id);
+		const notif = await client.notification.findUnique({
+			where: { id: id },
+		});
+		if (notif) this.cache.set(notif.id, notif);
+		return notif;
+	}
+
+	async delete(id: string) {
+		await client.notification.delete({
+			where: { id },
+		});
+		return this.cache.delete(id);
 	}
 }

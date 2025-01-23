@@ -33,6 +33,8 @@ model Notification {
   id          String    @id             @default(cuid())
   createdAt   DateTime  @default(now())
   text        String
+  title       String
+  url         String?
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
