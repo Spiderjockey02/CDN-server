@@ -64,7 +64,7 @@ export const postRegister = (client: Client) => {
 		// Save the new user to database + make sure to create folder
 		try {
 			const user = await client.userManager.create({ email, name: username, password: Hashpassword });
-			await client.notificationManager.create({ userId: user.id, text: 'Please remember to verify your email.' });
+			await client.notificationManager.create({ userId: user.id, text: 'Please remember to verify your email.', title: 'Verification' });
 			res.json({ success: 'User successfully created' });
 		} catch (err) {
 			client.logger.error(err);
