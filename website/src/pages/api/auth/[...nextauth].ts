@@ -23,18 +23,19 @@ export const AuthOption = {
 			},
 			async authorize(credentials) {
 				if (!credentials?.email || !credentials?.password) return null;
-				const resp = await fetch(`${config.backendURL}/api/auth/login`, {
-					method: 'post',
-					headers: {
-						'content-type': 'application/json;charset=UTF-8',
-					},
-					body: JSON.stringify({
+				try {
+					const { data } = await axios.post(`${config.backendURL}/api/auth/login`, {
 						password: credentials.password,
 						email: credentials.email,
-					}),
-				});
-				const data = await resp.json();
-				return (data.success) ? data.user : null;
+					});
+					console.log(data);
+					return (data.success) ? data.user : data.error;
+				} catch (error) {
+					if (axios.isAxiosError(error)) {
+						throw new Error(error.response?.data.error);
+					}
+					throw new Error('Failed to login');
+				}
 			},
 		}),
 	],

@@ -14,14 +14,14 @@ import InputForm from '@/components/Form/InputForm';
 
 type ErrorTypes = {
  type: | 'email' | 'password' | 'misc'
- error: string
+ message: string
 }
 
 export default function SignIn() {
 	const [errors, setErrors] = useState<ErrorTypes[]>([]);
 	const [user, setUser] = useState({
 		email: '',
-		 password: '',
+		password: '',
 	});
 	const router = useRouter();
 
@@ -30,8 +30,8 @@ export default function SignIn() {
 		const err = [] as ErrorTypes[];
 
 		// Make sure both fields are filled in
-		if (user.email.length == 0) err.push({ type: 'email', error: 'This field is missing.' });
-		if (user.password.length == 0) err.push({ type: 'password', error: 'This field is missing.' });
+		if (user.email.length == 0) err.push({ type: 'email', message: 'This field is missing.' });
+		if (user.password.length == 0) err.push({ type: 'password', message: 'This field is missing.' });
 
 		// Show errors if there are any
 		if (err.length !== 0) return setErrors(err);
@@ -45,7 +45,14 @@ export default function SignIn() {
 		}) as SignInResponse;
 
 		// Show errors if any
-		if (res.error) return setErrors([{ type: 'misc', error: 'Failed to login.' }]);
+		if (res.error) {
+			if (res.error == 'Invalid username or password.') {
+				return setErrors([
+					{ type: 'password', message: res.error }, { type: 'email', message: res.error },
+				]);
+			}
+			return setErrors([{ type: 'misc', message: 'Failed to login.' }]);
+		}
 
 		// Move to the callback URL so user knows they are logged in
 		router.push(res.url as string);
@@ -54,8 +61,8 @@ export default function SignIn() {
 	return (
 		<section className='d-flex flex-row align-items-center' style={{ 'backgroundColor': '#eee', padding: '0', minHeight: '100vh' }}>
 			<div className="container h-100">
-				{errors.length > 0 && (
-					<ErrorPopup text={errors[0].error}/>
+				{errors.find(e => e.type == 'misc') && (
+					<ErrorPopup text={`${errors.find(e => e.type == 'misc')?.message}`}/>
 				)}
 				<div className="row d-flex justify-content-center align-items-center h-100">
 					<div className="col-lg-8 col-xl-7">
@@ -65,10 +72,10 @@ export default function SignIn() {
 									<h1 className="h1 fw-bold mb-4">Login</h1>
 									<form className="w-100" onSubmit={handleSubmit}>
 										<div className="mb-3 w-100">
-											<InputForm title='Email' name='email' onChange={(e) => setUser(u => ({ ...u, email: e.target.value }))} />
+											<InputForm title='Email' type="email" name='email' onChange={(e) => setUser(u => ({ ...u, email: e.target.value }))} errorMsg={errors.find(e => e.type == 'email')?.message} />
 										</div>
 										<div className="mb-3 w-100">
-											<InputForm title='Password' name='password' autocomplete='current-password' onChange={(e) => setUser(u => ({ ...u, password: e.target.value }))} />
+											<InputForm title='Password' type="password" name='password' autocomplete='current-password' onChange={(e) => setUser(u => ({ ...u, password: e.target.value }))} errorMsg={errors.find(e => e.type == 'password')?.message} />
 										</div>
 										<div className="d-flex justify-content-center mb-3">
 											<button type="submit" className="btn btn-primary btn-lg">Login</button>
@@ -90,7 +97,6 @@ export default function SignIn() {
 								</div>
 							</div>
 						</div>
-
 					</div>
 				</div>
 			</div>
