@@ -4,7 +4,6 @@ import { getSession, parseForm } from '../middleware';
 import { Client } from '../helpers';
 import path from 'node:path';
 import { FileType } from '@prisma/client';
-// const trash = new TrashHandler();
 
 // Endpoint GET /api/files
 export const getFiles = (client: Client) => {
@@ -28,10 +27,10 @@ export const getFiles = (client: Client) => {
 // Endpoint POST /api/files/upload
 export const postFileUpload = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const session = await getSession(req);
-		if (!session?.user) return Error.InvalidSession(res);
-
 		try {
+			const session = await getSession(req);
+			if (!session?.user) return Error.InvalidSession(res);
+
 			// Parse and save file(s)
 			const { files } = await parseForm(client, req, session.user.id);
 			const file = files.media;
@@ -48,32 +47,53 @@ export const postFileUpload = (client: Client) => {
 // Endpoint DELETE /api/files/delete
 export const deleteFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const session = await getSession(req);
-		if (!session?.user) return Error.InvalidSession(res);
-
-		const { fileName } = req.body;
-		const userPath = (req.headers.referer)?.split('/files')[1] ?? '';
-
 		try {
+			const session = await getSession(req);
+			if (!session?.user) return Error.InvalidSession(res);
+
+			const { fileName } = req.body;
+			const userPath = (req.headers.referer)?.split('/files')[1] ?? '';
+
 			await client.FileManager.delete(session.user.id, `${userPath}/${fileName}`);
 			res.json({ success: 'Successfully deleted item.' });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to delete item.');
 		}
+	};
+};
 
+// Endpoint DELETE /api/files/bulk-delete
+export const deleteBulkFiles = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const session = await getSession(req);
+			if (!session?.user) return Error.InvalidSession(res);
+			const { paths } = req.body;
+			const filePaths: string[] = paths;
+
+			// Loop through and delete all files
+			for (const filePath of filePaths) {
+				await client.FileManager.delete(session.user.id, filePath);
+			}
+
+			res.json({ success: 'Successfully deleted items.' });
+		} catch (error) {
+			client.logger.error(error);
+			Error.GenericError(res, 'Failed to delete items.');
+		}
 	};
 };
 
 // Endpoint POST /api/files/move
 export const postMoveFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const session = await getSession(req);
-		if (!session?.user) return Error.InvalidSession(res);
-		const { newPath, fileName } = req.body;
-		const oldPath = (req.headers.referer)?.split('/files')[1] ?? '/';
-
 		try {
+			const session = await getSession(req);
+			if (!session?.user) return Error.InvalidSession(res);
+			const { newPath, fileName } = req.body;
+			const oldPath = (req.headers.referer)?.split('/files')[1] ?? '/';
+
 			await client.FileManager.move(session.user.id, `${oldPath}/${fileName}`, newPath);
 			res.json({ success: 'Successfully moved item' });
 		} catch (err) {
@@ -86,12 +106,12 @@ export const postMoveFile = (client: Client) => {
 // Endpoint POST /api/files/copy
 export const postCopyFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const session = await getSession(req);
-		if (!session?.user) return Error.InvalidSession(res);
-		const { newPath, fileName } = req.body;
-		const oldPath = (req.headers.referer)?.split('/files')[1] ?? '';
-
 		try {
+			const session = await getSession(req);
+			if (!session?.user) return Error.InvalidSession(res);
+			const { newPath, fileName } = req.body;
+			const oldPath = (req.headers.referer)?.split('/files')[1] ?? '';
+
 			await client.FileManager.copy(session.user.id, `${oldPath}/${fileName}`, newPath);
 			res.json({ success: 'Successfully copied file' });
 		} catch (err) {
@@ -104,36 +124,59 @@ export const postCopyFile = (client: Client) => {
 // Endpoint GET /api/files/download
 export const getDownloadFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const session = await getSession(req);
-		if (!session?.user) return Error.InvalidSession(res);
-		const { path: filePath } = req.query;
+		try {
+			const session = await getSession(req);
+			if (!session?.user) return Error.InvalidSession(res);
+			const { path: filePath } = req.query;
 
-		// Fetch file from database
-		const file = await client.FileManager.getByFilePath(session.user.id, filePath as string);
-		if (!file) return Error.MissingResource(res, 'File not found');
+			// Fetch file from database
+			const file = await client.FileManager.getByFilePath(session.user.id, filePath as string);
+			if (!file) return Error.MissingResource(res, 'File not found');
 
-		// Check if file is a file or actually a directory
-		switch (file.type) {
-			case 'FILE':
-				return client.FileManager.downloadFile(res, session.user.id, filePath as string);
-			case 'DIRECTORY':
-				return client.FileManager.downloadDirectory(res, session.user.id, filePath as string);
-			default:
-				return Error.GenericError(res, 'Invalid file type');
+			// Check if file is a file or actually a directory
+			switch (file.type) {
+				case 'FILE':
+					return client.FileManager.downloadFile(res, session.user.id, filePath as string);
+				case 'DIRECTORY':
+					return client.FileManager.downloadDirectory(res, session.user.id, filePath as string);
+				default:
+					return Error.GenericError(res, 'Invalid file type');
+			}
+		} catch (error) {
+			client.logger.error(error);
+			Error.GenericError(res, 'Failed to download file.');
 		}
 	};
 };
 
+// Endpoint GET /api/files/bulk-download
+export const getBulkDownload = (client: Client) => {
+	return async (req: Request, res: Response) => {
+		try {
+			const session = await getSession(req);
+			if (!session?.user) return Error.InvalidSession(res);
+			const { paths } = req.body;
+
+			const filesPaths: string[] = paths;
+			client.FileManager.downloadFiles(res, session.user.id, filesPaths);
+		} catch (error) {
+			client.logger.error(error);
+			Error.GenericError(res, 'Failed to download files.');
+		}
+	};
+};
+
+
 // Endpoint POST /api/files/rename
 export const postRenameFile = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const session = await getSession(req);
-		if (!session?.user) return Error.InvalidSession(res);
-		const { oldName, newName } = req.body;
-		const userPath = (req.headers.referer as string).split('/files')[1];
-		const originalPath = decodeURI(userPath.startsWith('/') ? `${userPath}/` : '/');
-
 		try {
+			const session = await getSession(req);
+			if (!session?.user) return Error.InvalidSession(res);
+			const { oldName, newName } = req.body;
+			const userPath = (req.headers.referer as string).split('/files')[1];
+			const originalPath = decodeURI(userPath.startsWith('/') ? `${userPath}/` : '/');
+
 			await client.FileManager.rename(session.user.id, `${originalPath}${oldName}`, newName);
 			res.json({ success: 'Successfully renamed item' });
 		} catch (err) {
@@ -146,10 +189,10 @@ export const postRenameFile = (client: Client) => {
 // Endpoint POST /api/files/create-folder
 export const postCreateFolder = (client: Client) => {
 	return async (req: Request, res: Response) => {
-		const session = await getSession(req);
-		if (!session?.user) return Error.InvalidSession(res);
-
 		try {
+			const session = await getSession(req);
+			if (!session?.user) return Error.InvalidSession(res);
+
 			const { folderName } = req.body;
 			if (typeof folderName !== 'string' || !folderName.trim()) return Error.IncorrectQuery(res, 'folderName is not a string');
 

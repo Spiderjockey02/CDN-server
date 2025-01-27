@@ -9,7 +9,7 @@ import RenameModal from '../Modals/renameFile';
 interface Props {
 	x: number
 	y: number
-	selected: fileItem
+	selected: fileItem[]
 	closeContextMenu: () => void
 }
 
@@ -19,7 +19,7 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 	useOnClickOutside(contextMenuRef as RefObject<HTMLDivElement>, closeContextMenu);
 	const handleDownload = async () => {
 		try {
-			const { data: blob } = await axios.get(`/api/files/download?path=${selected.path}`, {
+			const { data: blob } = await axios.get(`/api/files/download?path=${selected[0].path}`, {
 				headers: {
 					'Accept': 'application/zip',
 				},
@@ -32,7 +32,7 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 				link.href = url;
 
 				// Specify the file name for the downloaded file
-				link.download = selected.name;
+				link.download = selected[0].name;
 				document.body.appendChild(link);
 				link.click();
 				link.remove();
@@ -45,10 +45,11 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 		} catch (error) {
 			console.log(error);
 		}
+		closeContextMenu();
 	};
 
 	const handleCopyURL = async () => {
-		const url = `${window.location.origin}${window.location.pathname}/${encodeURI(selected.name)}`;
+		const url = `${window.location.origin}${window.location.pathname}/${encodeURI(selected[0].name)}`;
 		const unsecuredCopyToClipboard = (text: string) => {
 			const textArea = document.createElement('textarea');
 			textArea.value = text;
@@ -67,35 +68,89 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 		} else {
 			unsecuredCopyToClipboard(url);
 		}
+		closeContextMenu();
 	};
 
-	return (
-		<>
+	const handleBulkDownload = async () => {
+		const paths = selected.map((file) => file.path);
+		const { data: blob } = await axios.post('/api/files/bulk-download', { paths }, {
+			headers: {
+				'Accept': 'application/zip',
+			},
+			responseType: 'blob',
+		});
+
+		if (blob.size > 0) {
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+
+			// Specify the file name for the downloaded file
+			link.download = `files-${new Date()}.zip`;
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+
+			// Clean up the URL object
+			window.URL.revokeObjectURL(url);
+		} else {
+			throw new Error('Download failed: Empty file');
+		}
+		closeContextMenu();
+	};
+
+	const handleBulkDelete = async () => {
+		const paths = selected.map((file) => file.path);
+
+		try {
+			await axios.delete('/api/files/bulk-delete', { data: { paths } });
+		} catch (error) {
+			console.log(error);
+		}
+		closeContextMenu();
+	};
+
+	// Check if they have multi-selected or not
+	if (selected.length === 1) {
+		return (
+			<>
+				<div className="ctxmenu" ref={contextMenuRef} style={{ top: `${y}px`, left: `${x}px`, zIndex: 20, position: 'absolute' }}>
+					<button className="btn btn-ctx-menu">
+						<FontAwesomeIcon icon={faShareAlt} /> Share
+					</button>
+					<button className="btn btn-ctx-menu" onClick={handleCopyURL}>
+						<FontAwesomeIcon icon={faCopy} /> Copy link
+					</button>
+					<button className="btn btn-ctx-menu" onClick={handleDownload}>
+						<FontAwesomeIcon icon={faDownload} /> Download
+					</button>
+					<button type="button" className="btn btn-ctx-menu" data-bs-toggle="modal" data-bs-target={`#delete_${selected[0].id}`}>
+						<FontAwesomeIcon icon={faTrash} /> Delete
+					</button>
+					<button className="btn btn-ctx-menu" data-bs-toggle="modal" data-bs-target={`#change_${selected[0].id}`}>
+						<FontAwesomeIcon icon={faCopy} /> Move / Copy to
+					</button>
+					<button className="btn btn-ctx-menu" type="button" data-bs-toggle="modal" data-bs-target={`#rename_${selected[0].id}`}>
+						<FontAwesomeIcon icon={faFileSignature} /> Rename
+					</button>
+					<button className="btn btn-ctx-menu">
+						<FontAwesomeIcon icon={faEllipsisV} /> Properties
+					</button>
+				</div>
+
+				<RenameModal file={selected[0]} closeContextMenu={closeContextMenu} />
+			</>
+		);
+	} else {
+		return (
 			<div className="ctxmenu" ref={contextMenuRef} style={{ top: `${y}px`, left: `${x}px`, zIndex: 20, position: 'absolute' }}>
-				<button className="btn btn-ctx-menu">
-					<FontAwesomeIcon icon={faShareAlt} /> Share
-				</button>
-				<button className="btn btn-ctx-menu" onClick={handleCopyURL}>
-					<FontAwesomeIcon icon={faCopy} /> Copy link
-				</button>
-				<button className="btn btn-ctx-menu" onClick={handleDownload}>
+				<button className="btn btn-ctx-menu" onClick={handleBulkDownload}>
 					<FontAwesomeIcon icon={faDownload} /> Download
 				</button>
-				<button type="button" className="btn btn-ctx-menu" data-bs-toggle="modal" data-bs-target={`#delete_${selected.id}`}>
+				<button className="btn btn-ctx-menu" onClick={handleBulkDelete}>
 					<FontAwesomeIcon icon={faTrash} /> Delete
 				</button>
-				<button className="btn btn-ctx-menu" data-bs-toggle="modal" data-bs-target={`#change_${selected.id}`}>
-					<FontAwesomeIcon icon={faCopy} /> Move / Copy to
-				</button>
-				<button className="btn btn-ctx-menu" type="button" data-bs-toggle="modal" data-bs-target={`#rename_${selected.id}`}>
-					<FontAwesomeIcon icon={faFileSignature} /> Rename
-				</button>
-				<button className="btn btn-ctx-menu">
-					<FontAwesomeIcon icon={faEllipsisV} /> Properties
-				</button>
 			</div>
-
-			<RenameModal file={selected} closeContextMenu={closeContextMenu} />
-		</>
-	);
+		);
+	}
 }

@@ -17,14 +17,14 @@ const initalContextMenu = {
 	show: false,
 	x: 0,
 	y: 0,
-	selected: { name: '', type: '', size: 0, modified: '' } as unknown as fileItem,
+	selected: [] as fileItem[],
 };
 
 export default function Directory({ folder }: Props) {
 	const [, setSortKey] = useState<sortKeyTypes>('Name');
 	const [sortOrder, setSortOrder] = useState<SortOrder>('ascn');
 	const [contextMenu, setContextMenu] = useState(initalContextMenu);
-	const [filesSelected, setFilesSelected] = useState<string[]>([]);
+	const [filesSelected, setFilesSelected] = useState<fileItem[]>([]);
 	const [allSelected, setAllSelected] = useState(false);
 	const [filePanelToShow, setFilePanelToShow] = useState('');
 
@@ -68,22 +68,33 @@ export default function Directory({ folder }: Props) {
 		e.preventDefault();
 		const { pageX, pageY } = e;
 
+		const menuWidth = 170;
+		const menuHeight = 270;
+		const windowWidth = window.innerWidth;
+		const windowHeight = window.innerHeight;
+
+		let posX = pageX;
+		let posY = pageY;
+
+		// Adjust position if the menu would overflow the viewport
+		if (posX + menuWidth > windowWidth) posX = windowWidth - menuWidth;
+		if (posY + menuHeight > windowHeight) posY = windowHeight - menuHeight;
+
 		// Update this to support multi-selection
 		if (filesSelected.length > 0) {
-			setContextMenu({ show: true, x: pageX, y: pageY, selected });
+			setContextMenu({ show: true, x: posX, y: posY, selected: filesSelected });
 		} else {
-			setContextMenu({ show: true, x: pageX, y: pageY, selected });
+			setContextMenu({ show: true, x: posX, y: posY, selected: [selected] });
 		}
-
 	}
 	const closeContextMenu = () => setContextMenu(initalContextMenu);
 
-	function handleCheckboxToggle(e: MouseEvent, fileName: string) {
+	function handleCheckboxToggle(e: MouseEvent, file: fileItem) {
 		e.stopPropagation();
 		setFilesSelected((prevSelected) =>
-			prevSelected.includes(fileName)
-				? prevSelected.filter((name) => name !== fileName)
-				: [...prevSelected, fileName],
+			prevSelected.find((f) => f.name === file.name)
+				? prevSelected.filter((f) => f.name !== file.name)
+				: [...prevSelected, file],
 		);
 	}
 
@@ -93,8 +104,7 @@ export default function Directory({ folder }: Props) {
 			setFilesSelected([]);
 		} else {
 			// Select all files
-			const allFileNames = folder.children.map((file) => file.name);
-			setFilesSelected(allFileNames);
+			setFilesSelected(folder.children);
 		}
 		setAllSelected(!allSelected);
 	}
@@ -132,14 +142,14 @@ export default function Directory({ folder }: Props) {
 					{folder.children.filter(f => f.type == 'DIRECTORY').map(_ => (
 						<FileItemRow key={_.name}
 							file={_}
-							isChecked={filesSelected.includes(_.name)} openContextMenu={openContextMenu}
+							isChecked={filesSelected.includes(_)} openContextMenu={openContextMenu}
 							handleCheckboxToggle={handleCheckboxToggle} setShow={(fileId) => setFilePanelToShow(fileId)}
 						/>
 					))}
 					{folder.children.filter(f => f.type == 'FILE').map(_ => (
 						<FileItemRow key={_.name}
 							file={_}
-							isChecked={filesSelected.includes(_.name)} openContextMenu={openContextMenu}
+							isChecked={filesSelected.includes(_)} openContextMenu={openContextMenu}
 							handleCheckboxToggle={handleCheckboxToggle} setShow={(fileId) => setFilePanelToShow(fileId)}
 						/>
 					))}

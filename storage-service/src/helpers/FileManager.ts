@@ -92,9 +92,6 @@ export default class FileManager extends FileAccessor {
 		const newDir = await this.getByFilePath(userId, newFilePath);
 		if (oldFile == null || newDir == null) throw new Error('Invalid path.');
 
-		console.log(oldFile, newDir);
-		console.log(`${newDir.path}${oldFile.path}`);
-
 		const newFile = await this.create({
 			path: `${newDir.path}${oldFile.path}`,
 			name: oldFile.name,
@@ -105,7 +102,7 @@ export default class FileManager extends FileAccessor {
 		});
 
 		// Copy the file
-		return fs.copyFile(path.join(PATHS.CONTENT, userId, oldFilePath), path.join(PATHS.CONTENT, userId, newFile.path));
+		return fs.copyFile(path.join(PATHS.CONTENT, userId, oldFilePath), path.join(PATHS.CONTENT, userId, newFile.path), fs.constants.COPYFILE_EXCL);
 	}
 
 	/**
@@ -164,6 +161,36 @@ export default class FileManager extends FileAccessor {
 		}
 	}
 
+	async downloadFiles(res: Response, userId: string, filePaths: string[]) {
+		const archive = archiver('zip', { zlib: { level: 9 } });
+		res.setHeader('Content-Type', 'application/zip');
+		res.setHeader('Content-Disposition', 'attachment; filename="files.zip"');
+
+		// Append files to archive
+		archive.pipe(res);
+
+		for (const filePath of filePaths) {
+			// Check if file is actually file or a folder
+			const file = await this.getByFilePath(userId, filePath);
+			if (file == null) continue;
+
+			// Append file to archive
+			if (file.type === 'FILE') {
+				archive.file(path.join(PATHS.CONTENT, userId, filePath), { name: filePath });
+			} else {
+				archive.directory(path.join(PATHS.CONTENT, userId, filePath), file.name);
+			}
+		}
+
+		try {
+			await archive.finalize();
+			res.end();
+		} catch (error) {
+			ErrorCL.GenericError(res, 'Failed to create archive');
+		}
+	}
+
+
 	async deleteAvatar(userId: string) {
 		if (existsSync(`${PATHS.AVATAR}/${userId}.webp`)) return fs.rm(`${PATHS.AVATAR}/${userId}.webp`);
 	}
@@ -215,6 +242,8 @@ export default class FileManager extends FileAccessor {
 				}
 				return res.sendFile(`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`);
 			}
+			default:
+				return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
 		}
 	}
 
