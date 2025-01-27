@@ -28,36 +28,49 @@ export default function Directory({ folder }: Props) {
 	const [allSelected, setAllSelected] = useState(false);
 	const [filePanelToShow, setFilePanelToShow] = useState('');
 
-
 	function updateSortKey(sort: sortKeyTypes) {
 		switch(sort) {
 			case 'Name': {
-				setSortOrder(sortOrder == 'ascn' ? 'dscn' : 'ascn');
-				if (sortOrder == 'ascn') {
-					folder.children = folder.children.sort((a, b) => a.name > b.name ? 1 : -1);
-				} else {
-					folder.children = folder.children.sort((a, b) => a.name < b.name ? 1 : -1);
-				}
+				const isAscending = sortOrder === 'ascn';
+				setSortOrder(isAscending ? 'dscn' : 'ascn');
+
+				folder.children = folder.children.sort((a, b) => {
+					return isAscending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+				});
+
 				setSortKey(sort);
 				break;
 			}
 			case 'Size': {
-				setSortOrder(sortOrder == 'ascn' ? 'dscn' : 'ascn');
-				if (sortOrder == 'ascn') {
-					folder.children = folder.children.sort((a, b) => a.size > b.size ? 1 : -1);
-				} else {
-					folder.children = folder.children.sort((a, b) => a.size < b.size ? 1 : -1);
-				}
+				const isAscending = sortOrder === 'ascn';
+				setSortOrder(isAscending ? 'dscn' : 'ascn');
+
+				folder.children = folder.children.sort((a, b) => {
+					if (a.type === 'DIRECTORY' && b.type === 'DIRECTORY') {
+						return isAscending
+							? a._count.children - b._count.children
+							: b._count.children - a._count.children;
+					} else if (a.type === 'FILE' && b.type === 'FILE') {
+						return isAscending
+							? a.size - b.size
+							: b.size - a.size;
+					} else {
+						return a.type === 'DIRECTORY' ? -1 : 1;
+					}
+				});
+
 				setSortKey(sort);
 				break;
 			}
 			case 'Date_Mod': {
-				setSortOrder(sortOrder == 'ascn' ? 'dscn' : 'ascn');
-				if (sortOrder == 'ascn') {
-					folder.children = folder.children.sort((a, b) => a.createdAt > b.createdAt ? 1 : -1);
-				} else {
-					folder.children = folder.children.sort((a, b) => a.createdAt < b.createdAt ? 1 : -1);
-				}
+				const isAscending = sortOrder === 'ascn';
+				setSortOrder(isAscending ? 'dscn' : 'ascn');
+
+				folder.children = folder.children.sort((a, b) => {
+					const dateA = new Date(a.createdAt);
+					const dateB = new Date(b.createdAt);
+					return isAscending ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
+				});
 				setSortKey(sort);
 				break;
 			}
