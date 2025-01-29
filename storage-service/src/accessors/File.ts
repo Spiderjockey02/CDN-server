@@ -1,10 +1,11 @@
-import { createFile, updateFile } from 'src/types/database/File';
+import { createFile, FullFile, updateFile, updateFilePath } from 'src/types/database/File';
 import client from './prisma';
 import { LRUCache } from 'lru-cache';
 import { File, FileType } from '@prisma/client';
+import prisma from './prisma';
 
 export default class FileAccessor {
-	cache: LRUCache<string, File>;
+	cache: LRUCache<string, FullFile>;
 
 	constructor() {
 		this.cache = new LRUCache({
@@ -29,7 +30,7 @@ export default class FileAccessor {
 				parentId: data.parentId,
 			},
 		});
-		this.cache.set(file.id, file);
+		this.cache.set(`${file.userId}_${file.path}`, file);
 		return file;
 	}
 
@@ -38,8 +39,8 @@ export default class FileAccessor {
     * @param {updateFile} data The file data.
     * @returns {File} The updated file.
   */
-	async update(data: updateFile): Promise<File> {
-		const files = await client.file.update({
+	async update(data: updateFile): Promise<FullFile> {
+		const file = await client.file.update({
 			where: {
 				id: data.id,
 			},
@@ -53,43 +54,73 @@ export default class FileAccessor {
 					create: data.children,
 				},
 			},
+			include: {
+				children: {
+					where: {
+						deletedAt: null,
+					},
+					include: {
+						_count: {
+							select: {
+								children: {
+									where: {
+										deletedAt: null,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		});
-		this.cache.set(files.id, files);
-		return files;
+		this.cache.set(`${file.userId}_${file.path}`, file);
+		return file;
+	}
+
+	/**
+	 * Updates a file's path and all of it's children
+	 * @param {updateFile} data The file data.
+	 * @returns {number} The number of rows updated.
+	*/
+	async updateChildsPath({ oldPath, newPath, userId }: updateFilePath): Promise<number> {
+		// Update child paths using updateMany
+		return prisma.$executeRawUnsafe(
+			`UPDATE \`File\`
+			SET path = REPLACE(path, ?, ?)
+			WHERE path LIKE CONCAT(?, '%') 
+			AND userId = ?`,
+			oldPath,
+			newPath,
+			oldPath,
+			userId,
+		);
 	}
 
 	/**
     * Deletes a file
     * @param {string} id The file id.
+		* @returns {Boolean} If the file was deleted.
   */
-	async deleteFromDB(id: string): Promise<void> {
+	async deleteFromDB(id: string): Promise<boolean> {
 		await client.file.delete({
 			where: { id },
 		});
-		this.cache.delete(id);
+		return this.cache.delete(id);
 	}
 
 	/**
-    * Gets a file by id
-    * @param {string} id The file id.
-    * @returns {File | null} The file.
-  */
-	async getById(id: string): Promise<File | null> {
-		let file = this.cache.get(id) ?? null;
-		if (file == null) {
-			file = await client.file.findUnique({
-				where: {
-					id, deletedAt: null,
-				},
-			});
-			if (file !== null) this.cache.set(id, file);
-		}
+		* Gets a file by it's path
+		* @param {string} userId The file's owners Id.
+		* @param {string} filePath The file path.
+		* @returns {FullFile | null} The file.
+	*/
+	async getByFilePath(userId: string, filePath: string): Promise<FullFile | null> {
+		// Check cache first
+		let file = this.cache.get(`${userId}_${filePath}`) ?? null;
+		if (file !== null) return file;
 
-		return file;
-	}
-
-	async getByFilePath(userId: string, filePath: string) {
-		return client.file.findFirst({
+		// Fetch from database
+		file = await client.file.findFirst({
 			where: {
 				userId,
 				deletedAt: null,
@@ -116,6 +147,21 @@ export default class FileAccessor {
 				},
 			},
 		});
+		if (file !== null) this.cache.set(`${userId}_${filePath}`, file);
+		return file;
+	}
+
+	/**
+		* Gets files by it's parentId
+		* @param {string} parentId The file id.
+		* @returns {File[]} The file.
+	*/
+	getByParentId(parentId: string): Promise<File[]> {
+		return client.file.findMany({
+			where: {
+				parentId,
+			},
+		});
 	}
 
 	/**
@@ -136,16 +182,12 @@ export default class FileAccessor {
 		});
 	}
 
-	/*
-		* Gets all files
-		* @returns {number} The total count of files.
+	/**
+		* Gets all of the user's directories
+		* @param {string} userId The user Id.
+		* @returns {File[]} The files.
 	*/
-	async fetchTotalCount() {
-		return client.file.count();
-	}
-
-
-	getAllDirectories(userId: string) {
+	async getAllDirectories(userId: string): Promise<File[]> {
 		return client.file.findMany({
 			where: {
 				userId,
@@ -154,7 +196,12 @@ export default class FileAccessor {
 		});
 	}
 
-	getAllDeletedFiles(userId?: string) {
+	/**
+		* Get all user's (pending) deleted files
+		* @param {string} userId The user Id.
+		* @returns {File[]} The files.
+	*/
+	getAllDeletedFiles(userId?: string): Promise<File[]> {
 		return client.file.findMany({
 			where: {
 				userId,
@@ -163,5 +210,13 @@ export default class FileAccessor {
 				},
 			},
 		});
+	}
+
+	/**
+		* Gets all files
+		* @returns {number} The total count of files.
+	*/
+	async fetchTotal(): Promise<number> {
+		return client.file.count();
 	}
 }

@@ -1,4 +1,4 @@
-import { FileType } from '@prisma/client';
+import { FileType, Prisma } from '@prisma/client';
 
 export interface createFile {
   path: string
@@ -18,3 +18,18 @@ export interface updateFile {
   parentId?: string
   children?: createFile
 }
+
+export interface updateFilePath {
+  userId: string
+  oldPath: string
+  newPath: string
+}
+
+export type FullFile = Prisma.FileGetPayload<{
+  include?: {
+    children: true
+  }
+  _count?: {
+    children: number
+  }
+}>

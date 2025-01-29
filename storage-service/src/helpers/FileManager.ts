@@ -9,6 +9,7 @@ import FileAccessor from '../accessors/File';
 import archiver from 'archiver';
 import TrashHandler from './TrashHandler';
 import { lookup } from 'mime-types';
+import type { File } from '@prisma/client';
 const cmd = util.promisify(exec);
 
 interface diskStorage {
@@ -56,15 +57,36 @@ export default class FileManager extends FileAccessor {
 	async move(userId: string, oldFilePath: string, newFilePath: string) {
 		const oldFile = await this.getByFilePath(userId, oldFilePath);
 		const newDir = await this.getByFilePath(userId, newFilePath);
+
 		if (oldFile == null || newDir == null) throw new Error('Invalid path.');
 
-		const newFile = await this.update({
+		// Generate new file path for the current item
+		const newFilePathInDb = `${newDir.path}/${oldFilePath.split('/').at(-1)}`;
+
+		// Update the current file/folder in the database
+		await this.update({
 			id: oldFile.id,
 			parentId: newDir.id,
-			path: `${newDir.path}/${oldFilePath.split('/').at(-1)}`,
+			path: newFilePathInDb,
 		});
 
-		return fs.rename(path.join(PATHS.CONTENT, userId, oldFile.path), path.join(PATHS.CONTENT, userId, newFile.path));
+		// If it's a folder, process its children (don't move the folder itself again)
+		if (oldFile.type === 'DIRECTORY') {
+			const children = await this.getByParentId(oldFile.id);
+
+			// Move all child files/subfolders
+			for (const child of children) {
+				await this.move(userId, child.path, newFilePathInDb);
+			}
+			return;
+		}
+
+		// Ensure the new folder structure exists on the file system
+		const newFileSystemPath = path.join(PATHS.CONTENT, userId, newFilePathInDb);
+		await fs.mkdir(path.dirname(newFileSystemPath), { recursive: true });
+
+		// Move the file/folder on the file system
+		await fs.rename(path.join(PATHS.CONTENT, userId, oldFile.path), newFileSystemPath);
 	}
 
 	async rename(userId: string, filePath: string, newName: string) {
@@ -78,6 +100,8 @@ export default class FileManager extends FileAccessor {
 
 		// Will update to also support their children for path to be updated aswell (when it's a directory)
 		await this.update({ id: file.id, name: newName, path: newPath });
+		if (file.type === 'DIRECTORY') await this.updateChildsPath({ userId, oldPath: file.path, newPath });
+
 		return fs.rename(path.join(PATHS.CONTENT, userId, filePath), path.join(PATHS.CONTENT, userId, newName));
 	}
 
@@ -90,10 +114,25 @@ export default class FileManager extends FileAccessor {
 	async copy(userId: string, oldFilePath: string, newFilePath: string) {
 		const oldFile = await this.getByFilePath(userId, oldFilePath);
 		const newDir = await this.getByFilePath(userId, newFilePath);
+
 		if (oldFile == null || newDir == null) throw new Error('Invalid path.');
 
+		// If the old file is a directory, copy the directory and its contents recursively
+		if (oldFile.type === 'DIRECTORY') {
+			await this._copyDirectory(userId, oldFile, newDir);
+		} else {
+			// If it's a file, copy it as you already have in your original function
+			await this._copyFile(userId, oldFile, newDir);
+		}
+	}
+
+	private async _copyFile(userId: string, oldFile: File, newDir: File) {
+		// Generate the new file path
+		const newFilePath = `${newDir.path}${oldFile.path.substring(oldFile.path.lastIndexOf('/'))}`;
+
+		// Create the new file entry in the database
 		const newFile = await this.create({
-			path: `${newDir.path}${oldFile.path}`,
+			path: newFilePath,
 			name: oldFile.name,
 			size: oldFile.size,
 			userId: oldFile.userId,
@@ -101,8 +140,45 @@ export default class FileManager extends FileAccessor {
 			parentId: newDir.id,
 		});
 
-		// Copy the file
-		return fs.copyFile(path.join(PATHS.CONTENT, userId, oldFilePath), path.join(PATHS.CONTENT, userId, newFile.path), fs.constants.COPYFILE_EXCL);
+		// Ensure the target directory exists on the filesystem
+		const newFileDir = path.join(PATHS.CONTENT, userId, newFile.path.substring(0, newFile.path.lastIndexOf('/')));
+		await fs.mkdir(newFileDir, { recursive: true });
+
+		// Copy the actual file contents
+		await fs.copyFile(
+			path.join(PATHS.CONTENT, userId, oldFile.path),
+			path.join(PATHS.CONTENT, userId, newFile.path),
+			fs.constants.COPYFILE_EXCL,
+		);
+	}
+
+	private async _copyDirectory(userId: string, oldDir: File, newDir: File) {
+		// Create the new directory, but ensure the path doesn't include the old folder name twice
+		const newFolder = await this.create({
+			path: `${newDir.path}${oldDir.path.substring(oldDir.path.lastIndexOf('/'))}`,
+			name: oldDir.name,
+			size: 0n,
+			userId: oldDir.userId,
+			type: 'DIRECTORY',
+			parentId: newDir.id,
+		});
+
+		// / Create the directory on the filesystem as well
+		const newFolderPath = path.join(PATHS.CONTENT, userId, newFolder.path);
+		await fs.mkdir(newFolderPath, { recursive: true });
+
+		// Recursively copy files and subdirectories inside this folder
+		const children = await this.getByParentId(oldDir.id);
+
+		for (const child of children) {
+			if (child.type === 'DIRECTORY') {
+				// If it's a folder, copy it recursively
+				await this._copyDirectory(userId, child, newFolder);
+			} else {
+				// If it's a file, copy it
+				await this._copyFile(userId, child, newFolder);
+			}
+		}
 	}
 
 	/**
