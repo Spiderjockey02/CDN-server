@@ -35,12 +35,12 @@ export default function SideBar({ user }: Props) {
 			</ul>
 			<div className="offcanvas offcanvas-start" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel" style={{ maxWidth: '75%' }}>
 				<div className="offcanvas-header">
-					<Link href="/" className="sidebar-header">
-						<h5>{config.company.name}</h5>
+					<Link href="/" className='btn'>
+						<h4 className="offcanvas-title" id="offcanvasLabel">{config.company.name}</h4>
 					</Link>
-					<button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+					<button type="button" className="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
 				</div>
-				<div className="offcanvas-body">
+				<div className="offcanvas-body" style={{ padding: '0' }}>
 					<ul className="list-unstyled components">
 						<li>
 							<Link href="/files" className='btn sidebar-btn'>
@@ -54,14 +54,8 @@ export default function SideBar({ user }: Props) {
 								<span> Recents</span>
 							</Link>
 						</li>
-						<li>
-							<Link href="/favourites" className='btn sidebar-btn'>
-								<FontAwesomeIcon icon={faStar} data-toggle="tooltip" data-placement="right" title="Favourites" />
-								<span> Favourites</span>
-							</Link>
-						</li>
-						<li style={{ position:'fixed', bottom:'0' }}>
-							<div style={{ padding: '0 10px' }}>
+						<li className="bottom" style={{ position:'absolute', bottom:'0', width: '100%' }}>
+							<div className='d-flex flex-column align-items-center'>
 								<label>{formatBytes(size)} of {formatBytes(user.group.maxStorageSize)} used</label>
 								<div className="progress" style={{ width:'200px' }}>
 									<div className={`progress-bar ${getColor(size)}`} role="progressbar" style={{ width:`${(size / user.group.maxStorageSize) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={user.group.maxStorageSize}></div>
@@ -88,14 +82,8 @@ export default function SideBar({ user }: Props) {
 						<span className="side-text"> Recents</span>
 					</Link>
 				</li>
-				<li>
-					<Link href="/favourites" className='btn sidebar-btn'>
-						<FontAwesomeIcon icon={faStar} data-toggle="tooltip" data-placement="right" title="Favourites" />
-						<span className="side-text"> Favourites</span>
-					</Link>
-				</li>
-				<li className="bottom" style={{ position:'fixed', bottom:'0' }}>
-					<div style={{ padding: '0 10px' }}>
+				<li className="bottom" style={{ position:'absolute', bottom:'0', width: '100%' }}>
+					<div className='d-flex flex-column align-items-center'>
 						<label className="side-text">{formatBytes(size)} of {formatBytes(user.group.maxStorageSize)} used</label>
 						<div className="progress side-text" style={{ width:'200px' }}>
 							<div className={`progress-bar ${getColor(size)}`} role="progressbar" style={{ width:`${(size / user.group.maxStorageSize) * 100}%` }} aria-valuenow={size} aria-valuemin={0} aria-valuemax={user.group.maxStorageSize}></div>
