@@ -45,7 +45,7 @@ export default class FileManager extends FileAccessor {
 	  * @param {string} filePath file path of the file.
 	*/
 	async delete(userId: string, filePath: string) {
-		this.TrashHandler.addFile(userId, filePath);
+		this.TrashHandler.moveToTrash(userId, filePath);
 	}
 
 	/**

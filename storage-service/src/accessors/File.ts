@@ -114,7 +114,7 @@ export default class FileAccessor {
 		* @param {string} filePath The file path.
 		* @returns {FullFile | null} The file.
 	*/
-	async getByFilePath(userId: string, filePath: string): Promise<FullFile | null> {
+	async getByFilePath(userId: string, filePath: string, includeDeleted?: boolean): Promise<FullFile | null> {
 		// Check cache first
 		let file = this.cache.get(`${userId}_${filePath}`) ?? null;
 		if (file !== null) return file;
@@ -123,7 +123,7 @@ export default class FileAccessor {
 		file = await client.file.findFirst({
 			where: {
 				userId,
-				deletedAt: null,
+				deletedAt: includeDeleted ? null : undefined,
 				path: {
 					equals: filePath.startsWith('/') ? filePath : `/${filePath}`,
 				},
@@ -131,7 +131,7 @@ export default class FileAccessor {
 			include: {
 				children: {
 					where: {
-						deletedAt: null,
+						deletedAt: includeDeleted ? null : undefined,
 					},
 					include: {
 						_count: {
