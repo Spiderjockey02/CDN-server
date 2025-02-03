@@ -92,7 +92,7 @@ export const getRecentlyViewed = (client: Client) => {
 			const session = await getSession(req);
 			if (!session?.user) return Error.InvalidSession(res);
 
-			const files = await client.recentlyViewedFileManager.fetchUsers(session.user.id);
+			const files = await client.recentlyViewedFileManager.fetchUserLatest(session.user.id);
 			res.json({ files: sanitiseObject(files) });
 		} catch (err) {
 			client.logger.error(err);

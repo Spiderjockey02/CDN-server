@@ -4,7 +4,7 @@ import client from './prisma';
 import { CreateRecentlyViewedFile } from 'src/types/database/RecentlyViewedFile';
 
 export default class RecentlyViewedFileManager {
-	cache: LRUCache<string, RecentlyViewedFile>;
+	cache: LRUCache<string, RecentlyViewedFile[]>;
 
 	constructor() {
 		this.cache = new LRUCache({
@@ -13,8 +13,13 @@ export default class RecentlyViewedFileManager {
 		});
 	}
 
-	upsert(data: CreateRecentlyViewedFile): Promise<RecentlyViewedFile> {
-		return client.recentlyViewedFile.upsert({
+	/**
+		* Gets all of the user's directories
+		* @param {CreateRecentlyViewedFile} data The user Id.
+		* @returns {RecentlyViewedFile[]} The files.
+	*/
+	async upsert(data: CreateRecentlyViewedFile): Promise<RecentlyViewedFile> {
+		const history = await client.recentlyViewedFile.upsert({
 			where: {
 				fileId_userId: {
 					fileId: data.fileId,
@@ -37,19 +42,27 @@ export default class RecentlyViewedFileManager {
 				},
 			},
 		});
+		this.cache.delete(data.userId);
+		return history;
 	}
 
-	fetchUsers(userId: string) {
-		return client.recentlyViewedFile.findMany({
-			where: {
-				userId,
-			},
-			orderBy: {
-				viewedAt: 'asc',
-			},
-			include: {
-				file: true,
-			},
+	/**
+		* Gets a user's recently viewed files.
+		* @param {string} userId The user Id.
+		* @returns {RecentlyViewedFile[]} The files.
+	*/
+	async fetchUserLatest(userId: string): Promise<RecentlyViewedFile[]> {
+		let history = this.cache.get(userId) ?? null;
+		if (history) return history;
+
+		// Fetch from database as it's not in cache
+		history = await client.recentlyViewedFile.findMany({
+			where: { userId },
+			orderBy: { viewedAt: 'desc' },
+			include: { file: true },
 		});
+
+		this.cache.set(userId, history);
+		return history;
 	}
 }
