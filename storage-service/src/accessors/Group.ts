@@ -1,6 +1,6 @@
 import client from './prisma';
 import type { IdParam } from '../types';
-import { CreateGroupProps, getGroupsInclude, GroupNameProps } from 'src/types/database/Group';
+import { CreateGroupProps, FullGroup, getGroupsInclude, GroupNameProps } from 'src/types/database/Group';
 import { Group } from '@prisma/client';
 import { LRUCache } from 'lru-cache';
 
@@ -35,7 +35,7 @@ export default class GroupManager {
 	  * @param {getGroupsInclude} data The group data.
 		* @returns {Group[]} The groups.
 	*/
-	async fetchAll(data: getGroupsInclude = {}) {
+	async fetchAll(data: getGroupsInclude = {}): Promise<FullGroup[]> {
 		return client.group.findMany({
 			include: {
 				_count: data.count,
@@ -57,7 +57,7 @@ export default class GroupManager {
 					name: data.name,
 				},
 				include: {
-					users: data.includeUsers ?? false,
+					users: data.includeUsers,
 				},
 			});
 			if (group != null) this.cache.set(group.name, group);
@@ -68,15 +68,14 @@ export default class GroupManager {
 	/**
 	  * Deletes a group
 	  * @param {IdParam} data The group ID.
-		* @returns {Group} The deleted group.
+		* @returns {Boolean} Whether the group was deleted.
 	*/
-	async delete(data: IdParam): Promise<Group> {
+	async delete(data: IdParam): Promise<boolean> {
 		const group = await client.group.delete({
 			where: {
 				id: data.id,
 			},
 		});
-		this.cache.delete(group.name);
-		return group;
+		return this.cache.delete(group.name);
 	}
 }

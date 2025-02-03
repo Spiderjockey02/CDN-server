@@ -83,8 +83,7 @@ export default class FileAccessor {
 	 * @returns {number} The number of rows updated.
 	*/
 	async updateChildsPath({ oldPath, newPath, userId }: updateFilePath): Promise<number> {
-		// Update child paths using updateMany
-		return prisma.$executeRawUnsafe(
+		const updatedRows = await prisma.$executeRawUnsafe(
 			`UPDATE \`File\`
 			SET path = REPLACE(path, ?, ?)
 			WHERE path LIKE CONCAT(?, '%') 
@@ -94,18 +93,15 @@ export default class FileAccessor {
 			oldPath,
 			userId,
 		);
-	}
 
-	/**
-    * Deletes a file
-    * @param {string} id The file id.
-		* @returns {Boolean} If the file was deleted.
-  */
-	async deleteFromDB(id: string): Promise<boolean> {
-		await client.file.delete({
-			where: { id },
+		this.cache.forEach((file, key) => {
+			if (key.startsWith(`${userId}_${oldPath}`)) {
+				const newKey = key.replace(oldPath, newPath);
+				this.cache.delete(key);
+				this.cache.set(newKey, { ...file, path: file.path.replace(oldPath, newPath) });
+			}
 		});
-		return this.cache.delete(id);
+		return updatedRows;
 	}
 
 	/**
@@ -123,7 +119,7 @@ export default class FileAccessor {
 		file = await client.file.findFirst({
 			where: {
 				userId,
-				deletedAt: includeDeleted ? null : undefined,
+				deletedAt: includeDeleted ? undefined : null,
 				path: {
 					equals: filePath.startsWith('/') ? filePath : `/${filePath}`,
 				},
@@ -131,14 +127,14 @@ export default class FileAccessor {
 			include: {
 				children: {
 					where: {
-						deletedAt: includeDeleted ? null : undefined,
+						deletedAt: includeDeleted ? undefined : null,
 					},
 					include: {
 						_count: {
 							select: {
 								children: {
 									where: {
-										deletedAt: null,
+										deletedAt: includeDeleted ? undefined : null,
 									},
 								},
 							},
@@ -201,7 +197,7 @@ export default class FileAccessor {
 		* @param {string} userId The user Id.
 		* @returns {File[]} The files.
 	*/
-	getAllDeletedFiles(userId?: string): Promise<File[]> {
+	async getAllDeletedFiles(userId?: string): Promise<File[]> {
 		return client.file.findMany({
 			where: {
 				userId,

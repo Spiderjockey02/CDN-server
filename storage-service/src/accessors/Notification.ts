@@ -14,10 +14,10 @@ export default class NotificationManager {
 	}
 
 	/**
-	 * Creates a new notification
-	 * @param {CreateNotification} data The notification data.
-	 * @returns {Notification} The created notification.
-	 */
+	  * Creates a new notification
+	  * @param {CreateNotification} data The notification data.
+	  * @returns {Notification} The created notification.
+	*/
 	async create(data: CreateNotification): Promise<Notification> {
 		const notification = await client.notification.create({
 			data: {
@@ -35,19 +35,31 @@ export default class NotificationManager {
 		return notification;
 	}
 
-	async getById(id: string) {
-		if (this.cache.has(id)) return this.cache.get(id);
-		const notif = await client.notification.findUnique({
-			where: { id: id },
+
+	/**
+	  * Retrieves Notifications by Id
+	  * @param {string} id The notification id.
+	  * @returns {Notification | null} The notification.
+	*/
+	async getById(id: string): Promise<Notification | null> {
+		let notif = this.cache.get(id) ?? null;
+		if (notif) return notif;
+		notif = await client.notification.findUnique({
+			where: { id },
 		});
 		if (notif) this.cache.set(notif.id, notif);
 		return notif;
 	}
 
-	async delete(id: string) {
-		await client.notification.delete({
+	/**
+	  * Delete a notification by Id
+	  * @param {string} id The notification id.
+	  * @returns {Boolean} Whether the notification was deleted.
+	*/
+	async delete(id: string): Promise<boolean> {
+		const notif = await client.notification.delete({
 			where: { id },
 		});
-		return this.cache.delete(id);
+		return this.cache.delete(notif.id);
 	}
 }

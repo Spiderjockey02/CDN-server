@@ -10,16 +10,6 @@ const client = new PrismaClient({ errorFormat: 'pretty',
 	],
 });
 
-client.$use(async (params, next) => {
-	const startTime = Date.now(),
-		result = await next(params),
-		timeTook = Date.now() - startTime;
-
-	LoggerClass.debug(`Query ${params.model}.${params.action} took ${timeTook}ms`);
-
-	return result;
-});
-
 client.$on('info', (data) => {
 	LoggerClass.log(data.message);
 });
@@ -32,4 +22,19 @@ client.$on('error', (data) => {
 	LoggerClass.error(data.message);
 });
 
-export default client;
+const extendedClient = client.$extends({
+	query: {
+		$allModels: {
+			async $allOperations({ model, operation, args, query }) {
+				const startTime = Date.now();
+				const result = await query(args);
+				const timeTook = Date.now() - startTime;
+
+				LoggerClass.debug(`Query ${model}.${operation} took ${timeTook}ms`);
+				return result;
+			},
+		},
+	},
+});
+
+export default extendedClient;

@@ -128,7 +128,7 @@ export default class UserManager {
 	  * Fetch the total count of users
 		* @returns {number} The total count of users.
 	*/
-	async fetchTotalCount(): Promise<number> {
+	async fetchTotal(): Promise<number> {
 		return client.user.count();
 	}
 }
