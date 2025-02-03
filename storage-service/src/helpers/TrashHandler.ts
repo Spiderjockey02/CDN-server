@@ -23,6 +23,23 @@ export default class TrashHandler extends FileAccessor {
 			deletedAt: new Date(),
 		});
 
+		// If it's a folder, process its children (don't move the folder itself again)
+		if (file.type === 'DIRECTORY') {
+			const children = await this.getByParentId(file.id);
+
+			// Move all child files/subfolders
+			for (const child of children) {
+				await this.moveToTrash(userId, child.path);
+			}
+
+			// Delete the old folder now it should be empty
+			const oldFolderPath = path.join(PATHS.CONTENT, userId, file.path);
+			if ((await fs.readdir(oldFolderPath)).length === 0) {
+				await fs.rmdir(oldFolderPath);
+			}
+			return file;
+		}
+
 		// Make sure the folders exist
 		const targetDir = path.join(PATHS.TRASH, userId, file.path);
 		await fs.mkdir(path.dirname(targetDir), { recursive: true });
