@@ -3,7 +3,7 @@ import { formatBytes } from '@/utils/functions';
 import config from '@/config';
 import type { User } from '@/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars, faClock, faFolder, faStar, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faClock, faFolder, faTrash } from '@fortawesome/free-solid-svg-icons';
 interface Props {
 	user: User
 }

@@ -24,7 +24,7 @@ export default function RecentNavbar({ files }: Props) {
 								<div className="card recentIcon">
 									<div className="image-container">
 										<Image className="card-img-top" src={`/thumbnail/${file.userId}${file.path}`} alt="Recent file accessed"
-											style={{ width:'100%' }} width="200" height="225" />
+											style={{ width:'100%' }} width={200} height={225} />
 									</div>
 									<div className="card-body" style={{ borderTop: '1px solid #e3e3e3', padding:'0' }}>
 										<p className="text-truncate text-center" data-toggle="tooltip" data-placement="top" title={file.path.split('/').at(-1)}>{file.path.split('/').at(-1)}</p>

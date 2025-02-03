@@ -43,7 +43,7 @@ export type fileItem = {
   updatedAt: Date
   size: number
   type: fileType
-  _count?: {
+  _count: {
     children: number
   }
 }

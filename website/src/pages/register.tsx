@@ -111,7 +111,7 @@ export default function Register() {
 											<div className="form-check d-flex justify-content-center mb-5">
 												<input className="form-check-input me-2" type="checkbox" value="" id="T&S" onClick={changeState}/>
 												<label className="form-check-label" htmlFor="T&S">
-                  				I agree to the <a href="/terms-of-service">Terms of service</a>.
+                  				I agree to the <Link href="/terms-of-service">Terms of service</Link>.
 												</label>
 											</div>
 
