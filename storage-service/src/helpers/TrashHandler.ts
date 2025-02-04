@@ -26,9 +26,8 @@ export default class TrashHandler extends FileAccessor {
 		// If it's a folder, process its children (don't move the folder itself again)
 		if (file.type === 'DIRECTORY') {
 			const children = await this.getByParentId(file.id);
-
-			// Move all child files/subfolders
-			for (const child of children) {
+			// Move all child files/subfolders  (make sure no children are already moved to trash)
+			for (const child of children.filter(f => f.deletedAt == null)) {
 				await this.moveToTrash(userId, child.path);
 			}
 
@@ -66,8 +65,8 @@ export default class TrashHandler extends FileAccessor {
 		if (file.type === 'DIRECTORY') {
 			const children = await this.getByParentId(file.id);
 
-			// Move all child files/subfolders
-			for (const child of children) {
+			// Move all child files/subfolders (make sure no children are already restored)
+			for (const child of children.filter(f => f.deletedAt !== null)) {
 				await this.restoreFile(userId, child.path);
 			}
 
