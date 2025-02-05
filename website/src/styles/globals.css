@@ -523,6 +523,7 @@ section {
   width: 250px;
   background: #1992d4;
   transition: all 0.3s;
+  position: relative;
 }
 
 #sidebar .sidebar-header {
@@ -534,7 +535,6 @@ section {
 }
 
 #sidebar ul.components {
-  padding: 20px 0;
   border-bottom: 1px solid #47748b;
 }
 
@@ -604,6 +604,15 @@ section {
 }
 @media (max-width: 710px) {
   .searchBar {
+    display: none;
+  }
+  .mobile-searchBar {
+    display: block;
+  }
+}
+
+@media (min-width: 711px) {
+  .mobile-searchBar {
     display: none;
   }
 }

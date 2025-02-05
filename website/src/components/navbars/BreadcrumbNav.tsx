@@ -81,28 +81,39 @@ export default function BreadcrumbNav({ path, isFile, setviewType }: Props) {
 	};
 
 	return (
-		<div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-			<nav aria-label="breadcrumb" style={{ fontSize : '1.2rem' }}>
-				<ol className="breadcrumb" style={{ backgroundColor:'white' }}>
-					<li className="breadcrumb-item">
+		<div className="d-flex flex-row justify-content-between">
+			<nav aria-label="breadcrumb" className="align-self-center" style={{ fontSize: '1.2rem', margin: 0 }}>
+				<ol className="breadcrumb d-flex align-items-center" style={{ backgroundColor: 'white', margin: 0, padding: 0 }}>
+					<li className="breadcrumb-item d-flex align-items-center">
 						{splitPath[0] == '' ?
-							<b style={{ color:'black' }}>Home</b>
-							: <b>
-								<Link className="directoyLink" href='/files' style={{ color:'grey' }}>Home</Link>
+							<b style={{ color: 'black' }}>Home</b>
+						 :
+							<b>
+								<Link className="directoyLink" href="/files" style={{ color: 'grey' }}>Home</Link>
 							</b>
 						}
 					</li>
-					{splitPath.length >= 1 ?
+					{splitPath.length >= 1 ? (
 						splitPath.map(name => (
-							<li className="breadcrumb-item" key={name}>
-								{(name !== splitPath.at(-1) ?
+							<li className="breadcrumb-item d-flex align-items-center" key={name}>
+								{name !== splitPath.at(-1) ?
 									<b>
-										<Link className="directoyLink" href={`/files/${splitPath.slice(0, splitPath.indexOf(name) + 1).join('/')}`} style={{ color:'grey' }}>{name}</Link>
+										<Link
+											className="directoyLink"
+											href={`/files/${splitPath.slice(0, splitPath.indexOf(name) + 1).join('/')}`}
+											style={{ color: 'grey' }}
+										>
+											{name}
+										</Link>
 									</b>
-									: <b className="d-inline-block text-truncate" style={{ color:'black', maxWidth:'100vw' }}>{name}</b>
-								)}
+								 :
+									<b className="d-inline-block text-truncate" style={{ color: 'black', maxWidth: '100vw' }}>
+										{name}
+									</b>
+								}
 							</li>
-						)) : <> </>}
+						))
+					) : null}
 				</ol>
 			</nav>
 			<div className="btn-group" role="group">
