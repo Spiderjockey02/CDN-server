@@ -124,7 +124,7 @@ export default function Directory({ folder }: Props) {
 
 	return (
 		<div>
-			{contextMenu.show &&	<ContextMenu x={contextMenu.x} y={contextMenu.y} closeContextMenu={closeContextMenu} selected={contextMenu.selected} />}
+			{contextMenu.show &&	<ContextMenu x={contextMenu.x} y={contextMenu.y} closeContextMenu={closeContextMenu} selected={contextMenu.selected} showFilePanel={(fileId) => setFilePanelToShow(fileId)} />}
 			{folder.children.map((_) => <RenameModal key={_.id} file={_} />)}
 			{folder.children.map((_) => <ChangeModal key={_.id} file={_} />)}
 			{folder.children.map((_) => <DeleteFileModal key={_.id} file={_} />)}

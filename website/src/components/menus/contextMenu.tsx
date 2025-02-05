@@ -11,9 +11,10 @@ interface Props {
 	y: number
 	selected: fileItem[]
 	closeContextMenu: () => void
+	showFilePanel: (fileId: string) => void
 }
 
-export default function ContextMenu({ x, y, closeContextMenu, selected }: Props) {
+export default function ContextMenu({ x, y, closeContextMenu, selected, showFilePanel }: Props) {
 	const contextMenuRef = useRef<HTMLDivElement>(null);
 
 	useOnClickOutside(contextMenuRef as RefObject<HTMLDivElement>, closeContextMenu);
@@ -133,7 +134,7 @@ export default function ContextMenu({ x, y, closeContextMenu, selected }: Props)
 					<button className="btn btn-ctx-menu" type="button" data-bs-toggle="modal" data-bs-target={`#rename_${selected[0].id}`}>
 						<FontAwesomeIcon icon={faFileSignature} /> Rename
 					</button>
-					<button className="btn btn-ctx-menu">
+					<button className="btn btn-ctx-menu" onClick={() => showFilePanel(selected[0].id)}>
 						<FontAwesomeIcon icon={faEllipsisV} /> Properties
 					</button>
 				</div>
