@@ -10,10 +10,10 @@ export const getTrash = (client: Client) => {
 			const session = await getSession(req);
 			if (!session?.user) return Error.InvalidSession(res);
 
-			const files = await client.FileManager.TrashHandler.getAllDeletedFiles(session.user.id);
+			const files = await client.FileManager.getAllUsersDeletedFiles(session.user.id);
 			res.json({ files: sanitiseObject(files) });
 		} catch (err) {
-			console.log(err);
+			client.logger.error(err);
 			Error.GenericError(res, 'Failed to retrieve files in trash.');
 		}
 	};

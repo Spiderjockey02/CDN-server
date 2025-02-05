@@ -241,7 +241,7 @@ export const getAllDirectories = (client: Client) => {
 			const session = await getSession(req);
 			if (!session?.user) return res.json({ error: 'Invalid session' });
 
-			const dirs = await client.FileManager.getAllDirectories(session.user.id);
+			const dirs = await client.FileManager.getAllUsersDirectories(session.user.id);
 			return res.json({ dirs: sanitiseObject(dirs) });
 		} catch (err) {
 			client.logger.error(err);

@@ -21,7 +21,7 @@ export default class FileManager extends FileAccessor {
 	TrashHandler: TrashHandler;
 	constructor() {
 		super();
-		this.TrashHandler = new TrashHandler();
+		this.TrashHandler = new TrashHandler(this);
 
 		// Fetch disk data & update every 5 minutes
 		this.diskData = { free: 0, total: 0 };
@@ -57,7 +57,6 @@ export default class FileManager extends FileAccessor {
 	async move(userId: string, oldFilePath: string, newFilePath: string) {
 		const oldFile = await this.getByFilePath(userId, oldFilePath);
 		const newDir = await this.getByFilePath(userId, newFilePath);
-
 		if (oldFile == null || newDir == null) throw new Error('Invalid path.');
 
 		// Generate new file path for the current item
@@ -72,11 +71,17 @@ export default class FileManager extends FileAccessor {
 
 		// If it's a folder, process its children (don't move the folder itself again)
 		if (oldFile.type === 'DIRECTORY') {
-			const children = await this.getByParentId(oldFile.id);
+			const children = await this.getChildrenByParentId(oldFile.id);
 
 			// Move all child files/subfolders
 			for (const child of children) {
 				await this.move(userId, child.path, newFilePathInDb);
+			}
+
+			// Delete the old folder now it should be empty
+			const oldFolderPath = path.join(PATHS.CONTENT, userId, oldFilePath);
+			if ((await fs.readdir(oldFolderPath)).length === 0) {
+				await fs.rmdir(oldFolderPath);
 			}
 			return;
 		}
@@ -168,7 +173,7 @@ export default class FileManager extends FileAccessor {
 		await fs.mkdir(newFolderPath, { recursive: true });
 
 		// Recursively copy files and subdirectories inside this folder
-		const children = await this.getByParentId(oldDir.id);
+		const children = await this.getChildrenByParentId(oldDir.id);
 
 		for (const child of children) {
 			if (child.type === 'DIRECTORY') {

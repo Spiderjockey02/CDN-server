@@ -73,6 +73,10 @@ export default class FileAccessor {
 				},
 			},
 		});
+
+		// Update the cache on itself
+		const parentFile = await this.getById(file.parentId);
+		if (parentFile) this.cache.delete(`${file.userId}_${parentFile.path.slice(1)}`);
 		this.cache.set(`${file.userId}_${file.path}`, file);
 		return file;
 	}
@@ -111,7 +115,6 @@ export default class FileAccessor {
 		* @returns {FullFile | null} The file.
 	*/
 	async getByFilePath(userId: string, filePath: string, includeDeleted?: boolean): Promise<FullFile | null> {
-		// Check cache first
 		let file = this.cache.get(`${userId}_${filePath}`) ?? null;
 		if (file !== null) return file;
 
@@ -148,11 +151,23 @@ export default class FileAccessor {
 	}
 
 	/**
+		* Gets files by it's Id
+		* @param {string} id The file id.
+		* @returns {File} The file.
+	*/
+	async getById(id: string | null): Promise<File | null> {
+		if (id == null) return null;
+		return client.file.findUnique({
+			where: { id },
+		});
+	}
+
+	/**
 		* Gets files by it's parentId
 		* @param {string} parentId The file id.
-		* @returns {File[]} The file.
+		* @returns {File[]} The files.
 	*/
-	getByParentId(parentId: string): Promise<File[]> {
+	getChildrenByParentId(parentId: string): Promise<File[]> {
 		return client.file.findMany({
 			where: {
 				parentId,
@@ -183,7 +198,7 @@ export default class FileAccessor {
 		* @param {string} userId The user Id.
 		* @returns {File[]} The files.
 	*/
-	async getAllDirectories(userId: string): Promise<File[]> {
+	async getAllUsersDirectories(userId: string): Promise<File[]> {
 		return client.file.findMany({
 			where: {
 				userId,
@@ -197,7 +212,7 @@ export default class FileAccessor {
 		* @param {string} userId The user Id.
 		* @returns {File[]} The files.
 	*/
-	async getAllDeletedFiles(userId?: string): Promise<File[]> {
+	async getAllUsersDeletedFiles(userId?: string): Promise<File[]> {
 		return client.file.findMany({
 			where: {
 				userId,

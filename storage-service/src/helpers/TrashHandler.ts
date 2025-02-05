@@ -1,12 +1,13 @@
 import path from 'node:path';
-import FileAccessor from '../accessors/File';
 import fs from 'node:fs/promises';
 import { PATHS } from '../utils';
 import type { File } from '@prisma/client';
+import FileManager from './FileManager';
 
-export default class TrashHandler extends FileAccessor {
-	constructor() {
-		super();
+export default class TrashHandler {
+	fileManager: FileManager;
+	constructor(fileManager: FileManager) {
+		this.fileManager = fileManager;
 	}
 
 	/**
@@ -15,17 +16,17 @@ export default class TrashHandler extends FileAccessor {
 	  * @param {string} filePath The file path
 	*/
 	async moveToTrash(userId: string, filePath: string) {
-		const file = await this.getByFilePath(userId, filePath);
+		const file = await this.fileManager.getByFilePath(userId, filePath);
 		if (file == null) throw new Error('Invalid path');
 
-		await this.update({
+		await this.fileManager.update({
 			id: file.id,
 			deletedAt: new Date(),
 		});
 
 		// If it's a folder, process its children (don't move the folder itself again)
 		if (file.type === 'DIRECTORY') {
-			const children = await this.getByParentId(file.id);
+			const children = await this.fileManager.getChildrenByParentId(file.id);
 			// Move all child files/subfolders  (make sure no children are already moved to trash)
 			for (const child of children.filter(f => f.deletedAt == null)) {
 				await this.moveToTrash(userId, child.path);
@@ -52,18 +53,18 @@ export default class TrashHandler extends FileAccessor {
 	 * @returns {File} The updated file
 	 */
 	async restoreFile(userId: string, filePath: string): Promise<File> {
-		const file = await this.getByFilePath(userId, filePath, true);
+		const file = await this.fileManager.getByFilePath(userId, filePath, true);
 		if (file == null) throw new Error('Invalid path');
 
 		// Update the current file/folder in the database
-		await this.update({
+		await this.fileManager.update({
 			id: file.id,
 			deletedAt: null,
 		});
 
 		// If it's a folder, process its children (don't move the folder itself again)
 		if (file.type === 'DIRECTORY') {
-			const children = await this.getByParentId(file.id);
+			const children = await this.fileManager.getChildrenByParentId(file.id);
 
 			// Move all child files/subfolders (make sure no children are already restored)
 			for (const child of children.filter(f => f.deletedAt !== null)) {
@@ -94,7 +95,7 @@ export default class TrashHandler extends FileAccessor {
 	*/
 	async emptyTrash(userId: string): Promise<File[]> {
 		// First get all files in trash so the actual file can be moved back to the user's directory
-		const filesInTrash = await this.getAllDeletedFiles(userId);
+		const filesInTrash = await this.fileManager.getAllUsersDeletedFiles(userId);
 		return Promise.all(filesInTrash.map(async f => await this.restoreFile(userId, f.path)));
 	}
 }
