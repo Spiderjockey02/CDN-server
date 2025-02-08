@@ -19,7 +19,6 @@ export default function DeleteFileModal({ file, closeContextMenu }: Props) {
 
 	const handleDeleteSubmit = async (e: BaseSyntheticEvent) => {
 		e.preventDefault();
-
 		try {
 			await axios.delete('/api/files/delete', {
 				data: { fileName: file.name },
@@ -27,7 +26,7 @@ export default function DeleteFileModal({ file, closeContextMenu }: Props) {
 		} catch (err) {
 			console.log(err);
 		}
-		closeModal('deleteModel');
+		closeModal(`delete_${file.id}`);
 	};
 
 	return (

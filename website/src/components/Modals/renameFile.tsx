@@ -32,7 +32,7 @@ export default function RenameModal({ file, closeContextMenu }: Props) {
 			console.log(err);
 		}
 
-		closeModal('renameModel');
+		closeModal(`rename_${file.id}`);
 	};
 
 	return (
@@ -40,7 +40,7 @@ export default function RenameModal({ file, closeContextMenu }: Props) {
 			<div className="modal-dialog modal-dialog-centered" role="document">
 				<div className="modal-content">
 					<div className="modal-header">
-						<h5 className="modal-title" id="exampleModalLongTitle">Rename {file.name}</h5>
+						<h5 className="modal-title text-truncate" id="exampleModalLongTitle">Rename {file.name}</h5>
 						<button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
 					<form onSubmit={handleRenameSubmit} method="post">

@@ -6,6 +6,9 @@ import { fileItem } from '@/types';
 import { formatBytes } from '@/utils/functions';
 import { useRouter } from 'next/router';
 import axios from 'axios';
+import ChangeModal from '../Modals/changeFile';
+import DeleteFileModal from '../Modals/deleteFile';
+import RenameModal from '../Modals/renameFile';
 
 interface Props {
   file: fileItem
@@ -71,42 +74,47 @@ export default function FilePanelPopup({ file, setShow, show }: Props) {
 	};
 
 	return (
-		<div className={`offcanvas offcanvas-end ${show ? 'show' : ''}`} id="offcanvasExample" aria-labelledby="offcanvasExampleLabel" style={{ maxWidth: '75%' }}>
-			<div className="offcanvas-header">
-				<h5 className="offcanvas-title" id="offcanvasExampleLabel">File preview</h5>
-				<button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close" onClick={() => setShow('')}></button>
-			</div>
-			<div className="offcanvas-body">
-				<div className='container justify-content-center text-center'>
-					<span onClick={handleRowClick} style={{ cursor: 'pointer' }}>
-						<Image src={file.name} alt={file.name} style={{ maxWidth: '100%', height: 'auto' }} width={300} height={600} loader={imageLoader} loading='lazy' />
-						<br />
-						<h4>{file.name}</h4>
-					</span>
-					<p>Created on: {new Date(file.createdAt).toLocaleString('en-US')}</p>
-					<p>{file.type == 'FILE' ? formatBytes(file.size) : `${file._count?.children ?? 0} files`}</p>
+		<>
+			<RenameModal key={file.id} file={file} />
+			<ChangeModal key={file.id} file={file} />
+			<DeleteFileModal key={file.id} file={file} />
+			<div className={`offcanvas offcanvas-end ${show ? 'show' : ''}`} id="offcanvasExample" aria-labelledby="offcanvasExampleLabel" style={{ maxWidth: '75%' }}>
+				<div className="offcanvas-header">
+					<h5 className="offcanvas-title" id="offcanvasExampleLabel">File preview</h5>
+					<button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close" onClick={() => setShow('')}></button>
 				</div>
-				<div className='d-flex justify-content-evenly'>
-					<button className='btn'>
-						<FontAwesomeIcon icon={faShareAlt} />
-					</button>
-					<button className='btn' onClick={handleCopyURL}>
-						<FontAwesomeIcon icon={faCopy} />
-					</button>
-					<button className='btn' onClick={handleDownload}>
-						<FontAwesomeIcon icon={faDownload} />
-					</button>
-					<button className='btn' data-bs-toggle="modal" data-bs-target={`#delete_${file.id}`}>
-						<FontAwesomeIcon icon={faTrash} />
-					</button>
-					<button className='btn' data-bs-toggle="modal" data-bs-target={`#change_${file.id}`}>
-						<FontAwesomeIcon icon={faCopy} />
-					</button>
-					<button className="btn" type="button" data-bs-toggle="modal" data-bs-target={`#rename_${file.id}`}>
-						<FontAwesomeIcon icon={faFileSignature} />
-					</button>
+				<div className="offcanvas-body">
+					<div className='container justify-content-center text-center'>
+						<span onClick={handleRowClick} style={{ cursor: 'pointer' }}>
+							<Image src={file.name} alt={file.name} style={{ maxWidth: '100%', height: 'auto' }} width={300} height={600} loader={imageLoader} loading='lazy' />
+							<br />
+							<h4 className='text-break'>{file.name}</h4>
+						</span>
+						<p>Created on: {new Date(file.createdAt).toLocaleString('en-US')}</p>
+						<p>{file.type == 'FILE' ? formatBytes(file.size) : `${file._count?.children ?? 0} files`}</p>
+					</div>
+					<div className='d-flex justify-content-evenly'>
+						<button className='btn'>
+							<FontAwesomeIcon icon={faShareAlt} />
+						</button>
+						<button className='btn' onClick={handleCopyURL}>
+							<FontAwesomeIcon icon={faCopy} />
+						</button>
+						<button className='btn' onClick={handleDownload}>
+							<FontAwesomeIcon icon={faDownload} />
+						</button>
+						<button className='btn' data-bs-toggle="modal" data-bs-target={`#delete_${file.id}`}>
+							<FontAwesomeIcon icon={faTrash} />
+						</button>
+						<button className='btn' data-bs-toggle="modal" data-bs-target={`#change_${file.id}`}>
+							<FontAwesomeIcon icon={faCopy} />
+						</button>
+						<button className="btn" type="button" data-bs-toggle="modal" data-bs-target={`#rename_${file.id}`}>
+							<FontAwesomeIcon icon={faFileSignature} />
+						</button>
+					</div>
 				</div>
 			</div>
-		</div>
+		</>
 	);
 }

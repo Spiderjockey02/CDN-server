@@ -74,9 +74,11 @@ export default function Recent() {
 					<FontAwesomeIcon icon={faTrash} /> Empty Bin
 				</button>
 				&nbsp;
+				{selected.length > 0 &&
 				<button className='btn btn-outline-secondary' onClick={handleRestore}>
 					<FontAwesomeIcon icon={faRotateLeft} /> Restore
 				</button>
+				}
 			</div>
 			<table className="table" id="myTable">
 				<thead>

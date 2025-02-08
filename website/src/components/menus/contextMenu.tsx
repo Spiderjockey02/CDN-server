@@ -6,6 +6,8 @@ import { fileItem } from '@/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCopy, faDownload, faEllipsisV, faFileSignature, faShareAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import RenameModal from '../Modals/renameFile';
+import DeleteFileModal from '../Modals/deleteFile';
+import ChangeModal from '../Modals/changeFile';
 interface Props {
 	x: number
 	y: number
@@ -115,6 +117,9 @@ export default function ContextMenu({ x, y, closeContextMenu, selected, showFile
 	if (selected.length === 1) {
 		return (
 			<>
+				<DeleteFileModal file={selected[0]} closeContextMenu={closeContextMenu} />
+				<ChangeModal file={selected[0]} closeContextMenu={closeContextMenu} />
+				<RenameModal file={selected[0]} closeContextMenu={closeContextMenu} />
 				<div className="ctxmenu" ref={contextMenuRef} style={{ top: `${y}px`, left: `${x}px`, zIndex: 20, position: 'absolute' }}>
 					<button className="btn btn-ctx-menu">
 						<FontAwesomeIcon icon={faShareAlt} /> Share

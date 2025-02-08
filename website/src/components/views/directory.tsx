@@ -3,9 +3,6 @@ import { useState } from 'react';
 import ContextMenu from '../menus/contextMenu';
 import type { MouseEvent } from 'react';
 import FileItemRow from './FileItemRow';
-import RenameModal from '../Modals/renameFile';
-import ChangeModal from '../Modals/changeFile';
-import DeleteFileModal from '../Modals/deleteFile';
 import FilePanelPopup from './FilePanelPopup';
 type sortKeyTypes = 'Name' | 'Size' | 'Date_Mod';
 type SortOrder = 'ascn' | 'dscn';
@@ -125,10 +122,9 @@ export default function Directory({ folder }: Props) {
 	return (
 		<div>
 			{contextMenu.show &&	<ContextMenu x={contextMenu.x} y={contextMenu.y} closeContextMenu={closeContextMenu} selected={contextMenu.selected} showFilePanel={(fileId) => setFilePanelToShow(fileId)} />}
-			{folder.children.map((_) => <RenameModal key={_.id} file={_} />)}
-			{folder.children.map((_) => <ChangeModal key={_.id} file={_} />)}
-			{folder.children.map((_) => <DeleteFileModal key={_.id} file={_} />)}
-			{folder.children.map((_) => <FilePanelPopup key={_.id} file={_} show={filePanelToShow == _.id} setShow={(s) => setFilePanelToShow(s)} />)}
+			{folder.children.map((_) => (
+				filePanelToShow == _.id && <FilePanelPopup key={_.id} file={_} show={filePanelToShow == _.id} setShow={(s) => setFilePanelToShow(s)} />
+			))}
 			<table className="table" id="myTable">
 				<thead>
 					<tr>

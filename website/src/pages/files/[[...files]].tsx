@@ -1,4 +1,4 @@
-import { FileNavBar, Sidebar, Directory, PhotoAlbum, FileViewer, RecentNavbar } from '@/components';
+import { Directory, PhotoAlbum, FileViewer, RecentNavbar } from '@/components';
 import type { RecentlyViewed } from '../../types';
 import type { GetServerSidePropsContext } from 'next';
 import { useEffect, useState } from 'react';
@@ -8,6 +8,7 @@ import { AuthOption } from '../api/auth/[...nextauth]';
 import axios from 'axios';
 import BreadcrumbNav from '@/components/navbars/BreadcrumbNav';
 import { useFile, useFileDispatch } from '@/components/fileManager';
+import FileLayout from '@/layouts/file';
 interface Props {
 	path: string
 	analysed?: {
@@ -54,30 +55,21 @@ export default function Files({ path = '/' }: Props) {
 
 	if (status == 'loading') return null;
 	return (
-		<>
-
-			<div className="wrapper" style={{ height:'100vh' }}>
-				<Sidebar user={session.user}/>
-				<div className="container-fluid" style={{ overflowY: 'scroll' }}>
-					<FileNavBar user={session.user} />
-					<div className="container-fluid">
-						<BreadcrumbNav path={path} isFile={file?.path == path} setviewType={setviewType} />
-						{(path.length == 0 && recents.length > 0) &&
-							<RecentNavbar files={recents} />
-						}
-						&nbsp;
-						{file == null ?
-							null :
-							file.type == 'FILE' ?
-						 <FileViewer file={file} userId={session.user.id} /> :
-								viewType == 'Tiles' ?
-									<PhotoAlbum folder={file} /> :
-									<Directory folder={file} />
-						}
-					</div>
-				</div>
-			</div>
-		</>
+		<FileLayout user={session.user}>
+			<BreadcrumbNav path={path} isFile={file?.type == 'FILE'} setviewType={setviewType} />
+			{(path.length == 0 && recents.length > 0) &&
+				<RecentNavbar files={recents} />
+			}
+			&nbsp;
+			{file == null ?
+				null :
+				file.type == 'FILE' ?
+					<FileViewer file={file} userId={session.user.id} /> :
+					viewType == 'Tiles' ?
+						<PhotoAlbum folder={file} /> :
+						<Directory folder={file} />
+			}
+		</FileLayout>
 	);
 }
 
