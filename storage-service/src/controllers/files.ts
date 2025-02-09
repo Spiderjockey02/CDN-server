@@ -74,7 +74,9 @@ export const deleteBulkFiles = (client: Client) => {
 
 			// Loop through and delete all files
 			for (const filePath of filePaths) {
-				await client.FileManager.delete(session.user.id, filePath);
+				// Delete file but also delete the access so no broken links in the recently viewed files
+				const file = await client.FileManager.delete(session.user.id, filePath);
+				await client.recentlyViewedFileManager.delete(file.userId, file.id);
 			}
 
 			res.json({ success: 'Successfully deleted items.' });

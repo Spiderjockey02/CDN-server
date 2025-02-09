@@ -65,4 +65,21 @@ export default class RecentlyViewedFileManager {
 		this.cache.set(userId, history);
 		return history;
 	}
+
+	/**
+		* Delete a viewed file log
+		* @param {string} userId The user Id.
+		* @param {string} fileId The file Id.
+		* @returns {RecentlyViewedFile} The file.
+	*/
+	delete(userId: string, fileId: string): Promise<RecentlyViewedFile> {
+		return client.recentlyViewedFile.delete({
+			where: {
+				fileId_userId: {
+					fileId,
+					userId,
+				},
+			},
+		});
+	}
 }

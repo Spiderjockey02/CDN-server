@@ -37,13 +37,15 @@ export default class TrashHandler {
 			if ((await fs.readdir(oldFolderPath)).length === 0) {
 				await fs.rmdir(oldFolderPath);
 			}
-			return file;
+		} else {
+			// Make sure the folders exist
+			const targetDir = path.join(PATHS.TRASH, userId, file.path);
+			await fs.mkdir(path.dirname(targetDir), { recursive: true });
+			await fs.rename(path.join(PATHS.CONTENT, userId, file.path), path.join(PATHS.TRASH, userId, file.path));
 		}
 
-		// Make sure the folders exist
-		const targetDir = path.join(PATHS.TRASH, userId, file.path);
-		await fs.mkdir(path.dirname(targetDir), { recursive: true });
-		await fs.rename(path.join(PATHS.CONTENT, userId, file.path), path.join(PATHS.TRASH, userId, file.path));
+		// Return the deleted file
+		return file;
 	}
 
 	/**
