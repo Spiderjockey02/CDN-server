@@ -1,8 +1,7 @@
 import { PATHS, ipRegex } from './CONSTANTS';
 import Logger from './Logger';
 import Error from './Error';
-import imageThumbnail from 'image-thumbnail';
-import fs, { readdirSync, statSync } from 'fs';
+import { readdirSync, statSync } from 'fs';
 import { join, parse, sep } from 'path';
 import type { Request } from 'express';
 
@@ -40,13 +39,6 @@ export function searchDirectory(directory: string, files: string[] = []) {
 		if(is.isDirectory()) files = files.concat(searchDirectory(path));
 	}
 	return files;
-}
-
-
-export async function createThumbnail(userId: string, path: string) {
-	// @ts-ignore Broken types on this package
-	const thumbnail = await imageThumbnail(`${PATHS.CONTENT}/${userId}/${path}`, { responseType: 'buffer', width: 400, height: 520, fit: 'cover' });
-	fs.writeFileSync(`${PATHS.THUMBNAIL}/${userId}/${path.substring(0, path.lastIndexOf('.')) || path}.jpg`, thumbnail);
 }
 
 export function sanitiseObject(obj: any) {
