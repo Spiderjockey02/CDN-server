@@ -1,15 +1,16 @@
-import { createThumbnail, Error as ErrorCL, PATHS, sanitiseObject } from '../utils';
+import { Error as ErrorCL, PATHS, sanitiseObject } from '../utils';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import util from 'node:util';
-import { exec, spawn } from 'node:child_process';
+import { exec } from 'node:child_process';
 import type { Response } from 'express';
 import FileAccessor from '../accessors/File';
 import archiver from 'archiver';
 import TrashHandler from './TrashHandler';
 import { lookup } from 'mime-types';
 import type { File } from '@prisma/client';
+import ThumbnailCreator from './ThumbnailCreator';
 const cmd = util.promisify(exec);
 
 interface diskStorage {
@@ -19,9 +20,11 @@ interface diskStorage {
 export default class FileManager extends FileAccessor {
 	diskData: diskStorage;
 	TrashHandler: TrashHandler;
+	ThumbnailCreator: ThumbnailCreator;
 	constructor() {
 		super();
 		this.TrashHandler = new TrashHandler(this);
+		this.ThumbnailCreator = new ThumbnailCreator();
 
 		// Fetch disk data & update every 5 minutes
 		this.diskData = { free: 0, total: 0 };
@@ -43,9 +46,10 @@ export default class FileManager extends FileAccessor {
 	  * Deletes a file
 	  * @param {string} userId The user's ID.
 	  * @param {string} filePath file path of the file.
+		* @returns {File} The deleted file
 	*/
-	async delete(userId: string, filePath: string) {
-		this.TrashHandler.moveToTrash(userId, filePath);
+	async delete(userId: string, filePath: string): Promise<File> {
+		return this.TrashHandler.moveToTrash(userId, filePath);
 	}
 
 	/**
@@ -289,42 +293,11 @@ export default class FileManager extends FileAccessor {
 		const folder = file.path.split('/').slice(0, -1).join('/');
 		if (!existsSync(`${PATHS.THUMBNAIL}/${userId}/${folder}`)) await fs.mkdir(`${PATHS.THUMBNAIL}/${userId}/${folder}`, { recursive: true });
 
-		// Create thumbnail from video, photo
-		switch (fileType.split('/')[0]) {
-			case 'image': {
-				// Create thumbnail if not already created
-				try {
-					if (!existsSync(`${PATHS.THUMBNAIL}/${userId}${folder}/${decodeURI(fileName)}.jpg`)) await createThumbnail(userId, file.path);
-					return res.sendFile(`${PATHS.THUMBNAIL}/${userId}${folder}/${decodeURI(fileName)}.jpg`);
-				} catch (err) {
-					return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
-				}
-			}
-			case 'video': {
-				if (!existsSync(`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`)) {
-					try {
-						const child = spawn('ffmpeg',
-							['-i', `${PATHS.CONTENT}/${userId}${file.path}`,
-								'-ss', '00:00:00.750', '-vframes', '1',
-								`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`,
-							]);
-
-						child.on('message', console.log);
-
-						await new Promise((resolve, reject) => {
-							child.on('error', (err) => console.log(err));
-							child.on('close', resolve);
-							child.on('error', reject);
-						});
-					} catch (err) {
-						console.log(err);
-						return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
-					}
-				}
-				return res.sendFile(`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`);
-			}
-			default:
-				return res.sendFile(`${PATHS.THUMBNAIL}/missing-file-icon.png`);
+		if (existsSync(`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`)) {
+			res.sendFile(`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`);
+		} else {
+			await this.ThumbnailCreator.createThumbnail(file.userId, file.path);
+			res.sendFile(`${PATHS.THUMBNAIL}/${userId}${folder}/${fileName}.jpg`);
 		}
 	}
 
