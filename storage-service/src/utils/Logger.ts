@@ -3,7 +3,7 @@ import moment from 'moment';
 import { createRollingFileLogger } from 'simple-node-logger';
 import type { loggerTypes, customRequest, customResponse } from '../types';
 import onFinished from 'on-finished';
-import { getIP } from '../middleware';
+import { getIP } from './';
 const log = createRollingFileLogger({
 	logDirectory: './src/utils/logs',
 	fileNamePattern: 'roll-<DATE>.log',
