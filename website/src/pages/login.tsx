@@ -24,6 +24,7 @@ export default function SignIn() {
 		password: '',
 	});
 	const router = useRouter();
+	const { callbackUrl } = router.query;
 
 	const handleSubmit = async (event: BaseSyntheticEvent) => {
 		event.preventDefault();
@@ -39,7 +40,7 @@ export default function SignIn() {
 		// Try and sign in the user
 		const res = await signIn('credentials', {
 			redirect: false,
-			callbackUrl: `${window.location.search.split('=')[1]}`,
+			callbackUrl: `${callbackUrl ?? window.location.search.split('=')[1]}`,
 			email: user.email,
 			password: user.password,
 		}) as SignInResponse;
