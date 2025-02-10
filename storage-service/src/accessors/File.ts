@@ -224,6 +224,21 @@ export default class FileAccessor {
 	}
 
 	/**
+		* Delete a file from the system
+		* @param {string} fileId The file Id.
+		* @returns {File} The file.
+	*/
+	async deleteFromDB(fileId: string): Promise<File> {
+		const fileFromCache = this.cache.find(f => f.id == fileId);
+		if (fileFromCache) this.cache.delete(`${fileFromCache.userId}_${fileFromCache.path}`);
+		return client.file.delete({
+			where: {
+				id: fileId,
+			},
+		});
+	}
+
+	/**
 		* Gets all files
 		* @returns {number} The total count of files.
 	*/

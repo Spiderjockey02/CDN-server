@@ -3,11 +3,15 @@ import fs from 'node:fs/promises';
 import { PATHS } from '../utils';
 import type { File } from '@prisma/client';
 import FileManager from './FileManager';
+import config from '../config';
+import cron from 'node-cron';
 
 export default class TrashHandler {
 	fileManager: FileManager;
 	constructor(fileManager: FileManager) {
 		this.fileManager = fileManager;
+
+		this.checkRetentionOfFiles();
 	}
 
 	/**
@@ -19,9 +23,13 @@ export default class TrashHandler {
 		const file = await this.fileManager.getByFilePath(userId, filePath);
 		if (file == null) throw new Error('Invalid path');
 
+		// Calculate how long the file should stay in the trash before being removed
+		const dateToDelete = new Date();
+		dateToDelete.setDate(dateToDelete.getDate() + config.DeletedFileExpireDays);
+
 		await this.fileManager.update({
 			id: file.id,
-			deletedAt: new Date(),
+			deletedAt: dateToDelete,
 		});
 
 		// If it's a folder, process its children (don't move the folder itself again)
@@ -49,7 +57,7 @@ export default class TrashHandler {
 	}
 
 	/**
-	 * Restore the deleted files
+	 * Restore a deleted file back the user's directory
 	 * @param {string} userId The user ID
 	 * @param {string} filePath The file path
 	 * @returns {File} The updated file
@@ -91,7 +99,7 @@ export default class TrashHandler {
 	}
 
 	/**
-	  * Undo the deleted files
+	  * Restore a user's entire deleted files back to their files
 	  * @param {string} userId The user ID
 		* @returns {GetBatchResult} The result of the operation
 	*/
@@ -99,5 +107,34 @@ export default class TrashHandler {
 		// First get all files in trash so the actual file can be moved back to the user's directory
 		const filesInTrash = await this.fileManager.getAllUsersDeletedFiles(userId);
 		return Promise.all(filesInTrash.map(async f => await this.restoreFile(userId, f.path)));
+	}
+
+	/**
+	  * Remove the deleted file from the system
+	  * @param {string} userId The user ID
+	  * @param {string} filePath The file path
+	*/
+	async removeFileFromSystem(userId: string, filePath: string) {
+		const file = await this.fileManager.getByFilePath(userId, filePath, true);
+		if (file && file.deletedAt !== null) {
+			await this.fileManager.deleteFromDB(file.id);
+			await fs.rm(`${PATHS.CONTENT}/${userId}${filePath}`, { recursive: true });
+		}
+	}
+
+
+	/**
+	  * At the end of each day check if any trashed files need actually removing from system
+	*/
+	checkRetentionOfFiles() {
+		cron.schedule('0 0 * * *', async () => {
+			const files = await this.fileManager.getAllUsersDeletedFiles();
+
+			// Loop through each file and check if it should be deleted
+			for (const file of files) {
+				// @ts-expect-error All files that are fetched would have deletedAt value as that's the query
+				if (file.deletedAt.getTime() <= new Date().getTime()) this.removeFileFromSystem(file.userId, file.path);
+			}
+		});
 	}
 }
