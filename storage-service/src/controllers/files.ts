@@ -223,13 +223,15 @@ export const getSearchFile = (client: Client) => {
 			if (!session?.user) return res.json({ error: 'Invalid session' });
 
 			// Search for file with extra information if sent aswell
-			const srch = req.query.query as string;
+			const srch = req.query.query;
+			if (typeof srch !== 'string' || srch.length == 0) return Error.IncorrectQuery(res, 'Query is missing from request');
+
 			const fileType = req.query.fileType;
 			const type = [undefined, FileType.FILE, FileType.DIRECTORY][Number(fileType)] ?? undefined;
 			const files = await client.FileManager.searchByName(session.user.id, srch, type);
 
 			// Only need to send the name and path for search query
-			res.json({ query: files.map(f => ({ name: f.name, path: f.path })) });
+			res.json({ query: sanitiseObject(files) });
 		} catch (err) {
 			client.logger.error(err);
 			Error.GenericError(res, 'Failed to search for item.');

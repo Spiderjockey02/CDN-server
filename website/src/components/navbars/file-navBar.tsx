@@ -38,14 +38,14 @@ export default function FileNavBar({ user }: Props) {
 				<ul className="navbar-nav me-auto mb-2 mb-lg-0">
 					<li className="nav-item">
 						<span className="searchBar">
-							<form action="/files/search" method="post">
+							<form action="/search" method="GET">
 								<div className="input-group mb-3" style={{ width:'40vw' }}>
 									<div className="input-group-prepend">
 										<button id="searchIconBtn" type="submit" className="input-group-text" style={{ backgroundColor:'#f4f4f4', border:'none', borderRadius:'8px 0px 0px 8px', height:'40px' }} data-toggle="tooltip" data-placement="bottom" title="Search">
 											<FontAwesomeIcon icon={faSearch} />
 										</button>
 									</div>
-									<input onChange={(e) => autoComplete(e)} type="text" id="myInput" className="form-input form-control text-truncate" style={{ border:'none', backgroundColor:'#f4f4f4' }} placeholder="Search files and folders" name="search" autoComplete="off" />
+									<input onChange={(e) => autoComplete(e)} type="text" id="myInput" className="form-input form-control text-truncate" style={{ border:'none', backgroundColor:'#f4f4f4' }} placeholder="Search files and folders" name="query" autoComplete="off" />
 									{srchRes.length >= 1 && (
 										<div className="autocomplete-items">
 											{srchRes.map((file) => (
@@ -111,13 +111,13 @@ export default function FileNavBar({ user }: Props) {
 			<div className="modal fade" id="exampleModal" tabIndex={-1} aria-labelledby="exampleModalLabel" aria-hidden="true">
 				<div className="modal-dialog modal-dialog-centered">
 					<div className="modal-content">
-						<form action="/files/search" method="post">
+						<form action="/search" method="GET">
 							<div className="modal-header">
 								<h1 className="modal-title fs-5" id="exampleModalLabel">Search for file</h1>
 								<button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 							</div>
 							<div className="modal-body">
-								<input onChange={(e) => autoComplete(e)} type="text" id="myInput" className="form-input form-control text-truncate" style={{ border:'none', backgroundColor:'#f4f4f4' }} placeholder="Search files and folders" name="search" autoComplete="off" />
+								<input onChange={(e) => autoComplete(e)} type="text" id="myInput" className="form-input form-control text-truncate" style={{ border:'none', backgroundColor:'#f4f4f4' }} placeholder="Search files and folders" name="query" autoComplete="off" />
 								&nbsp;
 								<div className="row">
 									<div className="form-group col-6">
