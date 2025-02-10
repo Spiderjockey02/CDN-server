@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { BaseSyntheticEvent, ChangeEvent, useState } from 'react';
 import UploadStatusToast from '../menus/UploadStatusToast';
 import { useFileDispatch } from '../fileManager';
+import ErrorPopup from '../menus/Error-pop';
 
 interface Props {
   path: string
@@ -19,6 +20,7 @@ export default function BreadcrumbNav({ path, isFile, setviewType }: Props) {
 	const [timeRemaining, setRemaining] = useState('');
 	const [filename, setFilename] = useState('');
 	const [abortController] = useState(new AbortController());
+	const [errorMsg, setErrorMsg] = useState('');
 	const dispatch = useFileDispatch();
 
 	function closeModal(id: string) {
@@ -65,6 +67,7 @@ export default function BreadcrumbNav({ path, isFile, setviewType }: Props) {
 
 				const options: AxiosRequestConfig = {
 					headers: { 'Content-Type': 'multipart/form-data' },
+					responseType: 'json',
 					onUploadProgress: ({ loaded }) => {
 						// Calculate incremental progress for the current file
 						const incrementalBytes = loaded - previousLoaded;
@@ -97,8 +100,8 @@ export default function BreadcrumbNav({ path, isFile, setviewType }: Props) {
 				await axios.post('/api/files/upload', formData, options);
 			}
 		} catch (error) {
-			console.error(error);
 			if (axios.isAxiosError(error)) {
+				setErrorMsg(error.response?.data.error);
 				if (error.code === 'ERR_CANCELED') alert('Sorry! Something went wrong.');
 			}
 		} finally {
@@ -114,43 +117,44 @@ export default function BreadcrumbNav({ path, isFile, setviewType }: Props) {
 	};
 
 	return (
-		<div className="d-flex flex-row justify-content-between">
-			<nav aria-label="breadcrumb" className="align-self-center" style={{ fontSize: '1.2rem', margin: 0 }}>
-				<ol className="breadcrumb d-flex align-items-center" style={{ backgroundColor: 'white', margin: 0, padding: 0 }}>
-					<li className="breadcrumb-item d-flex align-items-center">
-						{splitPath[0] == '' ?
-							<b style={{ color: 'black' }}>Home</b>
+		<>
+			<div className="d-flex flex-row justify-content-between">
+				<nav aria-label="breadcrumb" className="align-self-center" style={{ fontSize: '1.2rem', margin: 0 }}>
+					<ol className="breadcrumb d-flex align-items-center" style={{ backgroundColor: 'white', margin: 0, padding: 0 }}>
+						<li className="breadcrumb-item d-flex align-items-center">
+							{splitPath[0] == '' ?
+								<b style={{ color: 'black' }}>Home</b>
 						 :
-							<b>
-								<Link className="directoyLink" href="/files" style={{ color: 'grey' }}>Home</Link>
-							</b>
-						}
-					</li>
-					{splitPath.length >= 1 ? (
-						splitPath.map(name => (
-							<li className="breadcrumb-item d-flex align-items-center" key={name}>
-								{name !== splitPath.at(-1) ?
-									<b>
-										<Link
-											className="directoyLink"
-											href={`/files/${splitPath.slice(0, splitPath.indexOf(name) + 1).join('/')}`}
-											style={{ color: 'grey' }}
-										>
-											{name}
-										</Link>
-									</b>
+								<b>
+									<Link className="directoyLink" href="/files" style={{ color: 'grey' }}>Home</Link>
+								</b>
+							}
+						</li>
+						{splitPath.length >= 1 ? (
+							splitPath.map(name => (
+								<li className="breadcrumb-item d-flex align-items-center" key={name}>
+									{name !== splitPath.at(-1) ?
+										<b>
+											<Link
+												className="directoyLink"
+												href={`/files/${splitPath.slice(0, splitPath.indexOf(name) + 1).join('/')}`}
+												style={{ color: 'grey' }}
+											>
+												{name}
+											</Link>
+										</b>
 								 :
-									<b className="d-inline-block text-truncate" style={{ color: 'black', maxWidth: '100vw' }}>
-										{name}
-									</b>
-								}
-							</li>
-						))
-					) : null}
-				</ol>
-			</nav>
-			<div className="btn-group" role="group">
-				{!isFile &&
+										<b className="d-inline-block text-truncate" style={{ color: 'black', maxWidth: '100vw' }}>
+											{name}
+										</b>
+									}
+								</li>
+							))
+						) : null}
+					</ol>
+				</nav>
+				<div className="btn-group" role="group">
+					{!isFile &&
           <>
           	<button type="button" className="btn btn-outline-secondary" style={{ display: 'inline-flex', alignContent: 'stretch', justifyContent: 'space-around', alignItems: 'center' }} data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-offset="0,10">
           		<FontAwesomeIcon icon={faPlus} /> New
@@ -180,31 +184,34 @@ export default function BreadcrumbNav({ path, isFile, setviewType }: Props) {
           		<li><a onClick={() => setviewType('List')} className="dropdown-item" href="#">List</a></li>
           	</ul>
           </>
-				}
-			</div>
-			<div className="modal fade" id="createFolderModal" role="dialog" aria-hidden="true">
+					}
+				</div>
+				<div className="modal fade" id="createFolderModal" role="dialog" aria-hidden="true">
 		    <div className="modal-dialog modal-dialog-centered" role="document">
 		      <div className="modal-content">
 		        <div className="modal-header">
 		          <h5 className="modal-title" id="exampleModalLongTitle">Create a new folder</h5>
-							<button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+								<button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 		        </div>
 		        <form onSubmit={handleFolderSubmit} method="post">
-							<div className="modal-body">
-								<div className="mb-3">
-									<label htmlFor="exampleInputPassword1" className="form-label">Folder name:</label>
-									<input type="text" className="form-control" id="exampleInputPassword1" name="folderName" onChange={(e) => setFolderName(e.target.value)} />
+								<div className="modal-body">
+									<div className="mb-3">
+										<label htmlFor="exampleInputPassword1" className="form-label">Folder name:</label>
+										<input type="text" className="form-control" id="exampleInputPassword1" name="folderName" onChange={(e) => setFolderName(e.target.value)} />
+									</div>
 								</div>
-							</div>
-							<div className="modal-footer">
+								<div className="modal-footer">
 		            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
 		            <button type="submit" className="btn btn-success">Create</button>
 		          </div>
 		        </form>
 		    	</div>
 		  	</div>
+				</div>
+				<UploadStatusToast percentage={progress} filename={filename} show={progress > 0} timeRemaining={timeRemaining} cancelUpload={cancelUpload} />
 			</div>
-			<UploadStatusToast percentage={progress} filename={filename} show={progress > 0} timeRemaining={timeRemaining} cancelUpload={cancelUpload} />
-		</div>
+			&nbsp;
+			{errorMsg.length > 0 && <ErrorPopup text={errorMsg} onClose={() => setErrorMsg('')} />}
+		</>
 	);
 }
