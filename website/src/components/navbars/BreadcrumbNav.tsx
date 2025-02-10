@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import axios, { AxiosRequestConfig } from 'axios';
 import Link from 'next/link';
 import { BaseSyntheticEvent, ChangeEvent, useState } from 'react';
-import Toast from '../menus/Toast';
+import UploadStatusToast from '../menus/UploadStatusToast';
 import { useFileDispatch } from '../fileManager';
 
 interface Props {
@@ -16,8 +16,9 @@ export default function BreadcrumbNav({ path, isFile, setviewType }: Props) {
 	const splitPath = path.split('/');
 	const [folderName, setFolderName] = useState('');
 	const [progress, setProgress] = useState(0);
-	const [, setRemaining] = useState(0);
+	const [timeRemaining, setRemaining] = useState('');
 	const [filename, setFilename] = useState('');
+	const [abortController] = useState(new AbortController());
 	const dispatch = useFileDispatch();
 
 	function closeModal(id: string) {
@@ -45,39 +46,71 @@ export default function BreadcrumbNav({ path, isFile, setviewType }: Props) {
 
 	const onFileUploadChange = async (e: ChangeEvent<HTMLInputElement>) => {
 		const fileInput = e.target;
-		if (!fileInput.files || fileInput.files.length == 0) return alert('Files list is empty');
+		if (!fileInput.files || fileInput.files.length === 0) {
+			return alert('Files list is empty');
+		}
+
+		const files = Array.from(fileInput.files);
+		const totalSize = files.reduce((acc, file) => acc + file.size, 0);
+		let uploadedBytes = 0;
+		const startAt = Date.now();
+
 		try {
-			const startAt = Date.now();
-			const formData = new FormData();
-			// Append files and set filename
-			Array.from(fileInput.files).forEach((f) => {
-				formData.append('media', f);
-				setFilename(f.name);
-			});
+			for (const file of files) {
+				setFilename(file.name);
 
-			const options: AxiosRequestConfig = {
-				headers: { 'Content-Type': 'multipart/form-data' },
-				onUploadProgress: ({ loaded, total }) => {
-					const percentage = (loaded * 100) / (total ?? 1);
-					setProgress(+percentage.toFixed(2));
+				const formData = new FormData();
+				formData.append('media', file);
+				let previousLoaded = 0;
 
-					const timeElapsed = Date.now() - startAt;
-					const uploadSpeed = loaded / timeElapsed;
-					const duration = ((total ?? 0) - loaded) / uploadSpeed;
-					setRemaining(duration);
-				},
-			};
+				const options: AxiosRequestConfig = {
+					headers: { 'Content-Type': 'multipart/form-data' },
+					onUploadProgress: ({ loaded }) => {
+						// Calculate incremental progress for the current file
+						const incrementalBytes = loaded - previousLoaded;
+						previousLoaded = loaded;
+						uploadedBytes += incrementalBytes;
 
-			await axios.post('/api/files/upload', formData, options);
-			const { data: { file } } = await axios.get(`/api/files/${path}`);
-			dispatch({ type: 'SET_FILE', payload: file });
+						// Update the cumulative progress percentage
+						const percentage = (uploadedBytes * 100) / totalSize;
+						setProgress(+percentage.toFixed(2));
+
+						const timeElapsed = (Date.now() - startAt) / 1000;
+						if (timeElapsed > 0) {
+							const uploadSpeed = uploadedBytes / timeElapsed;
+							const remainingTime = (totalSize - uploadedBytes) / uploadSpeed;
+
+							const hours = Math.floor(remainingTime / 3600);
+							const minutes = Math.floor((remainingTime % 3600) / 60);
+							const seconds = Math.floor(remainingTime % 60);
+
+							let timeString = '';
+							if (hours > 0) timeString += `${hours}h `;
+							timeString += `${minutes}m ${seconds}s`;
+
+							setRemaining(timeString.trim());
+						} else {
+							setRemaining('Calculating...');
+						}
+					},
+				};
+				await axios.post('/api/files/upload', formData, options);
+			}
 		} catch (error) {
 			console.error(error);
-			alert('Sorry! Something went wrong.');
+			if (axios.isAxiosError(error)) {
+				if (error.code === 'ERR_CANCELED') alert('Sorry! Something went wrong.');
+			}
 		} finally {
+			const { data: { file: uploadedFile } } = await axios.get(`/api/files/${path}`);
+			dispatch({ type: 'SET_FILE', payload: uploadedFile });
 			setProgress(0);
-			setRemaining(0);
+			setRemaining('');
 		}
+	};
+
+	const cancelUpload = () => {
+		abortController.abort();
 	};
 
 	return (
@@ -171,7 +204,7 @@ export default function BreadcrumbNav({ path, isFile, setviewType }: Props) {
 		    	</div>
 		  	</div>
 			</div>
-			<Toast percentage={progress} filename={filename} show={progress > 0}/>
+			<UploadStatusToast percentage={progress} filename={filename} show={progress > 0} timeRemaining={timeRemaining} cancelUpload={cancelUpload} />
 		</div>
 	);
 }
