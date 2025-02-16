@@ -1,0 +1,93 @@
+@use "sass:math";
+$columns: 12;
+
+.row {
+  --bs-gutter-x: 1.5rem;
+  --bs-gutter-y: 0;
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: calc(-1* var(--bs-gutter-y));
+  margin-right: calc(-0.5* var(--bs-gutter-x));
+  margin-left: calc(-0.5* var(--bs-gutter-x));
+}
+
+.col {
+  flex: 1 0 0%;
+}
+
+.row > * {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+  padding-right: calc(var(--bs-gutter-x)* 0.5);
+  padding-left: calc(var(--bs-gutter-x)* 0.5);
+  margin-top: var(--bs-gutter-y);
+}
+
+// Small screens < 576px width
+@media screen and (min-width: 576px) {
+  @mixin col-x-list {
+    @for $i from 1 through $columns {
+      .col-sm-#{$i} {
+        flex: 0 0 auto;
+        width: math.percentage(math.div($i, $columns));
+      }
+    }
+  }
+  @include col-x-list;
+}
+
+// Medium screens < 720px width
+@media screen and (min-width: 720px) {
+  @mixin col-x-list {
+    @for $i from 1 through $columns {
+      .col-md-#{$i} {
+        flex: 0 0 auto;
+        width: math.percentage(math.div($i, $columns));
+      }
+    }
+  }
+  @include col-x-list;
+}
+
+// Large screens < 992px width
+@media screen and (min-width: 992px) {
+  @mixin col-x-list {
+    @for $i from 1 through $columns {
+      @debug math.div($i, $columns);
+      .col-lg-#{$i} {
+        flex: 0 0 auto;
+        width: math.percentage(math.div($i, $columns));
+      }
+    }
+  }
+  @include col-x-list;
+}
+
+// Extra Large screens < 1200px width
+@media screen and (min-width: 1200px) {
+  @mixin col-x-list {
+    @for $i from 1 through $columns {
+      @debug math.div($i, $columns);
+      .col-xl-#{$i} {
+        flex: 0 0 auto;
+        width: math.percentage(math.div($i, $columns));
+      }
+    }
+  }
+  @include col-x-list;
+}
+
+// Extra Extra Large screens < 1400px width
+@media screen and (min-width: 1400px) {
+  @mixin col-x-list {
+    @for $i from 1 through $columns {
+      @debug math.div($i, $columns);
+      .col-xxl-#{$i} {
+        flex: 0 0 auto;
+        width: math.percentage(math.div($i, $columns));
+      }
+    }
+  }
+  @include col-x-list;
+}
