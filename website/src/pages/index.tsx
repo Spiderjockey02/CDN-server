@@ -1,10 +1,12 @@
-import '@/styles/Home.module.css';
 import Link from 'next/link';
 import config from '../config';
 import Script from 'next/script';
 import axios from 'axios';
 import { formatBytes } from '@/utils/functions';
 import MainLayout from '@/layouts/main';
+import { Col, Row } from '@/components/UI/Grid';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCommentDots, faEarthEurope, faFile, faGauge, faHardDrive, faUsers } from '@fortawesome/free-solid-svg-icons';
 
 interface Props {
 	totalUserCount: number
@@ -31,71 +33,64 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Pr
 			<main id="main">
 				<section id="featured-services" className="featured-services large-padding">
 					<div className="container" data-aos="fade-up">
-						<div className="row">
-							<div className="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0">
+						<Row>
+							<Col md={6} lg={3} className='d-flex align-items-stretch mb-5 mb-lg-0'>
 								<div className="icon-box" data-aos="fade-up" data-aos-delay="100">
-									<div className="icon"><i className="bi bi-chat-left-dots"></i></div>
+									<div className="icon"><FontAwesomeIcon icon={faCommentDots} /></div>
 									<h4 className="title">Collaborate</h4>
 									<p className="description">Manage tasks, track file updates, and stay in sync with your teams and clients.</p>
 								</div>
-							</div>
-							<div className="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0">
+							</Col>
+							<Col md={6} lg={3} className='d-flex align-items-stretch mb-5 mb-lg-0'>
 								<div className="icon-box" data-aos="fade-up" data-aos-delay="200">
-									<div className="icon"><i className="bi bi-file-earmark-text"></i></div>
+									<div className="icon"><FontAwesomeIcon icon={faFile} /></div>
 									<h4 className="title">Back up and protect</h4>
 									<p className="description">If you lose your device, you won&apos;t lose your files and photos when they&apos;re saved in {config.company.name}.</p>
 								</div>
-							</div>
-							<div className="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0">
+							</Col>
+							<Col md={6} lg={3} className='d-flex align-items-stretch mb-5 mb-lg-0'>
 								<div className="icon-box" data-aos="fade-up" data-aos-delay="300">
-									<div className="icon"><i className="fa-solid fa-gauge"></i></div>
+									<div className="icon"><FontAwesomeIcon icon={faGauge} className='bi'/> </div>
 									<h4 className="title">Superior loading speeds</h4>
 									<p className="description">Access, send and recieve important files with speed.</p>
 								</div>
-							</div>
-							<div className="col-md-6 col-lg-3 d-flex align-items-stretch mb-5 mb-lg-0">
+							</Col>
+							<Col md={6} lg={3} className='d-flex align-items-stretch mb-5 mb-lg-0'>
 								<div className="icon-box" data-aos="fade-up" data-aos-delay="400">
-									<div className="icon"><i className="bi bi-globe-europe-africa"></i></div>
+									<div className="icon"><FontAwesomeIcon icon={faEarthEurope} /></div>
 									<h4 className="title">Anywhere access</h4>
 									<p className="description">Enjoy the freedom to access, edit, and share your files on all your devices, wherever you are.</p>
 								</div>
-							</div>
-						</div>
+							</Col>
+						</Row>
 					</div>
 				</section>
 
 				<section id="counts" className="counts large-padding">
 					<div className="container" data-aos="fade-up">
-						<div className="row">
-							<div className="col-lg-3 col-md-6">
+						<Row>
+							<Col lg={4} md={6} className='mb-5'>
 								<div className="count-box">
-									<i className="fa-solid fa-users"></i>
+									<FontAwesomeIcon icon={faUsers} />
 									<span data-purecounter-start="0" data-purecounter-end="10" data-purecounter-duration="1" className="purecounter">{totalUserCount}</span>
 									<p>Happy users</p>
 								</div>
-							</div>
-							<div className="col-lg-3 col-md-6 mt-5 mt-md-0">
+							</Col>
+							<Col lg={4} md={6} className='mb-5'>
 								<div className="count-box">
-									<i className="fa-solid fa-file"></i>
+									<FontAwesomeIcon icon={faFile} />
 									<span data-purecounter-start="0" data-purecounter-end={totalFileCount} data-purecounter-duration="1" className="purecounter">{totalFileCount}</span>
 									<p>Total files</p>
 								</div>
-							</div>
-							<div className="col-lg-3 col-md-6 mt-5 mt-lg-0">
+							</Col>
+							<Col lg={4} md={6} className='mb-5'>
 								<div className="count-box">
-									<i className="fa-solid fa-hard-drive"></i>
+									<FontAwesomeIcon icon={faHardDrive} />
 									<span data-purecounter-start="0" data-purecounter-end={(storageUsed)} data-purecounter-duration="1" data-purecounter-currency="true" className="purecounter-data">{formatBytes(storageUsed)}</span>
 									<p>Total storage used</p>
 								</div>
-							</div>
-							<div className="col-lg-3 col-md-6 mt-5 mt-lg-0">
-								<div className="count-box">
-									<i className="bi bi-people"></i>
-									<span data-purecounter-start="0" data-purecounter-end="15" data-purecounter-duration="1" className="purecounter">0</span>
-									<p>Hard Workers</p>
-								</div>
-							</div>
-						</div>
+							</Col>
+						</Row>
 					</div>
 				</section>
 
@@ -105,8 +100,8 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Pr
 							<h3>Check our <span>Pricing</span></h3>
 							<p>Compare {config.company.name} cloud storage pricing and plans</p>
 						</div>
-						<div className="row">
-							<div className="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+						<Row>
+							<Col lg={3} md={6} className='mb-5'>
 								<div className="box">
 									<h3>Free</h3>
 									<h4><sup>$</sup>0<span> / month</span></h4>
@@ -119,11 +114,11 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Pr
 										<li className="na">Text editor</li>
 									</ul>
 									<div className="btn-wrap">
-										<Link href="/signup" className="btn-buy">Sign up</Link>
+										<Link href="/register" className="btn btn-primary">Sign up</Link>
 									</div>
 								</div>
-							</div>
-							<div className="col-lg-3 col-md-6 mt-4 mt-lg-0" data-aos="fade-up" data-aos-delay="200">
+							</Col>
+							<Col lg={3} md={6} className='mb-5'>
 								<div className="box">
 									<h3>Developer</h3>
 									<h4><sup>$</sup>5<span> / month</span></h4>
@@ -137,11 +132,11 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Pr
 										<li></li>
 									</ul>
 									<div className="btn-wrap">
-										<Link href="/signup" className="btn-buy">Buy Now</Link>
+										<Link href="/register" className="btn btn-primary">Buy Now</Link>
 									</div>
 								</div>
-							</div>
-							<div className="col-lg-3 col-md-6 mt-4 mt-md-0" data-aos="fade-up" data-aos-delay="300">
+							</Col>
+							<Col lg={3} md={6} className='mb-5'>
 								<div className="box featured">
 									<h3>Business</h3>
 									<h4><sup>$</sup>10<span> / month</span></h4>
@@ -154,11 +149,11 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Pr
 										<li></li>
 									</ul>
 									<div className="btn-wrap">
-										<Link href="#" className="btn-buy">Buy Now</Link>
+										<Link href="/register" className="btn btn-primary">Buy Now</Link>
 									</div>
 								</div>
-							</div>
-							<div className="col-lg-3 col-md-6 mt-4 mt-lg-0" data-aos="fade-up" data-aos-delay="400">
+							</Col>
+							<Col lg={3} md={6} className='mb-5'>
 								<div className="box">
 									<span className="advanced">Advanced</span>
 									<h3>Ultimate</h3>
@@ -172,11 +167,11 @@ export default function Home({ totalUserCount, storageUsed, totalFileCount }: Pr
 										<li></li>
 									</ul>
 									<div className="btn-wrap">
-										<Link href="#" className="btn-buy">Buy Now</Link>
+										<Link href="/register" className="btn btn-primary">Buy Now</Link>
 									</div>
 								</div>
-							</div>
-						</div>
+							</Col>
+						</Row>
 					</div>
 				</section>
 
