@@ -11,8 +11,8 @@ model User {
   id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
-  emailVerified DateTime?
   password      String
+  languageCode  String        @default("en-GB")
   createdAt     DateTime      @default(now()) @map("created_at")
   notifications Notification[]
   recentlyViewed RecentlyViewedFile[]

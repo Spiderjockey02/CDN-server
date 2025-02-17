@@ -20,14 +20,17 @@ export interface User {
   name: string
   email: string
   createdAt: Date
-  group: {
-    id: string
-    name: string
-    maxStorageSize: number
-  }
+  languageCode: string
+  group: Group
   notifications: Notification[]
   recentlyViewed: RecentlyViewed[]
   totalStorageSize: number
+}
+
+export interface Group {
+  id: string
+  name: string
+  maxStorageSize: number
 }
 
 
