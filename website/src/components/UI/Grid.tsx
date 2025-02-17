@@ -20,7 +20,7 @@ export function Row({ children, className, style }: GridLayoutProps) {
 export function Col({ children, className, style, xs, sm, md, lg, xl, xxl }: ColumnProps) {
 	const columns = columnCreator({ xs, sm, md, lg, xl, xxl });
 	return (
-		<div className={`${className ?? ''} ${columns.map(c => styles[c]).join(' ')}`} style={style}>
+		<div className={`${columns.length == 0 ? styles.col : ''} ${className ?? ''} ${columns.map(c => styles[c]).join(' ')}`} style={style}>
 			{children}
 		</div>
 	);
