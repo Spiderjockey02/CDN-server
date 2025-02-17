@@ -6,7 +6,7 @@ interface Props {
   file: fileItem
   closeContextMenu?: () => void
 }
-export default function ChangeModal({ file, closeContextMenu }: Props) {
+export default function UpdateLocationModal({ file, closeContextMenu }: Props) {
 	const elementRef = useRef(null);
 	const [dirs, setDirs] = useState<fileItem[]>([]);
 	const [action, setAction] = useState<'copy' | 'move' | ''>('');

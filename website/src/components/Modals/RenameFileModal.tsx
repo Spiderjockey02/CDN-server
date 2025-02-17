@@ -8,7 +8,7 @@ interface Props {
   closeContextMenu?: () => void
 }
 
-export default function RenameModal({ file, closeContextMenu }: Props) {
+export default function RenameFileModal({ file, closeContextMenu }: Props) {
 	const [rename, setRename] = useState(file.name);
 	const dispatch = useFileDispatch();
 

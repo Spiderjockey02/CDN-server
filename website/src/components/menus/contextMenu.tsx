@@ -4,10 +4,10 @@ import type { RefObject } from 'react';
 import axios from 'axios';
 import { fileItem } from '@/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy, faDownload, faEllipsisV, faFileSignature, faShareAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
-import RenameModal from '../Modals/renameFile';
-import DeleteFileModal from '../Modals/deleteFile';
-import ChangeModal from '../Modals/changeFile';
+import { faCopy, faDownload, faEllipsisV, faFileSignature, faFolderOpen, faShareAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
+import RenameModal from '../Modals/RenameFileModal';
+import DeleteFileModal from '../Modals/DeleteFileModal';
+import ChangeModal from '../Modals/UpdateLocationModal';
 interface Props {
 	x: number
 	y: number
@@ -134,7 +134,7 @@ export default function ContextMenu({ x, y, closeContextMenu, selected, showFile
 						<FontAwesomeIcon icon={faTrash} /> Delete
 					</button>
 					<button className="btn btn-ctx-menu" data-bs-toggle="modal" data-bs-target={`#change_${selected[0].id}`}>
-						<FontAwesomeIcon icon={faCopy} /> Move / Copy to
+						<FontAwesomeIcon icon={faFolderOpen} /> Move / Copy to
 					</button>
 					<button className="btn btn-ctx-menu" type="button" data-bs-toggle="modal" data-bs-target={`#rename_${selected[0].id}`}>
 						<FontAwesomeIcon icon={faFileSignature} /> Rename
