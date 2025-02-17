@@ -190,6 +190,17 @@ export default class FileAccessor {
 				type,
 				deletedAt: null,
 			},
+			include: {
+				_count: {
+					select: {
+						children: {
+							where: {
+								deletedAt: null,
+							},
+						},
+					},
+				},
+			},
 		});
 	}
 
