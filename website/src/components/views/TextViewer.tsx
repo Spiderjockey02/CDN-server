@@ -22,10 +22,9 @@ export default function TextReader({ path }: Props) {
 	}, []);
 
 	return (
-		<div>
-			&nbsp;
+		<>
 			<textarea rows={35} readOnly={true} value={fileContent} style={{ width: '100%' }}>
 			</textarea>
-		</div>
+		</>
 	);
 }

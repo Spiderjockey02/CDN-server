@@ -1,10 +1,9 @@
-import '@/styles/globals.css';
+import '@/styles/globals.scss';
 import type { AppProps } from 'next/app';
 import { SessionProvider } from 'next-auth/react';
 import 'bootstrap/dist/css/bootstrap.css';
 import { useEffect } from 'react';
 import Header from '../components/header';
-import 'bootstrap-icons/font/bootstrap-icons.css';
 import { FileProvider } from '@/components/fileManager';
 
 export default function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {

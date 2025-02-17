@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { AuthOption } from './api/auth/[...nextauth]';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
-import InputForm from '@/components/Form/InputForm';
+import InputForm from '@/components/Form/InputField';
 
 type ErrorTypes = {
  type: | 'email' | 'password' | 'misc'

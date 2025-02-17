@@ -8,7 +8,7 @@ import axios from 'axios';
 import { getServerSession } from 'next-auth/next';
 import type { GetServerSidePropsContext } from 'next';
 import { AuthOption } from './api/auth/[...nextauth]';
-import InputForm from '@/components/Form/InputForm';
+import InputForm from '@/components/Form/InputField';
 type ErrorTypes = {
  type: 'username' | 'email' | 'password' | 'age' | 'misc'
  message: string

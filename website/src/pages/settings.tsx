@@ -4,7 +4,7 @@ import type { BaseSyntheticEvent } from 'react';
 import { useState } from 'react';
 import axios from 'axios';
 import Image from 'next/image';
-import InputForm from '@/components/Form/InputForm';
+import InputForm from '@/components/Form/InputField';
 import MainLayout from '@/layouts/main';
 
 interface ErrorTypes {

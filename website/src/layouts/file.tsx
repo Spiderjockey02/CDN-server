@@ -11,7 +11,7 @@ export default function FileLayout({ children, user }: Props) {
 	return (
 		<div className="wrapper" style={{ height:'100vh' }}>
 			<Sidebar user={user} />
-			<div className="container-fluid" style={{ overflowY: 'scroll', padding: '0 6px' }}>
+			<div className="container-fluid" style={{ maxHeight: '100vh', overflowY: 'scroll', padding: '0 6px' }}>
 				<FileNavBar user={user} />
 				<div className="container-fluid" style={{ padding: '0' }}>
 					{children}
