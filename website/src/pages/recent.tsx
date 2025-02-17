@@ -1,22 +1,90 @@
-import { FileNavBar, Sidebar } from '@/components';
 import { useSession } from 'next-auth/react';
 import type { RecentlyViewed } from '@/types';
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import TimeAgo from 'javascript-time-ago';
+import en from 'javascript-time-ago/locale/en';
+import FileLayout from '@/layouts/file';
+import React from 'react';
+import { faSortUp, faSortDown, faSort, faFilter } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import Table from '@/components/UI/Table';
+import FileDetail from '@/components/views/FileDetail';
+TimeAgo.addDefaultLocale(en);
+const timeAgo = new TimeAgo('en-US');
+
+type sortKeyTypes = 'Name' | 'Acc_On';
+type SortOrder = 'ascn' | 'dscn';
 
 export default function Recent() {
 	const { data: session, status } = useSession({ required: true });
-	const [files, setFiles] = useState<RecentlyViewed[]>([]);
+	const [history, setHistory] = useState<RecentlyViewed[]>([]);
+	const [sortKey, setSortKey] = useState<sortKeyTypes>('Acc_On');
+	const [sortOrder, setSortOrder] = useState<SortOrder>('ascn');
+	const [filters, setFilters] = useState<string[]>(['']);
+	const [activeFilters, setActiveFilters] = useState<string[]>(['']);
 
 	async function fetchFiles() {
 		try {
 			const { data } = await axios.get('/api/session/recently-viewed');
-			setFiles(data.files);
+			setHistory(data.files);
+			setFilters([...new Set((data.files as RecentlyViewed[]).map(c => c.file.name.split('.')[1]))]);
 		} catch (err) {
 			console.log(err);
 		}
 	}
+
+	function updateSortKey(sort: sortKeyTypes) {
+		switch(sort) {
+			case 'Name': {
+				const isAscending = sortOrder === 'ascn';
+				setSortOrder(isAscending ? 'dscn' : 'ascn');
+				console.log(history);
+				const newHistory = history.sort((a, b) => {
+					return isAscending ? a.file.name.localeCompare(b.file.name) : b.file.name.localeCompare(a.file.name);
+				});
+				setHistory(newHistory);
+				setSortKey(sort);
+				break;
+			}
+			case 'Acc_On': {
+				const isAscending = sortOrder === 'ascn';
+				setSortOrder(isAscending ? 'dscn' : 'ascn');
+
+				setHistory(history.sort((a, b) => {
+					const dateA = new Date(a.viewedAt);
+					const dateB = new Date(b.viewedAt);
+					return isAscending ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
+				}));
+				setSortKey(sort);
+				break;
+			}
+		}
+	}
+
+	const handleFilterChange = async (type: string) => {
+		try {
+			const newActiveFilters =
+			activeFilters.includes(type)
+				? activeFilters.filter(filter => filter !== type)
+				: [...activeFilters, type];
+
+			const { data } = await axios.get('/api/session/recently-viewed');
+			let newFilteredHistory: RecentlyViewed[] = [];
+			if (newActiveFilters.length == 1) {
+				newFilteredHistory = (data.files as RecentlyViewed[]);
+			} else {
+				newFilteredHistory = (data.files as RecentlyViewed[]).filter(s => {
+					return newActiveFilters.includes(s.file.name.split('.')[1]);
+				});
+			}
+
+			setHistory(newFilteredHistory);
+			setActiveFilters(newActiveFilters);
+		} catch (err) {
+			console.log(err);
+		}
+	};
 
 	useEffect(() => {
 		fetchFiles();
@@ -24,50 +92,43 @@ export default function Recent() {
 
 	if (status == 'loading') return null;
 	return (
-		<>
-			<div className="wrapper" style={{ height:'100vh' }}>
-				<Sidebar user={session.user}/>
-				<div className="container-fluid" style={{ overflowY: 'scroll' }}>
-					<FileNavBar user={session.user}/>
-					<div className="container-fluid">
-						<div className="row">
-							<div className="col-md-10">
-								<nav style={{ fontSize:'18.72px' }} aria-label="breadcrumb">
-									<ol className="breadcrumb" style={{ backgroundColor:'white' }}>
-										<li className="breadcrumb-item">
-											<b style={{ color:'black' }}>Recently viewed files</b>
-										</li>
-									</ol>
-								</nav>
-							</div>
-							<div className="col-md-2">
-							</div>
-						</div>
-						<table className="table" id="myTable">
-							<thead>
-								<tr>
-									<th id="Name" className="th-header" scope="col">
-                    Name
-									</th>
-									<th id="Date modified" className="th-header" style={{ borderTopRightRadius: '5px' }} scope="col">
-                    Accessed on
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-								{files.sort((a, b) => new Date(b.viewedAt).getTime() - new Date(a.viewedAt).getTime()).map(_ => (
-									<tr key={_.id}>
-										<th scope="row" className="text-truncate" style={{ maxWidth: 'calc( 70 * 1vw )' }}>
-											<Link style={{ textDecoration: 'none', color: 'black' }} href={`/files${_.file.path}`}>{_.file.path}</Link>
-										</th>
-										<td>{new Date(_.viewedAt).toLocaleString('en-US')}</td>
-									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
+		<FileLayout user={session.user}>
+			<div className="d-flex flex-row justify-content-between">
+				<h5><b>Recently viewed files</b></h5>
+				<div className="dropdown">
+					<button className="input-group-text dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style={{ backgroundColor:'#f4f4f4', border:'none', borderRadius:'8px', height:'40px' }}>
+						<FontAwesomeIcon icon={faFilter} />
+					</button>
+					<ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1" style={{ padding: '8px' }}>
+						{filters.map(type => (
+							<li className="form-check" key={type}>
+								<input className="form-check-input" type="checkbox" id="flexCheckDefault" checked={activeFilters.includes(type)} onChange={() => handleFilterChange(type)} />
+								<label className="form-check-label" htmlFor="flexCheckDefault">
+									{type}
+								</label>
+							</li>
+						))}
+					</ul>
 				</div>
 			</div>
-		</>
+			<Table>
+				<Table.HeaderRow>
+					<Table.Header onClick={() => updateSortKey('Name')} style={{ cursor: 'pointer' }}>
+						Name <FontAwesomeIcon icon={sortKey == 'Name' ? (sortOrder == 'ascn' ? faSortUp : faSortDown) : faSort} />
+					</Table.Header>
+					<Table.Header onClick={() => updateSortKey('Acc_On')} style={{ cursor: 'pointer' }}>
+						Accessed on <FontAwesomeIcon icon={sortKey == 'Acc_On' ? (sortOrder == 'ascn' ? faSortUp : faSortDown) : faSort} />
+					</Table.Header>
+				</Table.HeaderRow>
+				<Table.Body>
+					{history.map(entry => (
+						<tr key={entry.id}>
+							<FileDetail file={entry.file} />
+							<td>{timeAgo.format(new Date().getTime() - (new Date().getTime() - new Date(entry.viewedAt).getTime()))}</td>
+						</tr>
+					))}
+				</Table.Body>
+			</Table>
+		</FileLayout>
 	);
 }
