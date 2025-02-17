@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Table from '@/components/UI/Table';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
+import FileDetail from '@/components/views/FileDetail';
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
 
@@ -101,9 +102,7 @@ export default function Trash() {
 							<td className="text-center">
 								<input className="form-check-input" type="checkbox" checked={selected.includes(file.path)} onChange={() => handleCheckboxToggle(file.path)} aria-label={`Select file ${file.path}`} />
 							</td>
-							<td className="text-truncate" style={{ maxWidth: '50vw' }}>
-								{file.path}
-							</td>
+							<FileDetail file={file} />
 							<td>{timeAgo.format(new Date(file.deletedAt))}</td>
 						</tr>
 					))}
