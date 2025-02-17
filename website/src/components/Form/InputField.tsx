@@ -13,7 +13,7 @@ interface Props {
 	autocomplete?: HTMLInputAutoCompleteAttribute
 }
 
-export default function InputForm({ title, name, type, placeholder, onChange, errorMsg, autocomplete }: Props) {
+export default function InputField({ title, name, type, placeholder, onChange, errorMsg, autocomplete }: Props) {
 	const [hidden, setHidden] = useState(false);
 
 	return (
