@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { fileItem } from '../types';
 import mimeType from 'mime-types';
-import { faFile, faFileAlt, faFileImage, faFileVideo, faFolder, faImages, faMusic } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faFileAlt, faFileImage, faFilePdf, faFileVideo, faFolder, faMusic } from '@fortawesome/free-solid-svg-icons';
 
 export function formatBytes(bytes: number) {
 	if (bytes == 0) return '0 Bytes';
@@ -21,14 +21,13 @@ export function formatTime(timeInSeconds: number) {
 
 export function getFileIcon(file: fileItem) {
 	// Check folder stuff
-	if (file.children) {
-		return (file.children.filter(item => ['image', 'video'].includes((mimeType.lookup(item.name) || '').split('/')[0])).length / file.children.length >= 0.60)
-			? <FontAwesomeIcon icon={faImages} /> : <FontAwesomeIcon icon={faFolder} /> ;
-	}
+	if (file.type == 'DIRECTORY') return (<FontAwesomeIcon icon={faFolder} />) ;
 
 	// Get the icon from file type
 	const type = mimeType.lookup(file.name);
 	if (type == false) return <FontAwesomeIcon icon={faFile} />;
+
+	if (type == 'application/pdf') return <FontAwesomeIcon icon={faFilePdf} />;
 
 	switch (type.split('/')[0]) {
 		case 'image':
