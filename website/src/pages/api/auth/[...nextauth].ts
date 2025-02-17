@@ -1,5 +1,4 @@
 import NextAuth from 'next-auth';
-import TwitterProvider from 'next-auth/providers/twitter';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import config from '@/config';
@@ -9,11 +8,6 @@ import axios from 'axios';
 
 export const AuthOption = {
 	providers: [
-		TwitterProvider({
-			clientId: config.twitter.consumer_key,
-			clientSecret: config.twitter.consumer_secret,
-			version: '2.0',
-		}),
 		CredentialsProvider({
 			id: 'credentials',
 			name: 'credentials',
@@ -28,12 +22,9 @@ export const AuthOption = {
 						password: credentials.password,
 						email: credentials.email,
 					});
-					console.log(data);
 					return (data.success) ? data.user : data.error;
 				} catch (error) {
-					if (axios.isAxiosError(error)) {
-						throw new Error(error.response?.data.error);
-					}
+					if (axios.isAxiosError(error)) throw new Error(error.response?.data.error);
 					throw new Error('Failed to login');
 				}
 			},
