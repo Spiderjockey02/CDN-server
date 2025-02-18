@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, MouseEvent } from 'react';
 import { useSession } from 'next-auth/react';
 import axios from 'axios';
 import FileLayout from '@/layouts/file';
@@ -9,13 +9,48 @@ import Table from '@/components/UI/Table';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import FileDetail from '@/components/views/FileDetail';
+import TrashContextMenu from '@/components/menus/trashContextMenu';
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
+
+const initalContextMenu = {
+	show: false,
+	x: 0,
+	y: 0,
+	selected: [] as fileItem[],
+};
 
 export default function Trash() {
 	const { data: session, status } = useSession({ required: true });
 	const [files, setFiles] = useState<fileItem[]>([]);
-	const [selected, setSelected] = useState<string[]>([]);
+	const [selected, setSelected] = useState<fileItem[]>([]);
+	const [contextMenu, setContextMenu] = useState(initalContextMenu);
+
+	function openContextMenu(e: MouseEvent<HTMLTableRowElement>, selectedFile: fileItem) {
+		e.preventDefault();
+		const { pageX, pageY } = e;
+
+		const menuWidth = 170;
+		const menuHeight = 270;
+		const windowWidth = window.innerWidth;
+		const windowHeight = window.innerHeight;
+
+		let posX = pageX;
+		let posY = pageY;
+
+		// Adjust position if the menu would overflow the viewport
+		if (posX + menuWidth > windowWidth) posX = windowWidth - menuWidth;
+		if (posY + menuHeight > windowHeight) posY = windowHeight - menuHeight;
+
+		// Update this to support multi-selection
+		if (selected.length > 0) {
+			setContextMenu({ show: true, x: posX, y: posY, selected: selected });
+		} else {
+			setContextMenu({ show: true, x: posX, y: posY, selected: [selectedFile] });
+		}
+	}
+
+	const closeContextMenu = () => setContextMenu(initalContextMenu);
 
 	// Fetch files from API
 	const fetchFiles = useCallback(async () => {
@@ -40,7 +75,7 @@ export default function Trash() {
 	// Restore selected files
 	const handleRestore = async () => {
 		try {
-			await axios.put('/api/trash/restore', { paths: selected });
+			await axios.put('/api/trash/restore', { paths: selected.map(s => s.path) });
 			setSelected([]);
 			await fetchFiles();
 		} catch (err) {
@@ -49,12 +84,16 @@ export default function Trash() {
 	};
 
 	// Toggle all checkboxes
-	const handleSelectAllToggle = () => {
-		setSelected(selected.length === files.length ? [] : files.map(f => f.path));
-	};
+	function handleSelectAllToggle() {
+		if (selected.length == 0) {
+			setSelected(files);
+		} else {
+			setSelected([]);
+		}
+	}
 
 	// Toggle individual checkbox selection
-	const handleCheckboxToggle = (filePath: string) => {
+	const handleCheckboxToggle = (filePath: fileItem) => {
 		setSelected(prevSelected =>
 			prevSelected.includes(filePath)
 				? prevSelected.filter(f => f !== filePath)
@@ -84,6 +123,7 @@ export default function Trash() {
 					<FontAwesomeIcon icon={faRotateLeft} /> Restore
 				</button>
 			</div>
+			{contextMenu.show && <TrashContextMenu x={contextMenu.x} y={contextMenu.y} closeContextMenu={closeContextMenu} selected={contextMenu.selected} />}
 			<Table>
 				<Table.HeaderRow>
 					<Table.Header className='text-center' style={{ width: '5%' }}>
@@ -98,9 +138,9 @@ export default function Trash() {
 				</Table.HeaderRow>
 				<Table.Body>
 					{files.sort((a, b) => new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime()).map(file => (
-						<tr key={file.id}>
+						<tr key={file.id} onContextMenu={(e) => openContextMenu(e, file)}>
 							<td className="text-center">
-								<input className="form-check-input" type="checkbox" checked={selected.includes(file.path)} onChange={() => handleCheckboxToggle(file.path)} aria-label={`Select file ${file.path}`} />
+								<input className="form-check-input" type="checkbox" checked={selected.includes(file)} onChange={() => handleCheckboxToggle(file)} aria-label={`Select file ${file.path}`} />
 							</td>
 							<FileDetail file={file} />
 							<td>{timeAgo.format(new Date(file.deletedAt))}</td>
