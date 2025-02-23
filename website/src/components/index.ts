@@ -1,29 +1,49 @@
-// Menus
-import ContextMenu from './menus/contextMenu';
-import ErrorPopup from './menus/Error-pop';
-import SuccessPopup from './menus/Success-pop';
-import Toast from './menus/Toast';
+// Forms
+import InputField from './Form/InputField';
 
-// navbars
-import BreadcrumbNav from './navbars/BreadcrumbNav';
-import FileNavBar from './navbars/file-navBar';
-import Footer from './navbars/footer';
-import HomeNavbar from './navbars/home-navbar';
-import RecentNavbar from './navbars/recent';
-import Sidebar from './navbars/sideBar';
+// Menus
+import FileContextMenu from './menus/FileContextMenu';
+import TrashContextMenu from './menus/TrashContextMenu';
+
+// Modals
+import DeleteFileModal from './Modals/DeleteFileModal';
+import RenameFileModal from './Modals/RenameFileModal';
+import UpdateLocationModal from './Modals/UpdateLocationModal';
+
+// Navbars
+import BreadcrumbNav from './Navbars/BreadcrumbNav';
+import FileNavBar from './Navbars/FileNavbar';
+import Footer from './Navbars/Footer';
+import HomeNavbar from './Navbars/HomeNavbar';
+import RecentNavbar from './Navbars/recent';
+import Sidebar from './Navbars/sideBar';
+
+// Tables
+import FileDetailCell from './Tables/FileDetailCell';
+import FileItemRow from './Tables/FileItemRow';
+import FileViewTable from './Tables/FileViewTable';
+
+// Toasts
+import ErrorPopup from './Toasts/ErrorPopup';
+import SuccessPopup from './Toasts/SuccessPopup';
+import UploadStatusToast from './Toasts/UploadStatusToast';
 
 // UI
+import { Row, Col } from './UI/Grid';
 import Modal from './UI/Modal';
+import NotificationBell from './UI/Notification';
+import Table from './UI/Table';
 
 // Views
-import FileItemRow from './views/FileItemRow';
-import FileViewer from './views/FileViewer';
-import VideoPlayer from './views/VideoPlayer';
 import Directory from './views/directory';
-import PhotoAlbum from './views/photoAlbum';
+import FilePanelPopup from './views/FilePanelPopup';
+import FileViewer from './views/FileViewer';
+import PhotoAlbum from './views/PhotoAlbum';
 import TextViewer from './views/TextViewer';
+import VideoPlayer from './views/VideoPlayer';
 
-
-export { ContextMenu, ErrorPopup, SuccessPopup, Toast, BreadcrumbNav,
-	FileNavBar, Footer, HomeNavbar, RecentNavbar, Sidebar, Modal, FileItemRow,
-	FileViewer, VideoPlayer, Directory, PhotoAlbum, TextViewer };
+export { InputField, FileContextMenu, TrashContextMenu, DeleteFileModal, RenameFileModal, UpdateLocationModal,
+	BreadcrumbNav, FileNavBar, Footer, HomeNavbar, RecentNavbar, Sidebar, FileDetailCell, FileItemRow,
+	FileViewTable, ErrorPopup, SuccessPopup, UploadStatusToast, Row, Col, Modal, NotificationBell,
+	Table, Directory, FilePanelPopup, FileViewer, PhotoAlbum, TextViewer, VideoPlayer,
+};
