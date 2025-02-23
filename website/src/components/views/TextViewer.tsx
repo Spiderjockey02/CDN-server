@@ -1,30 +1,28 @@
+import { TextViewerProps } from '@/types/Components/Views';
+import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
 
-interface Props {
-  path: string
-}
-
-export default function TextReader({ path }: Props) {
+export default function TextViewer({ path }: TextViewerProps) {
 	const [fileContent, setFileContent] = useState('');
 
-	async function loadContent() {
+	const loadContent = useCallback(async () => {
+		const controller = new AbortController();
+
 		try {
-			const { data } = await axios.get(`${path}`);
+			const { data } = await axios.get(path, { signal: controller.signal });
 			setFileContent(data);
 		} catch (err) {
-			console.error('Error fetching file content:', err);
+			if (!axios.isCancel(err)) console.error('Error fetching file content:', err);
 		}
-	}
+
+		return () => controller.abort();
+	}, [path]);
 
 	useEffect(() => {
 		loadContent();
-	}, []);
+	}, [loadContent]);
 
 	return (
-		<>
-			<textarea rows={35} readOnly={true} value={fileContent} style={{ width: '100%' }}>
-			</textarea>
-		</>
+		<textarea rows={35} readOnly value={fileContent} style={{ width: '100%' }} />
 	);
 }

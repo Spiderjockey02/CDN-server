@@ -1,14 +1,12 @@
+import type { AdminUserPageProps } from '@/types/pages';
+import type { GetServerSidePropsContext } from 'next';
 import { FileNavBar, Sidebar } from '@/components';
+import { formatBytes } from '@/utils/functions';
 import { useSession } from 'next-auth/react';
 import type { User } from '@/types';
-import { formatBytes } from '@/utils/functions';
-import type { GetServerSidePropsContext } from 'next';
 import axios from 'axios';
-interface Props {
-	users: Array<User>
-}
 
-export default function Files({ users }: Props) {
+export default function Files({ users }: AdminUserPageProps) {
 	// Make sure user is logged in before accessing page
 	const { data: session, status } = useSession({ required: true });
 	if (status == 'loading') return null;

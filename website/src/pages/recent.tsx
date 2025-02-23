@@ -9,7 +9,7 @@ import React from 'react';
 import { faSortUp, faSortDown, faSort, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Table from '@/components/UI/Table';
-import FileDetail from '@/components/views/FileDetail';
+import FileDetail from '@/components/Tables/FileDetailCell';
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
 

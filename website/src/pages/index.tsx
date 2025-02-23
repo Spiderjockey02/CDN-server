@@ -1,21 +1,15 @@
-import Link from 'next/link';
-import config from '../config';
-import Script from 'next/script';
-import axios from 'axios';
-import { formatBytes } from '@/utils/functions';
-import MainLayout from '@/layouts/main';
-import { Col, Row } from '@/components/UI/Grid';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCommentDots, faEarthEurope, faFile, faGauge, faHardDrive, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { formatBytes } from '@/utils/functions';
+import { Col, Row } from '@/components/UI/Grid';
+import { HomePageProps } from '@/types/pages';
+import MainLayout from '@/layouts/main';
+import Script from 'next/script';
+import config from '../config';
+import Link from 'next/link';
+import axios from 'axios';
 
-interface Props {
-	totalUserCount: number
-	storageUsed: number
-	totalFileCount: number
-}
-
-export default function Home({ totalUserCount, storageUsed, totalFileCount }: Props) {
-
+export default function Home({ totalUserCount, storageUsed, totalFileCount }: HomePageProps) {
 	return (
 		<MainLayout>
 			<Script src="https://cdn.jsdelivr.net/npm/@srexi/purecounterjs/dist/purecounter_vanilla.js" strategy="worker" />

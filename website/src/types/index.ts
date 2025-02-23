@@ -14,7 +14,6 @@ export interface RecentlyViewed {
   file: fileItem
 }
 
-
 export interface User {
   id: string
   name: string
@@ -33,7 +32,6 @@ export interface Group {
   maxStorageSize: number
 }
 
-
 export type fileType = 'FILE' | 'DIRECTORY'
 export type fileItem = {
   id: string
@@ -49,4 +47,19 @@ export type fileItem = {
   _count: {
     children: number
   }
+}
+
+export type LoginErrorTypes = {
+  type: | 'email' | 'password' | 'misc'
+  message: string
+}
+
+export type RegisterErrorTypes = {
+  type: 'username' | 'email' | 'password' | 'age' | 'misc'
+  message: string
+}
+
+export interface SettingErrorTypes {
+	type: 'current' | 'pwd1' | 'pwd2' | 'misc' | 'av' | 'email'
+	text: string
 }

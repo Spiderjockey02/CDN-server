@@ -1,12 +1,9 @@
+import { BaseSyntheticEvent, useEffect, useRef, useState } from 'react';
+import { FileModalProps } from '@/types/Components/Modals';
 import { fileItem } from '@/types';
 import axios from 'axios';
-import { BaseSyntheticEvent, useEffect, useRef, useState } from 'react';
 
-interface Props {
-  file: fileItem
-  closeContextMenu?: () => void
-}
-export default function UpdateLocationModal({ file, closeContextMenu }: Props) {
+export default function UpdateLocationModal({ file, closeContextMenu }: FileModalProps) {
 	const elementRef = useRef(null);
 	const [dirs, setDirs] = useState<fileItem[]>([]);
 	const [action, setAction] = useState<'copy' | 'move' | ''>('');

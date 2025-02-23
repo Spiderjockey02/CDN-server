@@ -1,23 +1,15 @@
-import FileLayout from '@/layouts/file';
-import { useSession } from 'next-auth/react';
+import { FilePanelPopup, FileViewTable, FileContextMenu } from '@/components';
+import { useCallback, useEffect, useState } from 'react';
 import { GetServerSidePropsContext } from 'next/types';
 import { AuthOption } from './api/auth/[...nextauth]';
+import { SearchPageProps } from '@/types/pages';
+import { useSession } from 'next-auth/react';
 import { getServerSession } from 'next-auth';
-import { useEffect, useState } from 'react';
 import type { MouseEvent } from 'react';
-import axios from 'axios';
+import FileLayout from '@/layouts/file';
 import { fileItem } from '@/types';
-import FilePanelPopup from '@/components/views/FilePanelPopup';
-import FileViewTable from '@/components/Tables/FileViewTable';
-import { ContextMenu } from '@/components';
+import axios from 'axios';
 
-interface Props {
-  query: {
-		query: string
-		fileType: string
-		dateUpdated: string
-	}
-}
 const initalContextMenu = {
 	show: false,
 	x: 0,
@@ -25,22 +17,21 @@ const initalContextMenu = {
 	selected: [] as fileItem[],
 };
 
-export default function Search({ query: { query, fileType, dateUpdated } }: Props) {
+export default function Search({ query: { query, fileType, dateUpdated } }: SearchPageProps) {
 	const { data: session, status } = useSession({ required: true });
 	const [contextMenu, setContextMenu] = useState(initalContextMenu);
 	const [files, setFiles] = useState<fileItem[]>([]);
 	const [filesSelected, setFilesSelected] = useState<fileItem[]>([]);
 	const [filePanelToShow, setFilePanelToShow] = useState('');
 
-	async function fetchFiles() {
+	const fetchFiles = useCallback(async () => {
 		try {
 			const { data } = await axios.get(`/api/files/search?query=${query}&fileType=${fileType}&updatedSince=${dateUpdated}`);
-			console.log(data.query);
 			setFiles(data.query);
 		} catch (err) {
 			console.log(err);
 		}
-	}
+	}, [query, fileType, dateUpdated]);
 
 	function openContextMenu(e: MouseEvent<HTMLTableRowElement>, selected: fileItem) {
 		e.preventDefault();
@@ -78,7 +69,7 @@ export default function Search({ query: { query, fileType, dateUpdated } }: Prop
 
 	useEffect(() => {
 		fetchFiles();
-	}, [query]);
+	}, [fetchFiles]);
 
 	if (status == 'loading') return null;
 	return (
@@ -87,7 +78,7 @@ export default function Search({ query: { query, fileType, dateUpdated } }: Prop
 			{files.map((_) => (
 				filePanelToShow == _.id && <FilePanelPopup key={_.id} file={_} show={filePanelToShow == _.id} setShow={(s) => setFilePanelToShow(s)} />
 			))}
-			{contextMenu.show &&	<ContextMenu x={contextMenu.x} y={contextMenu.y} closeContextMenu={closeContextMenu} selected={contextMenu.selected} showFilePanel={(fileId) => setFilePanelToShow(fileId)} />}
+			{contextMenu.show &&	<FileContextMenu x={contextMenu.x} y={contextMenu.y} closeContextMenu={closeContextMenu} selected={contextMenu.selected} showFilePanel={(fileId) => setFilePanelToShow(fileId)} />}
 			<FileViewTable files={files} selectedFiles={filesSelected} openContextMenu={openContextMenu}
 				handleSelectAllToggle={() => null} handleCheckboxToggle={handleCheckboxToggle}
 				setFilePanelToShow={setFilePanelToShow} showMoreDetail={true} />
@@ -98,6 +89,5 @@ export default function Search({ query: { query, fileType, dateUpdated } }: Prop
 export async function getServerSideProps(context: GetServerSidePropsContext) {
 	const session = await getServerSession(context.req, context.res, AuthOption);
 	if (session == null) return;
-	console.log();
 	return { props: { query: context.query } };
 }

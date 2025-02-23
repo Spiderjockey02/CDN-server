@@ -1,14 +1,11 @@
-import Link from 'next/link';
-import { formatBytes } from '@/utils/functions';
-import config from '@/config';
-import type { User } from '@/types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars, faClock, faFolder, faTrash } from '@fortawesome/free-solid-svg-icons';
-interface Props {
-	user: User
-}
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { FileNavBarProps } from '@/types/Components/Navbars';
+import { formatBytes } from '@/utils/functions';
+import Link from 'next/link';
+import config from '@/config';
 
-export default function SideBar({ user }: Props) {
+export default function SideBar({ user }: FileNavBarProps) {
 	const size = Number(user.totalStorageSize) ?? 0;
 
 	function getColor(num: number) {

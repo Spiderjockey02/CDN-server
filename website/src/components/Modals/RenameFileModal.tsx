@@ -1,14 +1,9 @@
-import { fileItem } from '@/types';
-import axios from 'axios';
+import { FileModalProps } from '@/types/Components/Modals';
 import { BaseSyntheticEvent, useState } from 'react';
 import { useFileDispatch } from '../fileManager';
+import axios from 'axios';
 
-interface Props {
-  file: fileItem
-  closeContextMenu?: () => void
-}
-
-export default function RenameFileModal({ file, closeContextMenu }: Props) {
+export default function RenameFileModal({ file, closeContextMenu }: FileModalProps) {
 	const [rename, setRename] = useState(file.name);
 	const dispatch = useFileDispatch();
 

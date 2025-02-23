@@ -1,19 +1,10 @@
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import type { InputFieldProps } from '@/types/Components/Form';
+import { JSX, useState } from 'react';
 import Link from 'next/link';
-import { ChangeEventHandler, HTMLInputAutoCompleteAttribute, HTMLInputTypeAttribute, useState } from 'react';
 
-interface Props {
-  title: string
-  name: string
-  type?: HTMLInputTypeAttribute
-  placeholder?: string
-	onChange?: ChangeEventHandler<HTMLInputElement>
-	errorMsg?: string
-	autocomplete?: HTMLInputAutoCompleteAttribute
-}
-
-export default function InputField({ title, name, type, placeholder, onChange, errorMsg, autocomplete }: Props) {
+export default function InputField({ title, name, type, placeholder, onChange, errorMsg, autocomplete }: InputFieldProps): JSX.Element {
 	const [hidden, setHidden] = useState(false);
 
 	return (

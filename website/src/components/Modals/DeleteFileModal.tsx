@@ -1,14 +1,9 @@
-import Modal from '@/components/UI/Modal';
-import { fileItem } from '@/types';
-import axios from 'axios';
+import { FileModalProps } from '@/types/Components/Modals';
 import { BaseSyntheticEvent } from 'react';
+import Modal from '@/components/UI/Modal';
+import axios from 'axios';
 
-interface Props {
-  file: fileItem
-  closeContextMenu?: () => void
-}
-
-export default function DeleteFileModal({ file, closeContextMenu }: Props) {
+export default function DeleteFileModal({ file, closeContextMenu }: FileModalProps) {
 	function closeModal(id: string) {
 		document.getElementById(id)?.classList.remove('show');
 		document.getElementById(id)?.setAttribute('aria-hidden', 'true');

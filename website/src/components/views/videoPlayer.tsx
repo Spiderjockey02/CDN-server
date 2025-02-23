@@ -1,16 +1,12 @@
-import { useRef } from 'react';
+import { faCompress, faExpand, faGear, faPause, faPlay, faVolumeHigh, faVolumeLow, faVolumeOff, faWindowMaximize } from '@fortawesome/free-solid-svg-icons';
 import type { KeyboardEvent, ChangeEvent, MouseEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCompress, faExpand, faGear, faPause, faPlay, faVolumeHigh, faVolumeLow, faVolumeOff, faWindowMaximize } from '@fortawesome/free-solid-svg-icons';
+import { VideoPlayerProps } from '@/types/Components/Views';
 import styles from '@/styles/VideoPlayer.module.css';
 import { formatTime } from '@/utils/functions';
+import { useRef } from 'react';
 
-interface Props {
-	userId: string
-	path: string
-}
-
-export default function VideoPlayer({ userId, path }: Props) {
+export default function VideoPlayer({ userId, path }: VideoPlayerProps) {
 	// Buttons and anything that can change
 	const video = useRef<HTMLVideoElement>(null);
 	const videoContainer = useRef<HTMLDivElement>(null);

@@ -1,15 +1,14 @@
-import { useEffect, useState, useCallback, MouseEvent } from 'react';
-import { useSession } from 'next-auth/react';
-import axios from 'axios';
-import FileLayout from '@/layouts/file';
-import { fileItem } from '@/types';
 import { faRotateLeft, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { useEffect, useState, useCallback, MouseEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { TrashContextMenu, FileDetailCell } from '@/components';
+import en from 'javascript-time-ago/locale/en';
+import { useSession } from 'next-auth/react';
 import Table from '@/components/UI/Table';
 import TimeAgo from 'javascript-time-ago';
-import en from 'javascript-time-ago/locale/en';
-import FileDetail from '@/components/views/FileDetail';
-import TrashContextMenu from '@/components/menus/trashContextMenu';
+import FileLayout from '@/layouts/file';
+import { fileItem } from '@/types';
+import axios from 'axios';
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
 
@@ -142,7 +141,7 @@ export default function Trash() {
 							<td className="text-center">
 								<input className="form-check-input" type="checkbox" checked={selected.includes(file)} onChange={() => handleCheckboxToggle(file)} aria-label={`Select file ${file.path}`} />
 							</td>
-							<FileDetail file={file} />
+							<FileDetailCell file={file} />
 							<td>{timeAgo.format(new Date(file.deletedAt))}</td>
 						</tr>
 					))}

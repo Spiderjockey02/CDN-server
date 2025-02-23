@@ -1,21 +1,15 @@
-import { useSession } from 'next-auth/react';
-import { ErrorPopup, SuccessPopup } from '@/components';
+import { ErrorPopup, SuccessPopup, InputField } from '@/components';
 import type { BaseSyntheticEvent } from 'react';
-import { useState } from 'react';
-import axios from 'axios';
-import Image from 'next/image';
-import InputForm from '@/components/Form/InputField';
+import { useSession } from 'next-auth/react';
+import { SettingErrorTypes } from '@/types';
 import MainLayout from '@/layouts/main';
-
-interface ErrorTypes {
-	type: 'current' | 'pwd1' | 'pwd2' | 'misc' | 'av' | 'email'
-	text: string
-}
-
+import { useState } from 'react';
+import Image from 'next/image';
+import axios from 'axios';
 
 export default function Settings() {
 	const { data: session, status } = useSession({ required: true });
-	const [errors, setErrors] = useState<ErrorTypes[]>([]);
+	const [errors, setErrors] = useState<SettingErrorTypes[]>([]);
 	const [email, setEmail] = useState('');
 	const [success, setSuccess] = useState('');
 	const [passwords, setPasswords] = useState({
@@ -59,7 +53,7 @@ export default function Settings() {
 
 		// Make sure both fields are not empty
 		if (newPassword.length == 0 || repeatNewPassword.length == 0) {
-			const errs = new Array<ErrorTypes>();
+			const errs = new Array<SettingErrorTypes>();
 			if (newPassword.length == 0) errs.push({ type: 'pwd1', text: 'This field is missing' });
 			if (repeatNewPassword.length == 0) errs.push({ type: 'pwd2', text: 'This field is missing' });
 			return setErrors(errs);
@@ -136,20 +130,20 @@ export default function Settings() {
 								<div className="tab-content mt-3">
 									<div className="tab-pane fade show active" id="personal-info">
 										<form className='mt-4' onSubmit={onPersonalSubmit}>
-											<InputForm title='Update Name' name='name' placeholder={session.user.name} />
-											<InputForm title='Update Email' name="email" placeholder={session.user.email} errorMsg={errors.find(e => e.type == 'email')?.text} onChange={(e) => setEmail(e.target.value)} />
+											<InputField title='Update Name' name='name' placeholder={session.user.name} />
+											<InputField title='Update Email' name="email" placeholder={session.user.email} errorMsg={errors.find(e => e.type == 'email')?.text} onChange={(e) => setEmail(e.target.value)} />
 											<button type="submit" className="btn btn-primary float-end">Save Changes</button>
 										</form>
 									</div>
 									<div className="tab-pane fade" id="password">
 										<form className="mt-4" onSubmit={onPasswordSubmit}>
-											<InputForm title="Current Password" name="current-password" autocomplete='current-password' type='password' errorMsg={errors.find(e => e.type == 'current')?.text} onChange={(e) => setPasswords(p => ({ ...p, currentPassword: e.target.value }))} />
+											<InputField title="Current Password" name="current-password" autocomplete='current-password' type='password' errorMsg={errors.find(e => e.type == 'current')?.text} onChange={(e) => setPasswords(p => ({ ...p, currentPassword: e.target.value }))} />
 											<div className="row">
 												<div className="col-md-6">
-													<InputForm title="New Password" name="new-password" autocomplete='new-password' type='password' errorMsg={errors.find(e => e.type == 'pwd1')?.text} onChange={(e) => setPasswords(p => ({ ...p, newPassword: e.target.value }))} />
+													<InputField title="New Password" name="new-password" autocomplete='new-password' type='password' errorMsg={errors.find(e => e.type == 'pwd1')?.text} onChange={(e) => setPasswords(p => ({ ...p, newPassword: e.target.value }))} />
 												</div>
 												<div className="col-md-6">
-													<InputForm title="Repeat Password" name="repeat-password" autocomplete='new-password' type='password' errorMsg={errors.find(e => e.type == 'pwd2')?.text} onChange={(e) => setPasswords(p => ({ ...p, repeatNewPassword: e.target.value }))} />
+													<InputField title="Repeat Password" name="repeat-password" autocomplete='new-password' type='password' errorMsg={errors.find(e => e.type == 'pwd2')?.text} onChange={(e) => setPasswords(p => ({ ...p, repeatNewPassword: e.target.value }))} />
 												</div>
 											</div>
 											<button type="submit" className="btn btn-primary float-end">Save Changes</button>
@@ -161,7 +155,6 @@ export default function Settings() {
 								<h3 className="mb-4">Billing Information</h3>
 								<p>Billing settings will be available here.</p>
 							</div>
-
 						</div>
 					</div>
 				</div>

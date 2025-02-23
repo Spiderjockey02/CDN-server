@@ -1,5 +1,5 @@
-import config from '@/config';
 import MainLayout from '@/layouts/main';
+import config from '@/config';
 
 export default function TermsOfService() {
 	return (

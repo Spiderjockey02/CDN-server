@@ -1,22 +1,18 @@
-import { useState } from 'react';
-import { useRouter } from 'next/router';
-import type { BaseSyntheticEvent } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import ErrorPopup from '../components/menus/Error-pop';
-import axios from 'axios';
-import { getServerSession } from 'next-auth/next';
+import { ErrorPopup, InputField } from '@/components';
 import type { GetServerSidePropsContext } from 'next';
 import { AuthOption } from './api/auth/[...nextauth]';
-import InputForm from '@/components/Form/InputField';
-type ErrorTypes = {
- type: 'username' | 'email' | 'password' | 'age' | 'misc'
- message: string
-}
+import { getServerSession } from 'next-auth/next';
+import type { BaseSyntheticEvent } from 'react';
+import { RegisterErrorTypes } from '@/types';
+import { useRouter } from 'next/router';
+import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import axios from 'axios';
 
 export default function Register() {
 	const [disabled, setDisabled] = useState(true);
-	const [errors, setErrors] = useState<ErrorTypes[]>([]);
+	const [errors, setErrors] = useState<RegisterErrorTypes[]>([]);
 	const [user, setUser] = useState({
 		username: '',
 		email: '',
@@ -24,8 +20,6 @@ export default function Register() {
 		password2: '',
 	});
 	const [birth, setBirth] = useState<Date | null>(null);
-
-
 	const router = useRouter();
 
 	const handleSubmit = async (event: BaseSyntheticEvent) => {
@@ -90,22 +84,22 @@ export default function Register() {
 									<div className="col-lg-6 order-2 order-lg-1">
 										<p className="text-center h1 fw-bold mb-5 mx-1 mx-md-4 mt-4">Sign up</p>
 										<form className="mx-1 mx-md-4" onSubmit={handleSubmit}>
-											<InputForm title="Username" name="username" onChange={(e) => setUser(u => ({ ...u, username: e.target.value }))} errorMsg={errors.find(e => e.type == 'username')?.message} />
+											<InputField title="Username" name="username" onChange={(e) => setUser(u => ({ ...u, username: e.target.value }))} errorMsg={errors.find(e => e.type == 'username')?.message} />
 
-											<InputForm title="Email" name="email" type='email' onChange={(e) => setUser(u => ({ ...u, email: e.target.value }))} errorMsg={errors.find(e => e.type == 'email')?.message} />
+											<InputField title="Email" name="email" type='email' onChange={(e) => setUser(u => ({ ...u, email: e.target.value }))} errorMsg={errors.find(e => e.type == 'email')?.message} />
 
 											<div className="d-flex flex-row align-items-center">
 												<div className="row">
 													<div className="col-sm-6">
-														<InputForm title="Password" name="password" type='password' autocomplete='new-password' onChange={(e) => setUser(u => ({ ...u, password: e.target.value }))} errorMsg={errors.find(e => e.type == 'password')?.message} />
+														<InputField title="Password" name="password" type='password' autocomplete='new-password' onChange={(e) => setUser(u => ({ ...u, password: e.target.value }))} errorMsg={errors.find(e => e.type == 'password')?.message} />
 													</div>
 													<div className="col-sm-6">
-														<InputForm title="Repeat password" name="password2" type='password' autocomplete='new-password' onChange={(e) => setUser(u => ({ ...u, password2: e.target.value }))} errorMsg={errors.find(e => e.type == 'password')?.message} />
+														<InputField title="Repeat password" name="password2" type='password' autocomplete='new-password' onChange={(e) => setUser(u => ({ ...u, password2: e.target.value }))} errorMsg={errors.find(e => e.type == 'password')?.message} />
 													</div>
 												</div>
 											</div>
 											<div className="form-outline row flex-fill">
-												<InputForm type="date" title="Date of birth" name="dob" autocomplete="bday" onChange={(e) => setBirth(e.target.valueAsDate)} errorMsg={errors.find(e => e.type == 'age')?.message} />
+												<InputField type="date" title="Date of birth" name="dob" autocomplete="bday" onChange={(e) => setBirth(e.target.valueAsDate)} errorMsg={errors.find(e => e.type == 'age')?.message} />
 											</div>
 											&nbsp;
 											<div className="form-check d-flex justify-content-center mb-5">
@@ -122,8 +116,7 @@ export default function Register() {
 										<p>Already have an account? <Link href="/login">Click here</Link></p>
 									</div>
 									<div className="col-lg-6 d-flex align-items-center order-1 order-lg-2">
-										<Image src="/register.webp"
-											className="img-fluid" alt="Sample image" width={530} height={280}/>
+										<Image src="/register.webp" className="img-fluid" alt="Sample image" width={530} height={280}/>
 									</div>
 								</div>
 							</div>

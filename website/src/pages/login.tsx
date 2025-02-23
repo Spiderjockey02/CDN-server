@@ -1,24 +1,19 @@
-import { useState } from 'react';
-import type { BaseSyntheticEvent } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/router';
-import type { SignInResponse } from 'next-auth/react';
-import ErrorPopup from '../components/menus/Error-pop';
-import type { GetServerSidePropsContext } from 'next';
-import { getServerSession } from 'next-auth/next';
-import Link from 'next/link';
-import { AuthOption } from './api/auth/[...nextauth]';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
-import InputForm from '@/components/Form/InputField';
-
-type ErrorTypes = {
- type: | 'email' | 'password' | 'misc'
- message: string
-}
+import type { SignInResponse } from 'next-auth/react';
+import { ErrorPopup, InputField } from '@/components';
+import type { GetServerSidePropsContext } from 'next';
+import { AuthOption } from './api/auth/[...nextauth]';
+import { getServerSession } from 'next-auth/next';
+import type { BaseSyntheticEvent } from 'react';
+import { LoginErrorTypes } from '@/types';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/router';
+import { useState } from 'react';
+import Link from 'next/link';
 
 export default function SignIn() {
-	const [errors, setErrors] = useState<ErrorTypes[]>([]);
+	const [errors, setErrors] = useState<LoginErrorTypes[]>([]);
 	const [user, setUser] = useState({
 		email: '',
 		password: '',
@@ -28,7 +23,7 @@ export default function SignIn() {
 
 	const handleSubmit = async (event: BaseSyntheticEvent) => {
 		event.preventDefault();
-		const err = [] as ErrorTypes[];
+		const err = [] as LoginErrorTypes[];
 
 		// Make sure both fields are filled in
 		if (user.email.length == 0) err.push({ type: 'email', message: 'This field is missing.' });
@@ -63,7 +58,7 @@ export default function SignIn() {
 		<section className='d-flex flex-row align-items-center' style={{ 'backgroundColor': '#eee', padding: '0', minHeight: '100vh' }}>
 			<div className="container h-100">
 				{errors.find(e => e.type == 'misc') && (
-					<ErrorPopup text={`${errors.find(e => e.type == 'misc')?.message}`}/>
+					<ErrorPopup text={`${errors.find(e => e.type == 'misc')?.message}`} onClose={() => setErrors([])}/>
 				)}
 				<div className="row d-flex justify-content-center align-items-center h-100">
 					<div className="col-lg-8 col-xl-7">
@@ -73,10 +68,10 @@ export default function SignIn() {
 									<h1 className="h1 fw-bold mb-4">Login</h1>
 									<form className="w-100" onSubmit={handleSubmit}>
 										<div className="mb-3 w-100">
-											<InputForm title='Email' type="email" name='email' onChange={(e) => setUser(u => ({ ...u, email: e.target.value }))} errorMsg={errors.find(e => e.type == 'email')?.message} />
+											<InputField title='Email' type="email" name='email' onChange={(e) => setUser(u => ({ ...u, email: e.target.value }))} errorMsg={errors.find(e => e.type == 'email')?.message} />
 										</div>
 										<div className="mb-3 w-100">
-											<InputForm title='Password' type="password" name='password' autocomplete='current-password' onChange={(e) => setUser(u => ({ ...u, password: e.target.value }))} errorMsg={errors.find(e => e.type == 'password')?.message} />
+											<InputField title='Password' type="password" name='password' autocomplete='current-password' onChange={(e) => setUser(u => ({ ...u, password: e.target.value }))} errorMsg={errors.find(e => e.type == 'password')?.message} />
 										</div>
 										<div className="d-flex justify-content-center mb-3">
 											<button type="submit" className="btn btn-primary btn-lg">Login</button>
