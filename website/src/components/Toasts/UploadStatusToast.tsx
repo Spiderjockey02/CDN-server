@@ -1,12 +1,6 @@
-interface Props {
-  percentage: number
-  filename: string
-  show: boolean
-	timeRemaining: string
-	cancelUpload: () => void
-}
+import { UploadStatusToastProps } from '@/types/Components/Toasts';
 
-export default function UploadStatusToast({ percentage, filename, show, timeRemaining, cancelUpload }: Props) {
+export default function UploadStatusToast({ percentage, filename, show, timeRemaining, cancelUpload }: UploadStatusToastProps) {
 	if (!show) return null;
 	return (
 		<div className="toast-container position-fixed bottom-0 end-0 p-3">
