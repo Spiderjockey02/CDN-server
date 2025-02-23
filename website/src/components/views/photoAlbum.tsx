@@ -1,55 +1,86 @@
-import type { fileItem } from '../../types';
-import Link from 'next/link';
-import Image from 'next/image';
 import type { ImageLoaderProps } from 'next/image';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import type { fileItem } from '@/types';
+import Image from 'next/image';
+import Link from 'next/link';
+
 interface Props {
-  folder: fileItem
+  folder: fileItem;
 }
 
 export default function PhotoAlbum({ folder }: Props) {
 	const [page, setPage] = useState(0);
-	const pageCount = 40;
+	const [pageCount, setPageCount] = useState(40);
+	const totalItems = folder.children.length;
+	const totalPages = Math.floor(totalItems / pageCount);
 
+	// Custom image loader for Next.js
 	const myLoader = ({ src }: ImageLoaderProps) => `/thumbnail/${folder.userId}${src}`;
+
+	// Memoized sorted and paginated files
+	const paginatedFiles = useMemo(() => {
+		return folder.children.slice(page * pageCount, (page + 1) * pageCount);
+	}, [folder.children, page, pageCount]);
+
+	// Handle page size change
+	const handlePageSizeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+		const newSize = parseInt(event.target.value, 10);
+		setPage(0);
+		setPageCount(newSize);
+	};
+
 	return (
 		<>
-			<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(0, 180px))', gap: '5px', justifyContent: 'flex-start' }}>
-				{folder.children.sort((a, b) => a.type.localeCompare(b.type)).slice(page * pageCount, (page + 1) * pageCount).map(_ => (
-					<div className="text-center" key={_.name} style={{ border: '1px solid black', borderRadius: '8px' }}>
-						<Link href={`/files${_.path}`} style={{ textDecoration: 'none' }}>
-							<Image className="center" loader={myLoader} src={_.path}
-								style={{ width: '100%', maxHeight: _.type == 'DIRECTORY' ? '236px' : '260px', borderRadius: '8px' }}
-								alt={_.name} width={200} height={275}
+			<div className="d-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '5px' }}>
+				{paginatedFiles.map((file) => (
+					<div key={file.name} className="text-center rounded">
+						<Link href={`/files${file.path}`} className="text-decoration-none">
+							<Image className="center img-fluid" loader={myLoader} src={file.path}
+								alt={file.name} width={200} height={275}
+								style={{ maxHeight: file.type === 'DIRECTORY' ? '236px' : '260px', borderRadius: '8px' }}
 							/>
 						</Link>
-						{_.type == 'DIRECTORY' && <p className='m-0 text-truncate' style={{ maxWidth: '200px' }}>{_.name}</p>}
+						{file.type === 'DIRECTORY' && (
+							<p className="m-0 text-truncate" style={{ maxWidth: '200px' }}>{file.name}</p>
+						)}
 					</div>
 				))}
 			</div>
-			&nbsp;
-			{folder.children.length > pageCount && (
-				<div className="d-flex justify-content-center">
-					<nav aria-label="Page navigation example">
+
+			{totalItems > pageCount && (
+				<div className="d-flex flex-column align-items-center mt-3">
+					<div className="d-flex align-items-center mb-2">
+						<p className="mb-0 me-2">
+							Showing {page * pageCount + 1} to {Math.min((page + 1) * pageCount, totalItems)} out of {totalItems}
+						</p>
+						<select className="form-select form-select-sm w-auto" value={pageCount} onChange={handlePageSizeChange}>
+							<option value="20">20 per page</option>
+							<option value="40">40 per page</option>
+							<option value="60">60 per page</option>
+							<option value="100">100 per page</option>
+						</select>
+					</div>
+
+					<nav aria-label="Page navigation">
 						<ul className="pagination">
-							<li className="page-item">
-								<a className="page-link" href="#" aria-label="Previous" onClick={() => setPage(page - 1 < 0 ? 0 : page - 1)}>
+							<li className={`page-item ${page === 0 ? 'disabled' : ''}`}>
+								<button className="page-link" onClick={() => setPage(Math.max(page - 1, 0))} aria-label="Previous">
 									<span aria-hidden="true">&laquo;</span>
-									<span className="sr-only">Previous</span>
-								</a>
+								</button>
 							</li>
 							<li className="page-item">
-								<a className="page-link" href="#"onClick={() => setPage(1)}>1</a>
+								<button className="page-link" onClick={() => setPage(0)}>1</button>
 							</li>
-							<li className="page-item"><p className="page-link">{page + 1}</p></li>
-							<li className="page-item">
-								<a className="page-link" href="#" onClick={() => setPage(Math.floor(folder.children.length / pageCount))} >{Math.floor(folder.children.length / pageCount) + 1}</a>
+							<li className="page-item disabled">
+								<span className="page-link">{page + 1}</span>
 							</li>
 							<li className="page-item">
-								<a className="page-link" href="#" aria-label="Next" onClick={() => setPage(page + 1 > Math.floor(folder.children.length / pageCount) ? Math.floor(folder.children.length / pageCount) : page + 1)}>
+								<button className="page-link" onClick={() => setPage(totalPages)}>{totalPages + 1}</button>
+							</li>
+							<li className={`page-item ${page == totalPages ? 'disabled' : ''}`}>
+								<button className="page-link" onClick={() => setPage(Math.min(page + 1, totalPages))} aria-label="Next">
 									<span aria-hidden="true">&raquo;</span>
-									<span className="sr-only">Next</span>
-								</a>
+								</button>
 							</li>
 						</ul>
 					</nav>
