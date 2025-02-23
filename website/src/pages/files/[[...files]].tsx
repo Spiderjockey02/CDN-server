@@ -41,7 +41,6 @@ export default function Files({ path = '/' }: FilePageProps) {
 
 	useEffect(() => {
 		fetchFiles();
-		setErrorMsg('Unable to fetch files');
 		if (!path) fetchRecentlyViewedFiles();
 	}, [path, fetchFiles, fetchRecentlyViewedFiles]);
 
