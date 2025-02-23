@@ -1,50 +1,25 @@
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpFromBracket, faFolderOpen, faGrip, faPlus, faTableList } from '@fortawesome/free-solid-svg-icons';
+import type { BreadcrumbNavProps } from '@/types/Components/Navbars';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { useOnClickOutside } from '@/utils/useOnClickOutisde';
+import { UploadStatusToast, ErrorPopup, CreateFolderModal } from '@/components';
 import axios, { AxiosRequestConfig } from 'axios';
-import Link from 'next/link';
-import { BaseSyntheticEvent, ChangeEvent, useState } from 'react';
-import UploadStatusToast from '../menus/UploadStatusToast';
 import { useFileDispatch } from '../fileManager';
-import ErrorPopup from '../menus/Error-pop';
+import Link from 'next/link';
 
-interface Props {
-  path: string
-  isFile: boolean
-	setviewType: (viewType: 'List' | 'Tiles') => void
-}
-
-export default function BreadcrumbNav({ path, isFile, setviewType }: Props) {
+export default function BreadcrumbNav({ path, isFile, setviewType, viewType }: BreadcrumbNavProps) {
 	const splitPath = path.split('/');
-	const [folderName, setFolderName] = useState('');
 	const [progress, setProgress] = useState(0);
 	const [timeRemaining, setRemaining] = useState('');
 	const [filename, setFilename] = useState('');
 	const [abortController] = useState(new AbortController());
 	const [errorMsg, setErrorMsg] = useState('');
 	const dispatch = useFileDispatch();
-
-	function closeModal(id: string) {
-		document.getElementById(id)?.classList.remove('show');
-		document.getElementById(id)?.setAttribute('aria-hidden', 'true');
-		document.getElementById(id)?.setAttribute('style', 'display: none');
-		document.body.removeChild(document.getElementsByClassName('modal-backdrop')[0] as Node);
-	}
-
-	async function handleFolderSubmit(event: BaseSyntheticEvent) {
-		event.preventDefault();
-		try {
-			const { data } = await axios.post('/api/files/create-folder', {
-				folderName: folderName,
-			});
-			if (data.success) {
-				const { data: { file } } = await axios.get(`/api/files/${path}`);
-				dispatch({ type: 'SET_FILE', payload: file });
-				closeModal('createFolderModal');
-			}
-		} catch (error) {
-			console.error(error);
-		}
-	}
+	const containerRef = useRef<HTMLOListElement>(null);
+	const dropdownRef = useRef<HTMLUListElement>(null);
+	const [isOverflowing, setIsOverflowing] = useState(false);
+	const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
 
 	const onFileUploadChange = async (e: ChangeEvent<HTMLInputElement>) => {
 		const fileInput = e.target;
@@ -112,60 +87,106 @@ export default function BreadcrumbNav({ path, isFile, setviewType }: Props) {
 		}
 	};
 
-	const cancelUpload = () => {
-		abortController.abort();
+	const cancelUpload = () => abortController.abort();
+
+	useEffect(() => {
+		const checkOverflow = () => {
+			if (containerRef.current) {
+				console.log(containerRef.current.scrollHeight);
+				setIsOverflowing(containerRef.current.scrollHeight > 40);
+			}
+		};
+		checkOverflow();
+		window.addEventListener('resize', checkOverflow);
+		return () => window.removeEventListener('resize', checkOverflow);
+	}, [path]);
+
+	const openDropdown = (event: React.MouseEvent<HTMLButtonElement>) => {
+		const rect = event.currentTarget.getBoundingClientRect();
+		setDropdownPosition({ top: rect.bottom + 5, left: rect.left });
 	};
+
+	useOnClickOutside(dropdownRef as any, () => setDropdownPosition(null));
 
 	return (
 		<>
 			<div className="d-flex flex-row justify-content-between">
-				<nav aria-label="breadcrumb" className="align-self-center" style={{ fontSize: '1.2rem', margin: 0 }}>
-					<ol className="breadcrumb d-flex align-items-center" style={{ backgroundColor: 'white', margin: 0, padding: 0 }}>
-						<li className="breadcrumb-item d-flex align-items-center">
-							{splitPath[0] == '' ?
-								<b style={{ color: 'black' }}>Home</b>
-						 :
-								<b>
-									<Link className="directoyLink" href="/files" style={{ color: 'grey' }}>Home</Link>
-								</b>
-							}
-						</li>
-						{splitPath.length >= 1 ? (
-							splitPath.map(name => (
-								<li className="breadcrumb-item d-flex align-items-center" key={name}>
-									{name !== splitPath.at(-1) ?
+				<nav aria-label="breadcrumb" className="align-self-center" style={{ fontSize: '1.2rem', margin: 0, position: 'relative' }}>
+					<ol className="breadcrumb d-flex align-items-center" ref={containerRef} style={{ backgroundColor: 'white', margin: 0, padding: 0, overflow: 'hidden' }}>
+						{isOverflowing && splitPath.length > 1 ? (
+							<>
+								<li className="breadcrumb-item d-flex align-items-center position-relative">
+									<button className="btn btn-sm" type="button" onClick={openDropdown}>
+                		...
+									</button>
+								</li>
+								<li className="breadcrumb-item d-flex align-items-center">
+									<b className="d-inline-block text-truncate" style={{ color: 'black', maxWidth: '100vw' }}>
+										{splitPath.at(-1)}
+									</b>
+								</li>
+							</>
+						) : (
+							<>
+								<li className="breadcrumb-item d-flex align-items-center">
+									{splitPath[0] === '' ?
+										<b style={{ color: 'black' }}>Home</b>
+										:
 										<b>
-											<Link
-												className="directoyLink"
-												href={`/files/${splitPath.slice(0, splitPath.indexOf(name) + 1).join('/')}`}
-												style={{ color: 'grey' }}
-											>
-												{name}
+											<Link className="directoyLink" href="/files" style={{ color: 'grey' }}>
+												Home
 											</Link>
-										</b>
-								 :
-										<b className="d-inline-block text-truncate" style={{ color: 'black', maxWidth: '100vw' }}>
-											{name}
 										</b>
 									}
 								</li>
-							))
-						) : null}
+								{splitPath.map((name, index) => (
+									<li className="breadcrumb-item d-flex align-items-center" key={index}>
+										{index !== splitPath.length - 1 ? (
+											<b>
+												<Link className="directoyLink" href={`/files/${splitPath.slice(0, index + 1).join('/')}`} style={{ color: 'grey' }}>
+													{name}
+												</Link>
+											</b>
+										) : (
+											<b className="d-inline-block text-truncate" style={{ color: 'black', maxWidth: '100vw' }}>
+												{name}
+											</b>
+										)}
+									</li>
+								))}
+							</>
+						)}
 					</ol>
+
+					{dropdownPosition && (
+						<ul ref={dropdownRef} className="dropdown-menu show" style={{
+							position: 'fixed', zIndex: 9999, top: dropdownPosition.top, left: dropdownPosition.left, display: 'block', minWidth: '150px',
+						}} >
+							<li>
+								<Link className="dropdown-item" href='/files'>
+									Home
+								</Link>
+							</li>
+							{splitPath.slice(0, -1).map((name, index) => (
+								<li key={index}>
+									<Link className="dropdown-item" href={`/files/${splitPath.slice(0, index + 1).join('/')}`} onClick={() => setDropdownPosition(null)}>
+										{name}
+									</Link>
+								</li>
+							))}
+						</ul>
+					)}
 				</nav>
 				<div className="btn-group" role="group">
 					{!isFile &&
           <>
-          	<button type="button" className="btn btn-outline-secondary" style={{ display: 'inline-flex', alignContent: 'stretch', justifyContent: 'space-around', alignItems: 'center' }} data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-offset="0,10">
+          	<button type="button" className="btn btn-outline-secondary" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           		<FontAwesomeIcon icon={faPlus} /> New
           	</button>
           	<div className="dropdown-menu dropdown-menu-right">
-          		<label className="dropdown-item btn" id="fileHover">
-								File upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onFileUploadChange} multiple />
-          		</label>
           		<input type="hidden" value="test" name="path" />
           		<label className="dropdown-item btn" id="fileHover">
-								Folder upload<input type="file" hidden name="sampleFile" className="upload-input" onChange={onFileUploadChange} ref={input => {
+          			<FontAwesomeIcon icon={faArrowUpFromBracket} /> Upload<input type="file" hidden multiple name="sampleFile" className="upload-input" onChange={onFileUploadChange} ref={input => {
           				if (input) {
           					input.setAttribute('webkitdirectory', '');
           					input.setAttribute('mozdirectory', '');
@@ -173,44 +194,19 @@ export default function BreadcrumbNav({ path, isFile, setviewType }: Props) {
           			}} />
           		</label>
           		<div className="dropdown-divider"></div>
-          		<a className="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#createFolderModal">Create folder</a>
-          		<button type="submit" style={{ display:'none' }} id="imagefile"></button>
+          		<a className="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#createFolderModal">
+          			<FontAwesomeIcon icon={faFolderOpen} /> Create folder
+          		</a>
           	</div>
-          	<button className="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-    					Change view
+          	<button className="btn btn-outline-secondary" onClick={() => setviewType(viewType == 'List' ? 'Tiles' : 'List')}>
+    					<FontAwesomeIcon icon={viewType == 'List' ? faTableList : faGrip} />
           	</button>
-          	<ul className="dropdown-menu">
-          		<li><a onClick={() => setviewType('Tiles')} className="dropdown-item" href="#">Tiles</a></li>
-          		<li><a onClick={() => setviewType('List')} className="dropdown-item" href="#">List</a></li>
-          	</ul>
           </>
 					}
 				</div>
-				<div className="modal fade" id="createFolderModal" role="dialog" aria-hidden="true">
-		    <div className="modal-dialog modal-dialog-centered" role="document">
-		      <div className="modal-content">
-		        <div className="modal-header">
-		          <h5 className="modal-title" id="exampleModalLongTitle">Create a new folder</h5>
-								<button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-		        </div>
-		        <form onSubmit={handleFolderSubmit} method="post">
-								<div className="modal-body">
-									<div className="mb-3">
-										<label htmlFor="exampleInputPassword1" className="form-label">Folder name:</label>
-										<input type="text" className="form-control" id="exampleInputPassword1" name="folderName" onChange={(e) => setFolderName(e.target.value)} />
-									</div>
-								</div>
-								<div className="modal-footer">
-		            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-		            <button type="submit" className="btn btn-success">Create</button>
-		          </div>
-		        </form>
-		    	</div>
-		  	</div>
-				</div>
+				<CreateFolderModal />
 				<UploadStatusToast percentage={progress} filename={filename} show={progress > 0} timeRemaining={timeRemaining} cancelUpload={cancelUpload} />
 			</div>
-			&nbsp;
 			{errorMsg.length > 0 && <ErrorPopup text={errorMsg} onClose={() => setErrorMsg('')} />}
 		</>
 	);
