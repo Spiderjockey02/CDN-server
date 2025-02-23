@@ -1,5 +1,5 @@
-import styles from '@/styles/Grid.module.scss';
 import type { ColPrefix, ColProps, ColumnProps, GridLayoutProps } from '@/types/Components/Layout';
+import styles from '@/styles/Grid.module.scss';
 
 /**
 	* Create a row element

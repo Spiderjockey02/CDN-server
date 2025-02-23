@@ -1,13 +1,6 @@
-import { BaseSyntheticEvent } from 'react';
+import { ModalProps } from '@/types/Components/UI';
 
-interface Props {
-  id: string
-  title: string
-  description: string
-  onSubmit: (event: BaseSyntheticEvent) => void
-}
-
-export default function Modal({ id, title, description, onSubmit }: Props) {
+export default function Modal({ id, title, description, onSubmit }: ModalProps) {
 	return (
 		<div className="modal fade" id={id} aria-hidden="true">
 			<div className="modal-dialog modal-dialog-centered">
@@ -29,6 +22,5 @@ export default function Modal({ id, title, description, onSubmit }: Props) {
 				</div>
 			</div>
 		</div>
-
 	);
 }

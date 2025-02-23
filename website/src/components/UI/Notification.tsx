@@ -1,21 +1,17 @@
-import { faBell } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import type { Notification } from '@/types';
-import TimeAgo from 'javascript-time-ago';
+import { faBell } from '@fortawesome/free-solid-svg-icons';
+import { NotificationProps } from '@/types/Components/UI';
 import en from 'javascript-time-ago/locale/en';
-import axios from 'axios';
 import { useSession } from 'next-auth/react';
+import TimeAgo from 'javascript-time-ago';
 import Link from 'next/link';
+import axios from 'axios';
 
 // Create formatter (English).
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo('en-US');
-interface Props {
-  notifications: Notification[]
-}
 
-
-export default function NotificationBell({ notifications }: Props) {
+export default function NotificationBell({ notifications }: NotificationProps) {
 	const { update } = useSession();
 
 	async function deleteNotification(id: string) {

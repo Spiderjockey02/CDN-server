@@ -9,13 +9,15 @@ import TrashContextMenu from './menus/TrashContextMenu';
 import DeleteFileModal from './Modals/DeleteFileModal';
 import RenameFileModal from './Modals/RenameFileModal';
 import UpdateLocationModal from './Modals/UpdateLocationModal';
+import CreateFolderModal from './Modals/CreateFolderModal';
+import SearchFileModal from './Modals/SearchFileModal';
 
 // Navbars
 import BreadcrumbNav from './Navbars/BreadcrumbNav';
 import FileNavBar from './Navbars/FileNavbar';
 import Footer from './Navbars/Footer';
 import HomeNavbar from './Navbars/HomeNavbar';
-import RecentNavbar from './Navbars/recent';
+import RecentNavbar from './Navbars/RecentNavbar';
 import Sidebar from './Navbars/sideBar';
 
 // Tables
@@ -45,5 +47,6 @@ import VideoPlayer from './views/VideoPlayer';
 export { InputField, FileContextMenu, TrashContextMenu, DeleteFileModal, RenameFileModal, UpdateLocationModal,
 	BreadcrumbNav, FileNavBar, Footer, HomeNavbar, RecentNavbar, Sidebar, FileDetailCell, FileItemRow,
 	FileViewTable, ErrorPopup, SuccessPopup, UploadStatusToast, Row, Col, Modal, NotificationBell,
-	Table, Directory, FilePanelPopup, FileViewer, PhotoAlbum, TextViewer, VideoPlayer,
+	Table, Directory, FilePanelPopup, FileViewer, PhotoAlbum, TextViewer, VideoPlayer, CreateFolderModal,
+	SearchFileModal,
 };
