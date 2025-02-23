@@ -1,12 +1,8 @@
-import { fileItem } from '@/types';
+import { FileDetailCellProps } from '@/types/Components/Tables';
 import { getFileIcon } from '@/utils/functions';
 import Link from 'next/link';
 
-interface Props {
-  file: fileItem
-}
-
-export default function FileDetail({ file }: Props) {
+export default function FileDetailCell({ file }: FileDetailCellProps) {
 	return (
 		<th scope="row" className="text-truncate" style={{ maxWidth: '50vw' }}>
 			<Link	className="d-flex flex-row align-items-center" style={{ textDecoration: 'none', color: 'black' }}	href={`/files${file.path}`}>

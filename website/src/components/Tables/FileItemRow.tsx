@@ -1,20 +1,12 @@
 import { getFileIcon, formatBytes } from '@/utils/functions';
-import { fileItem } from '@/types';
-import Link from 'next/link';
+import { FileItemRowProps } from '@/types/Components/Tables';
+import FileDetail from './FileDetailCell';
 import { useRouter } from 'next/router';
 import type { MouseEvent }from 'react';
-import FileDetail from './FileDetail';
+import Link from 'next/link';
 
-interface Props {
-  file: fileItem
-	isChecked: boolean
-	openContextMenu: (e: MouseEvent<HTMLTableRowElement>, file: fileItem) => void
-	handleCheckboxToggle: (e: MouseEvent, file: fileItem) => void
-	setShow: (fileId: string) => void
-	showMoreDetail?: boolean
-}
 
-export default function FileItemRow({ file, isChecked, openContextMenu, handleCheckboxToggle, setShow, showMoreDetail = false }: Props) {
+export default function FileItemRow({ file, isChecked, openContextMenu, handleCheckboxToggle, setShow, showMoreDetail = false }: FileItemRowProps) {
 	const router = useRouter();
 	const handleRowClick = () => router.push(`/files${file.path}`);
 

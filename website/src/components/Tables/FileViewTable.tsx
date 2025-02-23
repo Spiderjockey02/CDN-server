@@ -1,22 +1,11 @@
-import { fileItem } from '@/types';
-import Table from '../UI/Table';
-import FileItemRow from '../views/FileItemRow';
-import { useEffect, useState, type MouseEvent } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { FileViewProps, sortKeyTypes, SortOrder } from '@/types/Components/Tables';
+import { useEffect, useState } from 'react';
+import FileItemRow from './FileItemRow';
+import Table from '../UI/Table';
 
-interface Props {
-  files: fileItem[]
-  selectedFiles: fileItem[]
-  handleSelectAllToggle: () => void
-  handleCheckboxToggle: (e: MouseEvent, file: fileItem) => void
-  openContextMenu: (e: MouseEvent<HTMLTableRowElement>, selected: fileItem) => void
-  setFilePanelToShow: (fileId: string) => void
-	showMoreDetail?: boolean
-}
-type sortKeyTypes = 'Name' | 'Size' | 'Date_Mod';
-type SortOrder = 'ascn' | 'dscn';
-export default function FileViewTable({ files, handleSelectAllToggle, handleCheckboxToggle, selectedFiles, openContextMenu, setFilePanelToShow, showMoreDetail = false }: Props) {
+export default function FileViewTable({ files, handleSelectAllToggle, handleCheckboxToggle, selectedFiles, openContextMenu, setFilePanelToShow, showMoreDetail = false }: FileViewProps) {
 	const [sortKey, setSortKey] = useState<sortKeyTypes>('Name');
 	const [sortOrder, setSortOrder] = useState<SortOrder>('ascn');
 

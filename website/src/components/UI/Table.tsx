@@ -1,14 +1,6 @@
-import { CSSProperties, ReactNode } from 'react';
+import { TableProps } from '@/types/Components/UI';
 
-interface Props {
-  children: ReactNode
-  id?: string
-  className?: string
-  style?: CSSProperties
-	onClick?: () => void
-}
-
-function Table({ children, id, className, style }: Props) {
+function Table({ children, id, className, style }: TableProps) {
 	return (
 		<table className={`table ${className ?? ''}`} id={id} style={style}>
 			{children}
@@ -16,7 +8,7 @@ function Table({ children, id, className, style }: Props) {
 	);
 }
 
-function HeaderRow({ children }: Props) {
+function HeaderRow({ children }: TableProps) {
 	return (
 		<thead>
 			<tr>
@@ -26,7 +18,7 @@ function HeaderRow({ children }: Props) {
 	);
 }
 
-function Header({ children, id, className, style, onClick }: Props) {
+function Header({ children, id, className, style, onClick }: TableProps) {
 	return (
 		<th id={id} className={className} style={style} onClick={onClick}>
 			{children}
@@ -34,7 +26,7 @@ function Header({ children, id, className, style, onClick }: Props) {
 	);
 }
 
-function Body({ children, id, className, style }: Props) {
+function Body({ children, id, className, style }: TableProps) {
 	return (
 		<tbody id={id} className={className} style={style}>
 			{children}
