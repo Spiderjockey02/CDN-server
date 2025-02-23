@@ -1,18 +1,12 @@
-import { fileItem } from '@/types';
-import { useOnClickOutside } from '@/utils/useOnClickOutisde';
 import { faRotateLeft, faTrash } from '@fortawesome/free-solid-svg-icons';
+import type { TrashContextMenuProps } from '@/types/Components/Menu';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import axios from 'axios';
+import { useOnClickOutside } from '@/utils/useOnClickOutisde';
 import { useRef, RefObject } from 'react';
+import axios from 'axios';
+import ContextMenu from '../UI/ContextMenu';
 
-interface Props {
-  x: number
-  y: number
-  selected: fileItem[]
-  closeContextMenu: () => void
-}
-
-export default function TrashContextMenu({ x, y, closeContextMenu, selected }: Props) {
+export default function TrashContextMenu({ x, y, closeContextMenu, selected }: TrashContextMenuProps) {
 	const contextMenuRef = useRef<HTMLDivElement>(null);
 	useOnClickOutside(contextMenuRef as RefObject<HTMLDivElement>, closeContextMenu);
 
@@ -33,13 +27,13 @@ export default function TrashContextMenu({ x, y, closeContextMenu, selected }: P
 	};
 
 	return (
-		<div className="ctxmenu" ref={contextMenuRef} style={{ top: `${y}px`, left: `${x}px`, zIndex: 20, position: 'absolute' }}>
-			<button className="btn btn-ctx-menu" onClick={handleEmptyBin}>
+		<ContextMenu x={x} y={y} ref={contextMenuRef}>
+			<ContextMenu.Button onClick={handleEmptyBin}>
 				<FontAwesomeIcon icon={faTrash} /> Empty Bin
-			</button>
-			<button className="btn btn-ctx-menu" onClick={handleRestore}>
+			</ContextMenu.Button>
+			<ContextMenu.Button onClick={handleRestore}>
 				<FontAwesomeIcon icon={faRotateLeft} /> Restore
-			</button>
-		</div>
+			</ContextMenu.Button>
+		</ContextMenu>
 	);
 }

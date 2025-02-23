@@ -1,22 +1,13 @@
-import { useRef } from 'react';
-import { useOnClickOutside } from '@/utils/useOnClickOutisde';
-import type { RefObject } from 'react';
-import axios from 'axios';
-import { fileItem } from '@/types';
+import { faCopy, faDownload, faEllipsisV, faFileSignature, faFolderOpen, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { DeleteFileModal, RenameFileModal, UpdateLocationModal } from '@/components';
+import type { FileContextMenuProps } from '@/types/Components/Menu';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy, faDownload, faEllipsisV, faFileSignature, faFolderOpen, faShareAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
-import RenameModal from '../Modals/RenameFileModal';
-import DeleteFileModal from '../Modals/DeleteFileModal';
-import ChangeModal from '../Modals/UpdateLocationModal';
-interface Props {
-	x: number
-	y: number
-	selected: fileItem[]
-	closeContextMenu: () => void
-	showFilePanel: (fileId: string) => void
-}
+import { useOnClickOutside } from '@/utils/useOnClickOutisde';
+import { RefObject, useRef } from 'react';
+import axios from 'axios';
+import ContextMenu from '../UI/ContextMenu';
 
-export default function ContextMenu({ x, y, closeContextMenu, selected, showFilePanel }: Props) {
+export default function FileContextMenu({ x, y, closeContextMenu, selected, showFilePanel }: FileContextMenuProps) {
 	const contextMenuRef = useRef<HTMLDivElement>(null);
 
 	useOnClickOutside(contextMenuRef as RefObject<HTMLDivElement>, closeContextMenu);
@@ -118,45 +109,40 @@ export default function ContextMenu({ x, y, closeContextMenu, selected, showFile
 		return (
 			<>
 				<DeleteFileModal file={selected[0]} closeContextMenu={closeContextMenu} />
-				<ChangeModal file={selected[0]} closeContextMenu={closeContextMenu} />
-				<RenameModal file={selected[0]} closeContextMenu={closeContextMenu} />
-				<div className="ctxmenu" ref={contextMenuRef} style={{ top: `${y}px`, left: `${x}px`, zIndex: 20, position: 'absolute' }}>
-					<button className="btn btn-ctx-menu">
-						<FontAwesomeIcon icon={faShareAlt} /> Share
-					</button>
-					<button className="btn btn-ctx-menu" onClick={handleCopyURL}>
+				<UpdateLocationModal file={selected[0]} closeContextMenu={closeContextMenu} />
+				<RenameFileModal file={selected[0]} closeContextMenu={closeContextMenu} />
+				<ContextMenu ref={contextMenuRef} x={x} y={y}>
+					<ContextMenu.Button onClick={() => handleCopyURL()}>
 						<FontAwesomeIcon icon={faCopy} /> Copy link
-					</button>
-					<button className="btn btn-ctx-menu" onClick={handleDownload}>
+					</ContextMenu.Button>
+					<ContextMenu.Button onClick={() => handleDownload()}>
 						<FontAwesomeIcon icon={faDownload} /> Download
-					</button>
-					<button type="button" className="btn btn-ctx-menu" data-bs-toggle="modal" data-bs-target={`#delete_${selected[0].id}`}>
+					</ContextMenu.Button>
+					<ContextMenu.Button data-bs-toggle="modal" data-bs-target={`#delete_${selected[0].id}`}>
 						<FontAwesomeIcon icon={faTrash} /> Delete
-					</button>
-					<button className="btn btn-ctx-menu" data-bs-toggle="modal" data-bs-target={`#change_${selected[0].id}`}>
+					</ContextMenu.Button>
+					<ContextMenu.Button data-bs-toggle="modal" data-bs-target={`#change_${selected[0].id}`}>
 						<FontAwesomeIcon icon={faFolderOpen} /> Move / Copy to
-					</button>
-					<button className="btn btn-ctx-menu" type="button" data-bs-toggle="modal" data-bs-target={`#rename_${selected[0].id}`}>
+					</ContextMenu.Button>
+					<ContextMenu.Button data-bs-toggle="modal" data-bs-target={`#rename_${selected[0].id}`}>
 						<FontAwesomeIcon icon={faFileSignature} /> Rename
-					</button>
-					<button className="btn btn-ctx-menu" onClick={() => showFilePanel(selected[0].id)}>
+					</ContextMenu.Button>
+					<ContextMenu.Button onClick={() => showFilePanel(selected[0].id)}>
 						<FontAwesomeIcon icon={faEllipsisV} /> Properties
-					</button>
-				</div>
-
-				<RenameModal file={selected[0]} closeContextMenu={closeContextMenu} />
+					</ContextMenu.Button>
+				</ContextMenu>
 			</>
 		);
 	} else {
 		return (
-			<div className="ctxmenu" ref={contextMenuRef} style={{ top: `${y}px`, left: `${x}px`, zIndex: 20, position: 'absolute' }}>
-				<button className="btn btn-ctx-menu" onClick={handleBulkDownload}>
+			<ContextMenu ref={contextMenuRef} x={x} y={y}>
+				<ContextMenu.Button onClick={handleBulkDownload}>
 					<FontAwesomeIcon icon={faDownload} /> Download
-				</button>
-				<button className="btn btn-ctx-menu" onClick={handleBulkDelete}>
+				</ContextMenu.Button>
+				<ContextMenu.Button onClick={handleBulkDelete}>
 					<FontAwesomeIcon icon={faTrash} /> Delete
-				</button>
-			</div>
+				</ContextMenu.Button>
+			</ContextMenu>
 		);
 	}
 }
